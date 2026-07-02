@@ -1,0 +1,741 @@
+{
+  "id": "ambi",
+  "name": "Broad Personality Scan",
+  "subtitle": "Analog to Multiple Broadband Inventories",
+  "instructions": "Rate each statement from 1 (strongly disagree) to 7 (strongly agree).",
+  "scale": [
+    "Strongly disagree",
+    "Disagree",
+    "Slightly disagree",
+    "Neutral",
+    "Slightly agree",
+    "Agree",
+    "Strongly agree"
+  ],
+  "questions": [
+    {
+      "id": "Q1",
+      "text": "I rarely worry."
+    },
+    {
+      "id": "Q2",
+      "text": "I often eat too much."
+    },
+    {
+      "id": "Q3",
+      "text": "I usually like to spend my free time with people."
+    },
+    {
+      "id": "Q4",
+      "text": "I take charge."
+    },
+    {
+      "id": "Q5",
+      "text": "I am always busy."
+    },
+    {
+      "id": "Q6",
+      "text": "I radiate joy."
+    },
+    {
+      "id": "Q7",
+      "text": "I do not like poetry."
+    },
+    {
+      "id": "Q8",
+      "text": "I distrust people."
+    },
+    {
+      "id": "Q9",
+      "text": "I tell other people what they want to hear so that they will do what I want them to do."
+    },
+    {
+      "id": "Q10",
+      "text": "I anticipate the needs of others."
+    },
+    {
+      "id": "Q11",
+      "text": "I believe that I am better than others."
+    },
+    {
+      "id": "Q12",
+      "text": "I sympathize with the homeless."
+    },
+    {
+      "id": "Q13",
+      "text": "I keep things tidy."
+    },
+    {
+      "id": "Q14",
+      "text": "I am a highly disciplined person."
+    },
+    {
+      "id": "Q15",
+      "text": "I jump into things without thinking."
+    },
+    {
+      "id": "Q16",
+      "text": "I admire a really clever scam."
+    },
+    {
+      "id": "Q17",
+      "text": "I like to own things that impress people."
+    },
+    {
+      "id": "Q18",
+      "text": "I try to be with someone else when Im feeling badly."
+    },
+    {
+      "id": "Q19",
+      "text": "I feel others' emotions."
+    },
+    {
+      "id": "Q20",
+      "text": "I talk a lot."
+    },
+    {
+      "id": "Q21",
+      "text": "I try to avoid speaking in public"
+    },
+    {
+      "id": "Q22",
+      "text": "I am usually active and full of energy."
+    },
+    {
+      "id": "Q23",
+      "text": "I am patient with people who annoy me."
+    },
+    {
+      "id": "Q24",
+      "text": "I am easily annoyed."
+    },
+    {
+      "id": "Q25",
+      "text": "I push myself very hard to succeed."
+    },
+    {
+      "id": "Q26",
+      "text": "I do not like art."
+    },
+    {
+      "id": "Q27",
+      "text": "I love to hear about other countries and cultures."
+    },
+    {
+      "id": "Q28",
+      "text": "I am considered to be kind of eccentric."
+    },
+    {
+      "id": "Q29",
+      "text": "I worry about what people think of me."
+    },
+    {
+      "id": "Q30",
+      "text": "I am very shy in social situations."
+    },
+    {
+      "id": "Q31",
+      "text": "I don't have much energy."
+    },
+    {
+      "id": "Q32",
+      "text": "I don't think that laws apply to me."
+    },
+    {
+      "id": "Q33",
+      "text": "I have frequent mood swings."
+    },
+    {
+      "id": "Q34",
+      "text": "I hold a grudge."
+    },
+    {
+      "id": "Q35",
+      "text": "I like to act on a whim."
+    },
+    {
+      "id": "Q36",
+      "text": "I have felt the presence of another person when he or she was not really there."
+    },
+    {
+      "id": "Q37",
+      "text": "I seem to derive less enjoyment from interacting with people than others do."
+    },
+    {
+      "id": "Q38",
+      "text": "I love to be the center of attention."
+    },
+    {
+      "id": "Q39",
+      "text": "I don't let others cut in front of me in line."
+    },
+    {
+      "id": "Q40",
+      "text": "I insist that others do things my way."
+    },
+    {
+      "id": "Q41",
+      "text": "I am a firm believer in thinking things through."
+    },
+    {
+      "id": "Q42",
+      "text": "I dislike changes."
+    },
+    {
+      "id": "Q43",
+      "text": "I read a large variety of books."
+    },
+    {
+      "id": "Q44",
+      "text": "I love excitement."
+    },
+    {
+      "id": "Q45",
+      "text": "I would rather spend money than save it."
+    },
+    {
+      "id": "Q46",
+      "text": "I enjoy being reckless."
+    },
+    {
+      "id": "Q47",
+      "text": "I have never cared much what others thought of me."
+    },
+    {
+      "id": "Q48",
+      "text": "I usually get right to work on something that needs to be done as soon as I think of it."
+    },
+    {
+      "id": "Q49",
+      "text": "I often have the feeling that others laugh or talk about me."
+    },
+    {
+      "id": "Q50",
+      "text": "I try to forgive and forget."
+    },
+    {
+      "id": "Q51",
+      "text": "I feel little concern for others."
+    },
+    {
+      "id": "Q52",
+      "text": "I do things out of revenge."
+    },
+    {
+      "id": "Q53",
+      "text": "I have felt contact with a divine power."
+    },
+    {
+      "id": "Q54",
+      "text": "I am devoted to religion."
+    },
+    {
+      "id": "Q55",
+      "text": "I was a better than average student when I was in school."
+    },
+    {
+      "id": "Q56",
+      "text": "I felt close to my parents when I was a child."
+    },
+    {
+      "id": "Q57",
+      "text": "I feel a sense of worthlessness or hopelessness."
+    },
+    {
+      "id": "Q58",
+      "text": "I am interested in science."
+    },
+    {
+      "id": "Q59",
+      "text": "I believe that most questions have one right answer."
+    },
+    {
+      "id": "Q60",
+      "text": "I tend to feel happy and irritable at the same time."
+    },
+    {
+      "id": "Q61",
+      "text": "I believe it is always better to be safe than sorry."
+    },
+    {
+      "id": "Q62",
+      "text": "I rarely get irritated."
+    },
+    {
+      "id": "Q63",
+      "text": "I wanted to run away from home when I was a child."
+    },
+    {
+      "id": "Q64",
+      "text": "I often enjoy telling jokes or behaving in a humorous manner."
+    },
+    {
+      "id": "Q65",
+      "text": "I make enemies."
+    },
+    {
+      "id": "Q66",
+      "text": "I am fascinated by how machines work."
+    },
+    {
+      "id": "Q67",
+      "text": "I disliked math in school."
+    },
+    {
+      "id": "Q68",
+      "text": "I have a rich vocabulary."
+    },
+    {
+      "id": "Q69",
+      "text": "I like to read."
+    },
+    {
+      "id": "Q70",
+      "text": "I don't care about dressing nicely."
+    },
+    {
+      "id": "Q71",
+      "text": "I worry about things."
+    },
+    {
+      "id": "Q72",
+      "text": "I am easily intimidated."
+    },
+    {
+      "id": "Q73",
+      "text": "I love large parties."
+    },
+    {
+      "id": "Q74",
+      "text": "I seldom daydream."
+    },
+    {
+      "id": "Q75",
+      "text": "I crave the experience of great art."
+    },
+    {
+      "id": "Q76",
+      "text": "I tend to vote for liberal political candidates."
+    },
+    {
+      "id": "Q77",
+      "text": "I feel sympathy for those who are worse off than myself."
+    },
+    {
+      "id": "Q78",
+      "text": "I use my charm to get attention."
+    },
+    {
+      "id": "Q79",
+      "text": "I avoid activities that are physically dangerous."
+    },
+    {
+      "id": "Q80",
+      "text": "I immediately feel sad when hearing of an unhappy event."
+    },
+    {
+      "id": "Q81",
+      "text": "I can make myself work on a difficult task even when I don't feel like trying."
+    },
+    {
+      "id": "Q82",
+      "text": "I pay too little attention to details."
+    },
+    {
+      "id": "Q83",
+      "text": "I do not like to visit museums."
+    },
+    {
+      "id": "Q84",
+      "text": "I have no special urge to do something original."
+    },
+    {
+      "id": "Q85",
+      "text": "I have difficulty showing affection."
+    },
+    {
+      "id": "Q86",
+      "text": "I find it easy to manipulate others."
+    },
+    {
+      "id": "Q87",
+      "text": "I cannot imagine lying or cheating."
+    },
+    {
+      "id": "Q88",
+      "text": "I talk to a lot of different people at parties."
+    },
+    {
+      "id": "Q89",
+      "text": "I dislike having authority over others."
+    },
+    {
+      "id": "Q90",
+      "text": "I often forget to put things back in their proper place."
+    },
+    {
+      "id": "Q91",
+      "text": "I act without consulting others."
+    },
+    {
+      "id": "Q92",
+      "text": "I like to visit new places."
+    },
+    {
+      "id": "Q93",
+      "text": "I have time for play and relaxation."
+    },
+    {
+      "id": "Q94",
+      "text": "I am open to new experiences."
+    },
+    {
+      "id": "Q95",
+      "text": "I don't care what others think."
+    },
+    {
+      "id": "Q96",
+      "text": "I am not sure where my life is going."
+    },
+    {
+      "id": "Q97",
+      "text": "I would like to have more power than other people."
+    },
+    {
+      "id": "Q98",
+      "text": "I believe in universal harmony."
+    },
+    {
+      "id": "Q99",
+      "text": "I am skilled in handling social situations."
+    },
+    {
+      "id": "Q100",
+      "text": "I try to avoid complex people."
+    },
+    {
+      "id": "Q101",
+      "text": "I see myself as a good leader."
+    },
+    {
+      "id": "Q102",
+      "text": "I avoid crowds."
+    },
+    {
+      "id": "Q103",
+      "text": "I am not good at telling jokes."
+    },
+    {
+      "id": "Q104",
+      "text": "I don't use harsh language."
+    },
+    {
+      "id": "Q105",
+      "text": "I am able to fix electrical-wiring problems."
+    },
+    {
+      "id": "Q106",
+      "text": "I enjoy games of strategy."
+    },
+    {
+      "id": "Q107",
+      "text": "I was a slow learner in school."
+    },
+    {
+      "id": "Q108",
+      "text": "I often stop to analyze how I'm feeling."
+    },
+    {
+      "id": "Q109",
+      "text": "I get deeply immersed in music."
+    },
+    {
+      "id": "Q110",
+      "text": "I like to solve complex problems."
+    },
+    {
+      "id": "Q111",
+      "text": "I am concerned about others."
+    },
+    {
+      "id": "Q112",
+      "text": "I like to tidy up."
+    },
+    {
+      "id": "Q113",
+      "text": "I don't feel the need to be close to others."
+    },
+    {
+      "id": "Q114",
+      "text": "I love my enemies."
+    },
+    {
+      "id": "Q115",
+      "text": "I have an imagination that stretches beyond that of my friends."
+    },
+    {
+      "id": "Q116",
+      "text": "I find it difficult to organize tasks and activities."
+    },
+    {
+      "id": "Q117",
+      "text": "I feel that life has no meaning."
+    },
+    {
+      "id": "Q118",
+      "text": "I like being the authority who has everyone's attention."
+    },
+    {
+      "id": "Q119",
+      "text": "I have attacked someone physically."
+    },
+    {
+      "id": "Q120",
+      "text": "I like to stand out in a crowd."
+    },
+    {
+      "id": "Q121",
+      "text": "I get upset if others change the way that I have arranged things."
+    },
+    {
+      "id": "Q122",
+      "text": "I want things to proceed according to plan."
+    },
+    {
+      "id": "Q123",
+      "text": "I am often in a bad mood."
+    },
+    {
+      "id": "Q124",
+      "text": "I want to be the very best."
+    },
+    {
+      "id": "Q125",
+      "text": "I feel used by other people."
+    },
+    {
+      "id": "Q126",
+      "text": "I am able to control my cravings."
+    },
+    {
+      "id": "Q127",
+      "text": "I know what to say to make people feel good."
+    },
+    {
+      "id": "Q128",
+      "text": "I get so involved with things that I forget the time."
+    },
+    {
+      "id": "Q129",
+      "text": "I am often bored."
+    },
+    {
+      "id": "Q130",
+      "text": "I demand attention."
+    },
+    {
+      "id": "Q131",
+      "text": "I want everything to be \"just right.\""
+    },
+    {
+      "id": "Q132",
+      "text": "I would love to explore strange places."
+    },
+    {
+      "id": "Q133",
+      "text": "I amuse my friends."
+    },
+    {
+      "id": "Q134",
+      "text": "I worry about being embarrassed."
+    },
+    {
+      "id": "Q135",
+      "text": "I want to be left alone."
+    },
+    {
+      "id": "Q136",
+      "text": "I don't know why I do some of the things I do."
+    },
+    {
+      "id": "Q137",
+      "text": "I am exacting in my work."
+    },
+    {
+      "id": "Q138",
+      "text": "I have difficulty imagining things."
+    },
+    {
+      "id": "Q139",
+      "text": "I am not interested in theoretical discussions."
+    },
+    {
+      "id": "Q140",
+      "text": "I don't enjoy being the object of jokes."
+    },
+    {
+      "id": "Q141",
+      "text": "I plan my life logically."
+    },
+    {
+      "id": "Q142",
+      "text": "I indulge in my fantasies."
+    },
+    {
+      "id": "Q143",
+      "text": "I rarely cry during sad movies."
+    },
+    {
+      "id": "Q144",
+      "text": "I get to work at once."
+    },
+    {
+      "id": "Q145",
+      "text": "I wait for others to lead the way."
+    },
+    {
+      "id": "Q146",
+      "text": "I have never hated anyone."
+    },
+    {
+      "id": "Q147",
+      "text": "I need reassurance."
+    },
+    {
+      "id": "Q148",
+      "text": "I feel emotions with extreme intensity."
+    },
+    {
+      "id": "Q149",
+      "text": "I spend a lot of time reading."
+    },
+    {
+      "id": "Q150",
+      "text": "I don't try to figure myself out."
+    },
+    {
+      "id": "Q151",
+      "text": "I break my promises."
+    },
+    {
+      "id": "Q152",
+      "text": "I need a push to get started."
+    },
+    {
+      "id": "Q153",
+      "text": "I have a colorful and dramatic way of talking about things."
+    },
+    {
+      "id": "Q154",
+      "text": "I come up with new ways to do things."
+    },
+    {
+      "id": "Q155",
+      "text": "I don't like to spend money."
+    },
+    {
+      "id": "Q156",
+      "text": "I believe in a universal power or God."
+    },
+    {
+      "id": "Q157",
+      "text": "I am the life of the party."
+    },
+    {
+      "id": "Q158",
+      "text": "I don't attempt to conform to society's expectations."
+    },
+    {
+      "id": "Q159",
+      "text": "I wonder how I got to be the way that I am."
+    },
+    {
+      "id": "Q160",
+      "text": "I feel short-changed in life."
+    },
+    {
+      "id": "Q161",
+      "text": "I will not probe deeply into a subject."
+    },
+    {
+      "id": "Q162",
+      "text": "I panic easily."
+    },
+    {
+      "id": "Q163",
+      "text": "I have a strong personality."
+    },
+    {
+      "id": "Q164",
+      "text": "I prefer to participate fully rather than view life from the sidelines."
+    },
+    {
+      "id": "Q165",
+      "text": "I spend more money than I should."
+    },
+    {
+      "id": "Q166",
+      "text": "I make people feel at ease."
+    },
+    {
+      "id": "Q167",
+      "text": "I am always prepared."
+    },
+    {
+      "id": "Q168",
+      "text": "I keep my feelings to myself, regardless of how unhappy I am."
+    },
+    {
+      "id": "Q169",
+      "text": "I spend more money than I have."
+    },
+    {
+      "id": "Q170",
+      "text": "I love to chat."
+    },
+    {
+      "id": "Q171",
+      "text": "I am hard to get to know."
+    },
+    {
+      "id": "Q172",
+      "text": "I get back at people who insult me."
+    },
+    {
+      "id": "Q173",
+      "text": "I am relaxed most of the time."
+    },
+    {
+      "id": "Q174",
+      "text": "I check on things more often than necessary."
+    },
+    {
+      "id": "Q175",
+      "text": "I get too tired to do anything."
+    },
+    {
+      "id": "Q176",
+      "text": "I don't call attention to myself."
+    },
+    {
+      "id": "Q177",
+      "text": "I am a good listener."
+    },
+    {
+      "id": "Q178",
+      "text": "I shout or scream when I'm angry."
+    },
+    {
+      "id": "Q179",
+      "text": "I disclose my intimate thoughts."
+    },
+    {
+      "id": "Q180",
+      "text": "I am under constant pressure."
+    },
+    {
+      "id": "Q181",
+      "text": "I believe that most people would lie to get ahead."
+    }
+  ]
+}

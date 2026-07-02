@@ -1,0 +1,143 @@
+{
+  "id": "hsq",
+  "name": "Humor Style",
+  "subtitle": "Humor Styles Questionnaire",
+  "instructions": "Rate each statement from 1 (never or very rarely true) to 5 (very often or always true).",
+  "scale": [
+    "Never or very rarely true",
+    "Rarely true",
+    "Sometimes true",
+    "Often true",
+    "Very often or always true"
+  ],
+  "questions": [
+    {
+      "id": "Q1",
+      "text": "I usually don't laugh or joke around much with other people."
+    },
+    {
+      "id": "Q2",
+      "text": "If I am feeling depressed, I can usually cheer myself up with humor."
+    },
+    {
+      "id": "Q3",
+      "text": "If someone makes a mistake, I will often tease them about it."
+    },
+    {
+      "id": "Q4",
+      "text": "I let people laugh at me or make fun at my expense more than I should."
+    },
+    {
+      "id": "Q5",
+      "text": "I don't have to work very hard at making other people laugh, I seem to be a naturally humorous person."
+    },
+    {
+      "id": "Q6",
+      "text": "Even when I'm by myself, I'm often amused by the absurdities of life."
+    },
+    {
+      "id": "Q7",
+      "text": "People are never offended or hurt by my sense of humor."
+    },
+    {
+      "id": "Q8",
+      "text": "I will often get carried away in putting myself down if it makes my family or friends laugh."
+    },
+    {
+      "id": "Q9",
+      "text": "I rarely make other people laugh by telling funny stories about myself."
+    },
+    {
+      "id": "Q10",
+      "text": "If I am feeling upset or unhappy I usually try to think of something funny about the situation to make myself feel better."
+    },
+    {
+      "id": "Q11",
+      "text": "When telling jokes or saying funny things, I am usually not very concerned about how other people are taking it."
+    },
+    {
+      "id": "Q12",
+      "text": "I often try to make people like or accept me more by saying something funny about my own weaknesses, blunders, or faults."
+    },
+    {
+      "id": "Q13",
+      "text": "I laugh and joke a lot with my closest friends."
+    },
+    {
+      "id": "Q14",
+      "text": "My humorous outlook on life keeps me from getting overly upset or depressed about things."
+    },
+    {
+      "id": "Q15",
+      "text": "I do not like it when people use humor as a way of criticizing or putting someone down."
+    },
+    {
+      "id": "Q16",
+      "text": "I don't often say funny things to put myself down."
+    },
+    {
+      "id": "Q17",
+      "text": "I usually don't like to tell jokes or amuse people."
+    },
+    {
+      "id": "Q18",
+      "text": "If I'm by myself and I'm feeling unhappy, I make an effort to think of something funny to cheer myself up."
+    },
+    {
+      "id": "Q19",
+      "text": "Sometimes I think of something that is so funny that I can't stop myself from saying it, even if it is not appropriate for the situation."
+    },
+    {
+      "id": "Q20",
+      "text": "I often go overboard in putting myself down when I am making jokes or trying to be funny."
+    },
+    {
+      "id": "Q21",
+      "text": "I enjoy making people laugh."
+    },
+    {
+      "id": "Q22",
+      "text": "If I am feeling sad or upset, I usually lose my sense of humor."
+    },
+    {
+      "id": "Q23",
+      "text": "I never participate in laughing at others even if all my friends are doing it."
+    },
+    {
+      "id": "Q24",
+      "text": "When I am with friends or family, I often seem to be the one that other people make fun of or joke about."
+    },
+    {
+      "id": "Q25",
+      "text": "I don't often joke around with my friends."
+    },
+    {
+      "id": "Q26",
+      "text": "It is my experience that thinking about some amusing aspect of a situation is often a very effective way of coping with problems."
+    },
+    {
+      "id": "Q27",
+      "text": "If I don't like someone, I often use humor or teasing to put them down."
+    },
+    {
+      "id": "Q28",
+      "text": "If I am having problems or feeling unhappy, I often cover it up by joking around, so that even my closest friends don't know how I really feel."
+    },
+    {
+      "id": "Q29",
+      "text": "I usually can't think of witty things to say when I'm with other people."
+    },
+    {
+      "id": "Q30",
+      "text": "My sense of humor does not depend on having an audience; funny thoughts keep me entertained all on their own."
+    },
+    {
+      "id": "Q31",
+      "text": "Even if something is really funny to me, I will not laugh or joke about it if someone will be offended."
+    },
+    {
+      "id": "Q32",
+      "text": "Letting others laugh at me is my way of keeping my friends and family in good spirits."
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "id": "bpnss",
+  "name": "Inner Needs",
+  "subtitle": "Basic Psychological Needs Satisfaction",
+  "instructions": "Rate each statement from 1 (not at all true) to 7 (very true).",
+  "scale": [
+    "Not at all true",
+    "",
+    "Somewhat true",
+    "",
+    "Mostly true",
+    "",
+    "Very true"
+  ],
+  "questions": [
+    {
+      "id": "Q1",
+      "text": "I feel like I am free to decide for myself how to live my life."
+    },
+    {
+      "id": "Q2",
+      "text": "I really like the people I interact with."
+    },
+    {
+      "id": "Q3",
+      "text": "Often, I do not feel very competent."
+    },
+    {
+      "id": "Q4",
+      "text": "I feel pressured in my life."
+    },
+    {
+      "id": "Q5",
+      "text": "People I know tell me I am good at what I do."
+    },
+    {
+      "id": "Q6",
+      "text": "I get along with people I come into contact with."
+    },
+    {
+      "id": "Q7",
+      "text": "I pretty much keep to myself and don't have a lot of social contacts."
+    },
+    {
+      "id": "Q8",
+      "text": "I generally feel free to express my ideas and opinions."
+    },
+    {
+      "id": "Q9",
+      "text": "I consider the people I regularly interact with to be my friends."
+    },
+    {
+      "id": "Q10",
+      "text": "I have been able to learn interesting new skills recently."
+    },
+    {
+      "id": "Q11",
+      "text": "In my daily life, I frequently have to do what I am told."
+    },
+    {
+      "id": "Q12",
+      "text": "People in my life care about me."
+    },
+    {
+      "id": "Q13",
+      "text": "Most days I feel a sense of accomplishment from what I do."
+    },
+    {
+      "id": "Q14",
+      "text": "People I interact with on a daily basis tend to take my feelings into consideration."
+    },
+    {
+      "id": "Q15",
+      "text": "In my life I do not get much of a chance to show how capable I am."
+    },
+    {
+      "id": "Q16",
+      "text": "There are not many people that I am close to."
+    },
+    {
+      "id": "Q17",
+      "text": "I feel like I can pretty much be myself in my daily situations."
+    },
+    {
+      "id": "Q18",
+      "text": "The people I interact with regularly do not seem to like me much."
+    },
+    {
+      "id": "Q19",
+      "text": "When I am working, I often feel like I am not very capable at the tasks in front of me."
+    },
+    {
+      "id": "Q20",
+      "text": "There is not much opportunity for me to decide for myself how to do things in my daily life."
+    },
+    {
+      "id": "Q21",
+      "text": "People are generally pretty friendly towards me."
+    }
+  ]
+}

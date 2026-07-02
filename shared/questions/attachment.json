@@ -1,0 +1,152 @@
+{
+  "id": "attachment",
+  "name": "Attachment Style",
+  "subtitle": "Attachment Style",
+  "instructions": "Think about how you generally behave in your closest relationships, whether romantic or a very close friendship. Rate each statement from 1 (Strongly Disagree) to 7 (Strongly Agree).",
+  "questions": [
+    {
+      "id": "ECR1",
+      "text": "Even when a relationship is going well, there are parts of yourself you tend to keep back rather than share openly."
+    },
+    {
+      "id": "ECR2",
+      "text": "In a stable relationship, you can find yourself paying attention to small changes in how the other person is acting toward you."
+    },
+    {
+      "id": "ECR3",
+      "text": "You find it relatively natural to let someone close see what's actually going on with you."
+    },
+    {
+      "id": "ECR4",
+      "text": "Your closest relationships tend to take up a fair amount of mental space, sometimes more than you'd like."
+    },
+    {
+      "id": "ECR5",
+      "text": "Even when things are going well with someone, you can find yourself pulling back a little without fully understanding why."
+    },
+    {
+      "id": "ECR6",
+      "text": "You have sometimes wondered whether the people you're closest to feel as strongly about you as you do about them."
+    },
+    {
+      "id": "ECR7",
+      "text": "When someone you're close to wants to spend more time together or share more of themselves, you can feel a quiet unease."
+    },
+    {
+      "id": "ECR8",
+      "text": "The thought of losing someone important to you tends to sit at the back of your mind more than you'd prefer."
+    },
+    {
+      "id": "ECR9",
+      "text": "Opening up and sharing the more private parts of yourself tends to happen slowly and carefully, if at all."
+    },
+    {
+      "id": "ECR10",
+      "text": "There are times when you've wanted more visible investment or enthusiasm from the person you were with."
+    },
+    {
+      "id": "ECR11",
+      "text": "You have had the experience of wanting to get closer to someone and then, once you did, feeling an urge to create some distance again."
+    },
+    {
+      "id": "ECR12",
+      "text": "At times, how much you wanted to connect with someone seemed to make them pull back from you."
+    },
+    {
+      "id": "ECR13",
+      "text": "When someone you care about tries to get closer emotionally, something in you can resist, even when you want the connection."
+    },
+    {
+      "id": "ECR14",
+      "text": "The idea of going through life without a stable, deep connection to someone is something you find genuinely unsettling."
+    },
+    {
+      "id": "ECR15",
+      "text": "Sharing your real thoughts with someone you trust doesn't feel like much of a risk."
+    },
+    {
+      "id": "ECR16",
+      "text": "There have been times when your need for closeness was more than what the other person seemed able or willing to match."
+    },
+    {
+      "id": "ECR17",
+      "text": "You tend to maintain a sense of your own independence in your relationships, keeping some emotional space."
+    },
+    {
+      "id": "ECR18",
+      "text": "Knowing regularly that you are wanted and valued in a relationship helps you feel more settled."
+    },
+    {
+      "id": "ECR19",
+      "text": "Getting close to someone and depending on them feels fairly natural rather than uncomfortable."
+    },
+    {
+      "id": "ECR20",
+      "text": "You have sometimes done something small to see how the other person would respond, just to get a sense of where you stood with them."
+    },
+    {
+      "id": "ECR21",
+      "text": "Asking for support from someone close, even when you genuinely need it, is something you tend to resist."
+    },
+    {
+      "id": "ECR22",
+      "text": "Worry about being left doesn't take up much space in your thinking when you're in a relationship."
+    },
+    {
+      "id": "ECR23",
+      "text": "You tend to feel most comfortable in relationships where both people keep a degree of their own separate life."
+    },
+    {
+      "id": "ECR24",
+      "text": "When a partner seems less present or engaged than usual, you tend to notice it fairly quickly and feel something about it."
+    },
+    {
+      "id": "ECR25",
+      "text": "There is very little you actively keep from someone you trust. You tend to share most of what's going on."
+    },
+    {
+      "id": "ECR26",
+      "text": "There have been relationships where you found yourself wanting more closeness than the other person seemed to want."
+    },
+    {
+      "id": "ECR27",
+      "text": "When something is weighing on you, your instinct is to bring it to your partner rather than work through it on your own."
+    },
+    {
+      "id": "ECR28",
+      "text": "Between relationships, you're aware of a low-level unease, like something important is absent."
+    },
+    {
+      "id": "ECR29",
+      "text": "Trusting someone enough to lean on them feels like a normal part of being close to them."
+    },
+    {
+      "id": "ECR30",
+      "text": "When a partner is busier or less available than usual, it tends to get under your skin a bit."
+    },
+    {
+      "id": "ECR31",
+      "text": "Asking someone close to you for comfort or help doesn't feel like weakness or an imposition."
+    },
+    {
+      "id": "ECR32",
+      "text": "When you need someone and they're not reachable, you feel it more acutely than you'd prefer."
+    },
+    {
+      "id": "ECR33",
+      "text": "When you're struggling, turning to the person you're with tends to be a natural first move."
+    },
+    {
+      "id": "ECR34",
+      "text": "When someone close to you is disappointed in you, or withdraws their warmth, you feel it quite strongly."
+    },
+    {
+      "id": "ECR35",
+      "text": "Your partner is usually among the first people you'd go to when something goes wrong."
+    },
+    {
+      "id": "ECR36",
+      "text": "When your partner's attention is elsewhere for a stretch of time, you tend to find it a little difficult to sit with."
+    }
+  ]
+}

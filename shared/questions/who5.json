@@ -1,0 +1,37 @@
+{
+  "id": "who5",
+  "name": "Wellbeing Check",
+  "subtitle": "WHO-5 Wellbeing Index",
+  "instructions": "Thinking about the last two weeks, indicate for each statement which is closest to how you have been feeling.",
+  "scale": [
+    "At no time",
+    "Some of the time",
+    "Less than half of the time",
+    "More than half of the time",
+    "Most of the time",
+    "All of the time"
+  ],
+  "category": "wellbeing",
+  "questions": [
+    {
+      "id": "Q1",
+      "text": "I have felt cheerful and in good spirits."
+    },
+    {
+      "id": "Q2",
+      "text": "I have felt calm and relaxed."
+    },
+    {
+      "id": "Q3",
+      "text": "I have felt active and vigorous."
+    },
+    {
+      "id": "Q4",
+      "text": "I woke up feeling fresh and rested."
+    },
+    {
+      "id": "Q5",
+      "text": "My daily life has been filled with things that interest me."
+    }
+  ]
+}

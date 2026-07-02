@@ -1,0 +1,977 @@
+{
+  "id": "hexaco",
+  "name": "Six-Trait Personality",
+  "subtitle": "HEXACO Six-Factor Personality",
+  "instructions": "Rate each statement from 1 (strongly disagree) to 7 (strongly agree), based on how you actually tend to be.",
+  "scale": [
+    "Strongly disagree",
+    "Disagree",
+    "Slightly disagree",
+    "Neutral",
+    "Slightly agree",
+    "Agree",
+    "Strongly agree"
+  ],
+  "questions": [
+    {
+      "id": "EFear8",
+      "text": "I love dangerous situations."
+    },
+    {
+      "id": "EDepe3",
+      "text": "I need the approval of others."
+    },
+    {
+      "id": "XExpr3",
+      "text": "I am the life of the party."
+    },
+    {
+      "id": "AGent6",
+      "text": "I am quick to judge others."
+    },
+    {
+      "id": "CPrud8",
+      "text": "I make careless mistakes."
+    },
+    {
+      "id": "OCrea10",
+      "text": "I seldom experience sudden intuitive insights."
+    },
+    {
+      "id": "ESent1",
+      "text": "I feel others' emotions."
+    },
+    {
+      "id": "OCrea2",
+      "text": "I come up with something new."
+    },
+    {
+      "id": "HGree1",
+      "text": "I would not enjoy being a famous celebrity."
+    },
+    {
+      "id": "XLive9",
+      "text": "I tire out quickly."
+    },
+    {
+      "id": "EFear7",
+      "text": "I face danger confidently."
+    },
+    {
+      "id": "AFlex4",
+      "text": "I react strongly to criticism."
+    },
+    {
+      "id": "XSoci10",
+      "text": "I keep others at a distance."
+    },
+    {
+      "id": "XSoci6",
+      "text": "I seem to derive less enjoyment from interacting with people than others do."
+    },
+    {
+      "id": "HGree9",
+      "text": "I prefer to eat at expensive restaurants."
+    },
+    {
+      "id": "HSinc7",
+      "text": "I pretend to be concerned for others."
+    },
+    {
+      "id": "EAnxi1",
+      "text": "I often worry about things that turn out to be unimportant."
+    },
+    {
+      "id": "EFear5",
+      "text": "I would never go riding down a stretch of rapids in a canoe."
+    },
+    {
+      "id": "APati4",
+      "text": "I rarely get irritated."
+    },
+    {
+      "id": "CPerf8",
+      "text": "I demand quality."
+    },
+    {
+      "id": "CPerf10",
+      "text": "I prefer to just let things happen."
+    },
+    {
+      "id": "HFair10",
+      "text": "I would not regret my behavior if I were to take advantage of someone impulsively."
+    },
+    {
+      "id": "OInqu10",
+      "text": "I will not probe deeply into a subject."
+    },
+    {
+      "id": "ESent4",
+      "text": "I am sensitive to the needs of others."
+    },
+    {
+      "id": "XExpr8",
+      "text": "I say little."
+    },
+    {
+      "id": "OInqu7",
+      "text": "I don't know much about history."
+    },
+    {
+      "id": "EDepe7",
+      "text": "I suspect that my facial expressions give me away when I feel sad."
+    },
+    {
+      "id": "XSocB1",
+      "text": "I am good at making impromptu speeches."
+    },
+    {
+      "id": "CPerf9",
+      "text": "I pay too little attention to details."
+    },
+    {
+      "id": "CPrud5",
+      "text": "I do things without thinking of the consequences."
+    },
+    {
+      "id": "XLive1",
+      "text": "I maintain high energy throughout the day."
+    },
+    {
+      "id": "CPerf3",
+      "text": "I have an eye for detail."
+    },
+    {
+      "id": "OCrea6",
+      "text": "I have excellent ideas."
+    },
+    {
+      "id": "APati3",
+      "text": "I am usually a patient person."
+    },
+    {
+      "id": "HFair8",
+      "text": "I steal things."
+    },
+    {
+      "id": "EDepe1",
+      "text": "I need reassurance."
+    },
+    {
+      "id": "HMode10",
+      "text": "I boast about my virtues."
+    },
+    {
+      "id": "OAesA6",
+      "text": "I do not like art."
+    },
+    {
+      "id": "HMode1",
+      "text": "I don't think that i'm better than other people."
+    },
+    {
+      "id": "XSocB3",
+      "text": "I feel comfortable around people."
+    },
+    {
+      "id": "APati5",
+      "text": "I seldom get mad."
+    },
+    {
+      "id": "APati10",
+      "text": "I get upset easily."
+    },
+    {
+      "id": "XSoci2",
+      "text": "I talk to a lot of different people at parties."
+    },
+    {
+      "id": "AFlex3",
+      "text": "I when interacting with a group of people, am often bothered by at least one of them."
+    },
+    {
+      "id": "AForg2",
+      "text": "I try to forgive and forget."
+    },
+    {
+      "id": "CPrud10",
+      "text": "I make a fool of myself."
+    },
+    {
+      "id": "OUnco2",
+      "text": "I know that my ideas sometimes surprise people."
+    },
+    {
+      "id": "AForg7",
+      "text": "I get back at people who insult me."
+    },
+    {
+      "id": "AGent1",
+      "text": "I rarely complain."
+    },
+    {
+      "id": "OInqu6",
+      "text": "I have a rich vocabulary."
+    },
+    {
+      "id": "OAesA4",
+      "text": "I enjoy feeling close to the earth."
+    },
+    {
+      "id": "XSoci4",
+      "text": "I make friends easily."
+    },
+    {
+      "id": "CPerf4",
+      "text": "I want every detail taken care of."
+    },
+    {
+      "id": "AForg1",
+      "text": "I love my enemies."
+    },
+    {
+      "id": "APati2",
+      "text": "I rarely feel angry with people."
+    },
+    {
+      "id": "XSocB5",
+      "text": "I have a strong personality."
+    },
+    {
+      "id": "AGent4",
+      "text": "I have a good word for everyone."
+    },
+    {
+      "id": "XExpr4",
+      "text": "I tell people about it when i'm irritated."
+    },
+    {
+      "id": "XLive2",
+      "text": "I have great stamina."
+    },
+    {
+      "id": "HGree3",
+      "text": "I love luxury."
+    },
+    {
+      "id": "HFair4",
+      "text": "I would feel very badly for a long time if I were to steal from someone."
+    },
+    {
+      "id": "COrga8",
+      "text": "I don't finish the things that I start."
+    },
+    {
+      "id": "XSocB8",
+      "text": "I find it difficult to approach others."
+    },
+    {
+      "id": "XSoci1",
+      "text": "I usually like to spend my free time with people."
+    },
+    {
+      "id": "HFair6",
+      "text": "I admire a really clever scam."
+    },
+    {
+      "id": "AForg9",
+      "text": "I distrust people."
+    },
+    {
+      "id": "EDepe9",
+      "text": "I can't do without the company of others."
+    },
+    {
+      "id": "ESent10",
+      "text": "I seldom get emotional."
+    },
+    {
+      "id": "OInqu3",
+      "text": "I enjoy intellectual games."
+    },
+    {
+      "id": "HGree6",
+      "text": "I am mainly interested in money."
+    },
+    {
+      "id": "AForg5",
+      "text": "I find it hard to forgive others."
+    },
+    {
+      "id": "CPrud9",
+      "text": "I don't know why I do some of the things I do."
+    },
+    {
+      "id": "HMode7",
+      "text": "I like to attract attention."
+    },
+    {
+      "id": "OCrea1",
+      "text": "I have a vivid imagination."
+    },
+    {
+      "id": "HMode2",
+      "text": "I see myself as an average person."
+    },
+    {
+      "id": "ESent6",
+      "text": "I rarely cry during sad movies."
+    },
+    {
+      "id": "CDili4",
+      "text": "I work hard."
+    },
+    {
+      "id": "EAnxi10",
+      "text": "I don't worry about things that have already happened."
+    },
+    {
+      "id": "HGree7",
+      "text": "I wish to stay young forever."
+    },
+    {
+      "id": "AFlex10",
+      "text": "I am hard to reason with."
+    },
+    {
+      "id": "OCrea5",
+      "text": "I love to think up new ways of doing things."
+    },
+    {
+      "id": "XExpr10",
+      "text": "I speak softly."
+    },
+    {
+      "id": "OCrea7",
+      "text": "I do not have a good imagination."
+    },
+    {
+      "id": "XLive5",
+      "text": "I feel healthy and vibrant most of the time."
+    },
+    {
+      "id": "OCrea8",
+      "text": "I have difficulty imagining things."
+    },
+    {
+      "id": "OUnco1",
+      "text": "I am considered to be kind of eccentric."
+    },
+    {
+      "id": "AFlex9",
+      "text": "I am hard to satisfy."
+    },
+    {
+      "id": "ESent9",
+      "text": "I don't understand people who get emotional."
+    },
+    {
+      "id": "APati1",
+      "text": "I find that it takes a lot to make me feel angry at someone."
+    },
+    {
+      "id": "HSinc10",
+      "text": "I let people push me around to help them feel important."
+    },
+    {
+      "id": "OInqu2",
+      "text": "I would love to explore strange places."
+    },
+    {
+      "id": "OAesA5",
+      "text": "I have read the great literary classics."
+    },
+    {
+      "id": "EDepe10",
+      "text": "I want to be liked."
+    },
+    {
+      "id": "XExpr6",
+      "text": "I don't talk a lot."
+    },
+    {
+      "id": "ESent7",
+      "text": "I seldom feel weepy while reading the sad part of a story."
+    },
+    {
+      "id": "CDili7",
+      "text": "I stop when work becomes too difficult."
+    },
+    {
+      "id": "XLive4",
+      "text": "I smile a lot."
+    },
+    {
+      "id": "XSocB6",
+      "text": "I would be afraid to give a speech in public."
+    },
+    {
+      "id": "HGree5",
+      "text": "I seek status."
+    },
+    {
+      "id": "ESent5",
+      "text": "I am deeply moved by others' misfortunes."
+    },
+    {
+      "id": "AFlex6",
+      "text": "I am hard to convince."
+    },
+    {
+      "id": "CDili1",
+      "text": "I push myself very hard to succeed."
+    },
+    {
+      "id": "HSinc5",
+      "text": "I switch my loyalties when I feel like it."
+    },
+    {
+      "id": "AFlex1",
+      "text": "I adjust easily."
+    },
+    {
+      "id": "EFear10",
+      "text": "I am willing to take risks."
+    },
+    {
+      "id": "OAesA1",
+      "text": "I believe in the importance of art."
+    },
+    {
+      "id": "EAnxi7",
+      "text": "I rarely feel depressed."
+    },
+    {
+      "id": "HGree2",
+      "text": "I don't strive for elegance in my appearance."
+    },
+    {
+      "id": "OUnco5",
+      "text": "I swim against the current."
+    },
+    {
+      "id": "OUnco4",
+      "text": "I rebel against authority."
+    },
+    {
+      "id": "APati7",
+      "text": "I get angry easily."
+    },
+    {
+      "id": "EAnxi4",
+      "text": "I get upset by unpleasant thoughts that come into my mind."
+    },
+    {
+      "id": "HFair3",
+      "text": "I return extra change when a cashier makes a mistake."
+    },
+    {
+      "id": "OAesA2",
+      "text": "I get deeply immersed in music."
+    },
+    {
+      "id": "XExpr9",
+      "text": "I bottle up my feelings."
+    },
+    {
+      "id": "OAesA10",
+      "text": "I do not enjoy watching dance performances."
+    },
+    {
+      "id": "COrga5",
+      "text": "I want everything to be just right."
+    },
+    {
+      "id": "EAnxi6",
+      "text": "I rarely worry."
+    },
+    {
+      "id": "CPerf1",
+      "text": "I pay attention to details."
+    },
+    {
+      "id": "HGree10",
+      "text": "I am out for my own personal gain."
+    },
+    {
+      "id": "XExpr2",
+      "text": "I am never at a loss for words."
+    },
+    {
+      "id": "OUnco3",
+      "text": "I do things that others find strange."
+    },
+    {
+      "id": "XSoci3",
+      "text": "I love to chat."
+    },
+    {
+      "id": "HMode5",
+      "text": "I would like to have more power than other people."
+    },
+    {
+      "id": "COrga4",
+      "text": "I like to tidy up."
+    },
+    {
+      "id": "HGree8",
+      "text": "I try to impress others."
+    },
+    {
+      "id": "CPerf2",
+      "text": "I continue until everything is perfect."
+    },
+    {
+      "id": "EFear3",
+      "text": "I would fear walking in a high-crime part of a city."
+    },
+    {
+      "id": "EDepe2",
+      "text": "I let myself be influenced by others."
+    },
+    {
+      "id": "EFear9",
+      "text": "I would be good at rescuing people from a burning building."
+    },
+    {
+      "id": "XSocB7",
+      "text": "I keep in the background."
+    },
+    {
+      "id": "XSocB9",
+      "text": "I hate being the center of attention."
+    },
+    {
+      "id": "APati8",
+      "text": "I get irritated easily."
+    },
+    {
+      "id": "XExpr5",
+      "text": "I have an intense, boisterous laugh."
+    },
+    {
+      "id": "AGent2",
+      "text": "I take things as they come."
+    },
+    {
+      "id": "XSoci9",
+      "text": "I am hard to get to know."
+    },
+    {
+      "id": "AGent9",
+      "text": "I have a sharp tongue."
+    },
+    {
+      "id": "COrga7",
+      "text": "I leave my belongings around."
+    },
+    {
+      "id": "EDepe8",
+      "text": "I seek support."
+    },
+    {
+      "id": "XLive6",
+      "text": "I laugh a lot."
+    },
+    {
+      "id": "OAesA3",
+      "text": "I see beauty in things that others might not notice."
+    },
+    {
+      "id": "OUnco6",
+      "text": "I would hate to be considered odd or strange."
+    },
+    {
+      "id": "AGent10",
+      "text": "I criticize others' shortcomings."
+    },
+    {
+      "id": "AFlex2",
+      "text": "I am good at taking advice."
+    },
+    {
+      "id": "XLive3",
+      "text": "I am usually active and full of energy."
+    },
+    {
+      "id": "XSoci8",
+      "text": "I would not enjoy a job that involves a lot of social interaction."
+    },
+    {
+      "id": "COrga9",
+      "text": "I often forget to put things back in their proper place."
+    },
+    {
+      "id": "HSinc9",
+      "text": "I find it necessary to please the people who have power."
+    },
+    {
+      "id": "XSocB10",
+      "text": "I have little to say."
+    },
+    {
+      "id": "XLive7",
+      "text": "I feel that I have a lot of inner strength."
+    },
+    {
+      "id": "CDili9",
+      "text": "I hang around doing nothing."
+    },
+    {
+      "id": "EFear1",
+      "text": "I am a physical coward."
+    },
+    {
+      "id": "HFair7",
+      "text": "I cheat to get ahead."
+    },
+    {
+      "id": "XLive10",
+      "text": "I often feel blue."
+    },
+    {
+      "id": "COrga1",
+      "text": "I keep things tidy."
+    },
+    {
+      "id": "EAnxi3",
+      "text": "I get stressed out easily."
+    },
+    {
+      "id": "OAesA8",
+      "text": "I do not like poetry."
+    },
+    {
+      "id": "HGree4",
+      "text": "I have a strong need for power."
+    },
+    {
+      "id": "CPerf7",
+      "text": "I detect mistakes."
+    },
+    {
+      "id": "XSoci5",
+      "text": "I enjoy being part of a group."
+    },
+    {
+      "id": "OUnco8",
+      "text": "I like to be viewed as proper and conventional."
+    },
+    {
+      "id": "EDepe4",
+      "text": "I need protection."
+    },
+    {
+      "id": "AGent7",
+      "text": "I find fault with everything."
+    },
+    {
+      "id": "CPrud6",
+      "text": "I make rash decisions."
+    },
+    {
+      "id": "EDepe5",
+      "text": "I often need help."
+    },
+    {
+      "id": "HSinc2",
+      "text": "I use flattery to get ahead."
+    },
+    {
+      "id": "OInqu5",
+      "text": "I find political discussions interesting."
+    },
+    {
+      "id": "AGent3",
+      "text": "I accept people as they are."
+    },
+    {
+      "id": "HMode6",
+      "text": "I believe that I am better than others."
+    },
+    {
+      "id": "CDili3",
+      "text": "I am exacting in my work."
+    },
+    {
+      "id": "CPerf5",
+      "text": "I dislike imperfect work."
+    },
+    {
+      "id": "CPrud1",
+      "text": "I avoid mistakes."
+    },
+    {
+      "id": "OUnco10",
+      "text": "I try to avoid complex people."
+    },
+    {
+      "id": "OInqu4",
+      "text": "I love to read challenging material."
+    },
+    {
+      "id": "EFear4",
+      "text": "I tremble in dangerous situations."
+    },
+    {
+      "id": "EFear6",
+      "text": "I like to do frightening things."
+    },
+    {
+      "id": "XExpr1",
+      "text": "I talk a lot."
+    },
+    {
+      "id": "XExpr7",
+      "text": "I don't like to draw attention to myself."
+    },
+    {
+      "id": "CDili8",
+      "text": "I do too little work."
+    },
+    {
+      "id": "XSoci7",
+      "text": "I rarely enjoy being with people."
+    },
+    {
+      "id": "HSinc6",
+      "text": "I play a role in order to impress people."
+    },
+    {
+      "id": "HFair5",
+      "text": "I try to follow the rules."
+    },
+    {
+      "id": "XSocB2",
+      "text": "I don't mind being the center of attention."
+    },
+    {
+      "id": "CDili2",
+      "text": "I get started quickly on doing a job."
+    },
+    {
+      "id": "HMode4",
+      "text": "I consider myself an average person."
+    },
+    {
+      "id": "AFlex5",
+      "text": "I get upset if others change the way that I have arranged things."
+    },
+    {
+      "id": "AForg3",
+      "text": "I am inclined to forgive others."
+    },
+    {
+      "id": "AGent8",
+      "text": "I speak ill of others."
+    },
+    {
+      "id": "HMode9",
+      "text": "I am likely to show off if I get the chance."
+    },
+    {
+      "id": "OUnco7",
+      "text": "I enjoy being thought of as a normal mainstream person."
+    },
+    {
+      "id": "EAnxi8",
+      "text": "I am not easily disturbed by events."
+    },
+    {
+      "id": "OCrea9",
+      "text": "I have trouble guessing how others will react."
+    },
+    {
+      "id": "OCrea3",
+      "text": "I carry the conversation to a higher level."
+    },
+    {
+      "id": "COrga10",
+      "text": "I am not bothered by disorder."
+    },
+    {
+      "id": "AForg10",
+      "text": "I feel that most people can't be trusted."
+    },
+    {
+      "id": "EAnxi9",
+      "text": "I remain calm under pressure."
+    },
+    {
+      "id": "EAnxi5",
+      "text": "I panic easily."
+    },
+    {
+      "id": "HSinc8",
+      "text": "I act like different people in different situations."
+    },
+    {
+      "id": "CDili6",
+      "text": "I do just enough work to get by."
+    },
+    {
+      "id": "CPerf6",
+      "text": "I want everything to add up perfectly."
+    },
+    {
+      "id": "CPrud2",
+      "text": "I make plans and stick to them."
+    },
+    {
+      "id": "AForg4",
+      "text": "I am nice to people I should be angry at."
+    },
+    {
+      "id": "AForg6",
+      "text": "I hold a grudge."
+    },
+    {
+      "id": "HFair1",
+      "text": "I would never take things that aren't mine."
+    },
+    {
+      "id": "OAesA7",
+      "text": "I seldom notice the emotional aspects of paintings and pictures."
+    },
+    {
+      "id": "HFair9",
+      "text": "I cheat on people who have trusted me."
+    },
+    {
+      "id": "OUnco9",
+      "text": "I like to be thought of as a normal kind of person."
+    },
+    {
+      "id": "OInqu8",
+      "text": "I avoid difficult reading material."
+    },
+    {
+      "id": "EFear2",
+      "text": "I begin to panic when there is danger."
+    },
+    {
+      "id": "HFair2",
+      "text": "I would never cheat on my taxes."
+    },
+    {
+      "id": "HSinc4",
+      "text": "I put on a show to impress people."
+    },
+    {
+      "id": "HMode3",
+      "text": "I am just an ordinary person."
+    },
+    {
+      "id": "AGent5",
+      "text": "I become frustrated and angry with people when they don't live up to my expectations."
+    },
+    {
+      "id": "COrga2",
+      "text": "I get chores done right away."
+    },
+    {
+      "id": "CPrud4",
+      "text": "I jump into things without thinking."
+    },
+    {
+      "id": "XLive8",
+      "text": "I have a lot of fun."
+    },
+    {
+      "id": "AForg8",
+      "text": "I get even with others."
+    },
+    {
+      "id": "HMode8",
+      "text": "I am more capable than most others."
+    },
+    {
+      "id": "EAnxi2",
+      "text": "I worry about things."
+    },
+    {
+      "id": "AFlex8",
+      "text": "I can't stand being contradicted."
+    },
+    {
+      "id": "ESent8",
+      "text": "I am seldom bothered by the apparent suffering of strangers."
+    },
+    {
+      "id": "ESent3",
+      "text": "I cry during movies."
+    },
+    {
+      "id": "XSocB4",
+      "text": "I have leadership abilities."
+    },
+    {
+      "id": "COrga6",
+      "text": "I leave a mess in my room."
+    },
+    {
+      "id": "AFlex7",
+      "text": "I am annoyed by others' mistakes."
+    },
+    {
+      "id": "ESent2",
+      "text": "I immediately feel sad when hearing of an unhappy event."
+    },
+    {
+      "id": "CDili10",
+      "text": "I quickly lose interest in the tasks I start."
+    },
+    {
+      "id": "CDili5",
+      "text": "I complete tasks successfully."
+    },
+    {
+      "id": "OInqu1",
+      "text": "I am interested in science."
+    },
+    {
+      "id": "COrga3",
+      "text": "I like order."
+    },
+    {
+      "id": "CPrud3",
+      "text": "I do things according to a plan."
+    },
+    {
+      "id": "EDepe6",
+      "text": "I show my sadness."
+    },
+    {
+      "id": "HSinc3",
+      "text": "I tell other people what they want to hear so that they will do what I want them to do."
+    },
+    {
+      "id": "APati9",
+      "text": "I lose my temper."
+    },
+    {
+      "id": "CPrud7",
+      "text": "I act impulsively when something is bothering me."
+    },
+    {
+      "id": "OInqu9",
+      "text": "I don't bother worrying about political and social problems."
+    },
+    {
+      "id": "APati6",
+      "text": "I am easily annoyed."
+    },
+    {
+      "id": "OAesA9",
+      "text": "I do not like concerts."
+    },
+    {
+      "id": "HSinc1",
+      "text": "I don't pretend to be more than I am."
+    },
+    {
+      "id": "OCrea4",
+      "text": "I am full of ideas."
+    }
+  ]
+}

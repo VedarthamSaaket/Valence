@@ -1,0 +1,238 @@
+{
+  "id": "fti",
+  "name": "Temperament Type",
+  "subtitle": "Fisher Temperament Inventory",
+  "instructions": "Rate each statement from 1 (strongly disagree) to 4 (strongly agree).",
+  "scale": [
+    "Strongly disagree",
+    "Disagree",
+    "Agree",
+    "Strongly agree"
+  ],
+  "questions": [
+    {
+      "id": "Q1",
+      "text": "I find unpredictable situations exhilarating."
+    },
+    {
+      "id": "Q2",
+      "text": "I do things on the spur of the moment."
+    },
+    {
+      "id": "Q3",
+      "text": "I get bored when I have to do the same familiar things."
+    },
+    {
+      "id": "Q4",
+      "text": "I have a very wide range of interests."
+    },
+    {
+      "id": "Q5",
+      "text": "I am more optimistic than most people."
+    },
+    {
+      "id": "Q6",
+      "text": "I am more creative than most people."
+    },
+    {
+      "id": "Q7",
+      "text": "I am always looking for new experiences."
+    },
+    {
+      "id": "Q8",
+      "text": "I am always doing new things."
+    },
+    {
+      "id": "Q9",
+      "text": "I am more enthusiastic than most people."
+    },
+    {
+      "id": "Q10",
+      "text": "I am willing to take risks to do what I want to do."
+    },
+    {
+      "id": "Q11",
+      "text": "I get restless if I have to stay home for any length of time."
+    },
+    {
+      "id": "Q12",
+      "text": "My friends would say I am very curious."
+    },
+    {
+      "id": "Q13",
+      "text": "I have more energy than most people."
+    },
+    {
+      "id": "Q14",
+      "text": "On my time off, I like to be free to do whatever looks fun."
+    },
+    {
+      "id": "Q15",
+      "text": "I think consistent routines keep life orderly and relaxing."
+    },
+    {
+      "id": "Q16",
+      "text": "I consider (and reconsider) every option thoroughly before making a plan."
+    },
+    {
+      "id": "Q17",
+      "text": "People should behave according to established standards of proper conduct."
+    },
+    {
+      "id": "Q18",
+      "text": "I enjoy planning way ahead."
+    },
+    {
+      "id": "Q19",
+      "text": "In general, I think it is important to follow rules."
+    },
+    {
+      "id": "Q20",
+      "text": "Taking care of my possessions is a high priority for me."
+    },
+    {
+      "id": "Q21",
+      "text": "My friends and family would say I have traditional values."
+    },
+    {
+      "id": "Q22",
+      "text": "I tend to be meticulous in my duties."
+    },
+    {
+      "id": "Q23",
+      "text": "I tend to be cautious, but not fearful."
+    },
+    {
+      "id": "Q24",
+      "text": "People should behave in ways that are morally correct."
+    },
+    {
+      "id": "Q25",
+      "text": "It is important to respect authority."
+    },
+    {
+      "id": "Q26",
+      "text": "I would rather have loyal friends than interesting friends"
+    },
+    {
+      "id": "Q27",
+      "text": "Long established customs need to be respected and preserved."
+    },
+    {
+      "id": "Q28",
+      "text": "I like to work in a straightforward path toward completing the task."
+    },
+    {
+      "id": "Q29",
+      "text": "I understand complex machines easily."
+    },
+    {
+      "id": "Q30",
+      "text": "I enjoy competitive conversations."
+    },
+    {
+      "id": "Q31",
+      "text": "I am intrigued by rules and patterns that govern systems."
+    },
+    {
+      "id": "Q32",
+      "text": "I am more analytical and logical than most people."
+    },
+    {
+      "id": "Q33",
+      "text": "I pursue intellectual topics thoroughly and regularly."
+    },
+    {
+      "id": "Q34",
+      "text": "I am able to solve problems without letting emotion get in the way"
+    },
+    {
+      "id": "Q35",
+      "text": "I like to figure out how things work."
+    },
+    {
+      "id": "Q36",
+      "text": "I am tough-minded."
+    },
+    {
+      "id": "Q37",
+      "text": "Debating is a good way to match my wits with others."
+    },
+    {
+      "id": "Q38",
+      "text": "I have no trouble making a choice, even when several alternatives seem equally good at first."
+    },
+    {
+      "id": "Q39",
+      "text": "When I buy a new machine (e.g., camera, computer or car), I want to know all of its technical features."
+    },
+    {
+      "id": "Q40",
+      "text": "I like to avoid the nuances and say exactly what I mean."
+    },
+    {
+      "id": "Q41",
+      "text": "I think it is important to be direct."
+    },
+    {
+      "id": "Q42",
+      "text": "When making a decision, I like to stick to the facts rather than be swayed by people's feelings."
+    },
+    {
+      "id": "Q43",
+      "text": "I like to get to know my friends' deepest needs and feelings."
+    },
+    {
+      "id": "Q44",
+      "text": "I highly value deep emotional intimacy in my relationships."
+    },
+    {
+      "id": "Q45",
+      "text": "Regardless of what is logical, I generally listen to my heart when making important decisions."
+    },
+    {
+      "id": "Q46",
+      "text": "I frequently catch myself daydreaming."
+    },
+    {
+      "id": "Q47",
+      "text": "I can change my mind easily."
+    },
+    {
+      "id": "Q48",
+      "text": "After watching an emotional film I often still feel moved by it several hours later."
+    },
+    {
+      "id": "Q49",
+      "text": "I vividly imagine both wonderful and horrible things happening to me."
+    },
+    {
+      "id": "Q50",
+      "text": "I am very sensitive to people's feelings and needs."
+    },
+    {
+      "id": "Q51",
+      "text": "I often find myself getting lost in my thoughts during the day."
+    },
+    {
+      "id": "Q52",
+      "text": "I feel emotions more deeply than most people."
+    },
+    {
+      "id": "Q53",
+      "text": "I have a vivid imagination."
+    },
+    {
+      "id": "Q54",
+      "text": "When I wake up from a vivid dream, it takes me a few seconds to return to reality."
+    },
+    {
+      "id": "Q55",
+      "text": "When reading, I enjoy when the writer takes a sidetrack to say something beautiful or meaningful."
+    },
+    {
+      "id": "Q56",
+      "text": "I am very empathetic."
+    }
+  ]
+}

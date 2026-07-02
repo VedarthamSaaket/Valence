@@ -1,0 +1,75 @@
+{
+  "id": "gcbs",
+  "name": "Conspiracy Beliefs",
+  "subtitle": "Generic Conspiracist Beliefs Scale",
+  "instructions": "Rate each statement from 1 (definitely not true) to 5 (definitely true).",
+  "scale": [
+    "Definitely not true",
+    "Probably not true",
+    "Not sure / can't decide",
+    "Probably true",
+    "Definitely true"
+  ],
+  "questions": [
+    {
+      "id": "Q1",
+      "text": "The government is involved in the murder of innocent citizens and/or well-known public figures, and keeps this a secret."
+    },
+    {
+      "id": "Q2",
+      "text": "The power held by heads of state is second to that of small unknown groups who really control world politics."
+    },
+    {
+      "id": "Q3",
+      "text": "Secret organizations communicate with extraterrestrials, but keep this fact from the public."
+    },
+    {
+      "id": "Q4",
+      "text": "The spread of certain viruses and/or diseases is the result of the deliberate, concealed efforts of some organization."
+    },
+    {
+      "id": "Q5",
+      "text": "Groups of scientists manipulate, fabricate, or suppress evidence in order to deceive the public."
+    },
+    {
+      "id": "Q6",
+      "text": "The government permits or perpetrates acts of terrorism on its own soil, disguising its involvement."
+    },
+    {
+      "id": "Q7",
+      "text": "A small, secret group of people is responsible for making all major world decisions, such as going to war."
+    },
+    {
+      "id": "Q8",
+      "text": "Evidence of alien contact is being concealed from the public."
+    },
+    {
+      "id": "Q9",
+      "text": "Technology with mind-control capacities is used on people without their knowledge."
+    },
+    {
+      "id": "Q10",
+      "text": "New and advanced technology which would harm current industry is being suppressed."
+    },
+    {
+      "id": "Q11",
+      "text": "The government uses people as patsies to hide its involvement in criminal activity."
+    },
+    {
+      "id": "Q12",
+      "text": "Certain significant events have been the result of the activity of a small group who secretly manipulate world events."
+    },
+    {
+      "id": "Q13",
+      "text": "Some UFO sightings and rumors are planned or staged in order to distract the public from real alien contact."
+    },
+    {
+      "id": "Q14",
+      "text": "Experiments involving new drugs or technologies are routinely carried out on the public without their knowledge or consent."
+    },
+    {
+      "id": "Q15",
+      "text": "A lot of important information is deliberately concealed from the public out of self-interest."
+    }
+  ]
+}

@@ -1,0 +1,116 @@
+{
+  "id": "darktriad",
+  "name": "Dark Traits",
+  "subtitle": "Dark Triad",
+  "instructions": "Rate each statement from 1 (Not at all like me) to 5 (Very much like me), based on how you genuinely think and behave. There are no good or bad answers here.",
+  "questions": [
+    {
+      "id": "M1",
+      "text": "There are things about yourself, your plans, your opinions of certain people, that you wantedly keep to yourself even around people you're close to."
+    },
+    {
+      "id": "M2",
+      "text": "When you want something from someone, you know or think you know how to approach the request in a way that makes it easier for them to say yes."
+    },
+    {
+      "id": "M3",
+      "text": "Before doing something important, you think of whose support you would want behind you first."
+    },
+    {
+      "id": "M4",
+      "text": "When someone does something that genuinely bothers you, you often find it more useful to stay pleasant with them for now."
+    },
+    {
+      "id": "M5",
+      "text": "You have a fairly reliable memory for the moments when people have shown you who they really are, and you keep that in mind."
+    },
+    {
+      "id": "M6",
+      "text": "When someone does something wrong by you, you rarely feel the need to respond immediately. You trust the timing to work itself out."
+    },
+    {
+      "id": "M7",
+      "text": "Even with people you're quite open with, there are areas of your thinking that you don't let them into."
+    },
+    {
+      "id": "M8",
+      "text": "When you're deciding how to act in a situation, how it affects you tends to be a fairly central part of the calculation."
+    },
+    {
+      "id": "M9",
+      "text": "Over time, you've noticed that most people follow fairly predictable patterns, and you find that awareness useful."
+    },
+    {
+      "id": "N1",
+      "text": "In most situations you're part of, people tend to look to you when something needs to be figured out or decided."
+    },
+    {
+      "id": "N2",
+      "text": "Being the person that a room is focused on isn't something that particularly appeals to you."
+    },
+    {
+      "id": "N3",
+      "text": "When you're not around, you sometimes have a sense that the dynamic in a group shifts in some way."
+    },
+    {
+      "id": "N4",
+      "text": "People in your life have pointed out that there's something distinct about the way you carry yourself or how you come across."
+    },
+    {
+      "id": "N5",
+      "text": "You find yourself naturally drawn to spending time around people who are accomplished or well-regarded in what they do."
+    },
+    {
+      "id": "N6",
+      "text": "When someone praises your work directly, you tend to feel a little uncomfortable rather than straightforwardly pleased."
+    },
+    {
+      "id": "N7",
+      "text": "More than once, someone has drawn a comparison between you and a well-known or particularly capable person."
+    },
+    {
+      "id": "N8",
+      "text": "If you're honest, you think of yourself as fairly ordinary and not particularly different from most people around you."
+    },
+    {
+      "id": "N9",
+      "text": "When you feel that your effort or contribution isn't being acknowledged as it deserves, it genuinely bothers you."
+    },
+    {
+      "id": "P1",
+      "text": "When someone in a position of authority has treated you unfairly, you've felt a clear pull toward wanting to set things straight."
+    },
+    {
+      "id": "P2",
+      "text": "Before making a significant move, you tend to think carefully about the risks and what you might lose."
+    },
+    {
+      "id": "P3",
+      "text": "When you feel wronged, you tend to think that a clear and relatively quick response is better than a slow, drawn-out one."
+    },
+    {
+      "id": "P4",
+      "text": "People who know you well have described you as someone who doesn't always stick to the expected way of doing things."
+    },
+    {
+      "id": "P5",
+      "text": "You tend to say what you think fairly directly, without always softening it for the other person."
+    },
+    {
+      "id": "P6",
+      "text": "People who have pushed against you have generally found it wasn't particularly worth their while."
+    },
+    {
+      "id": "P7",
+      "text": "Your history with rules and authority has been fairly unremarkable, with no real incidents to speak of."
+    },
+    {
+      "id": "P8",
+      "text": "When there is clear mutual interest, physical closeness with someone you've only just met isn't something that would make you particularly uncomfortable."
+    },
+    {
+      "id": "P9",
+      "text": "When you need something badly enough, you're capable of saying what's needed to move things forward, even if it's not the whole picture."
+    }
+  ]
+}

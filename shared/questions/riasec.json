@@ -1,0 +1,200 @@
+{
+  "id": "riasec",
+  "name": "Career Type",
+  "subtitle": "Career and Interest Type",
+  "instructions": "Rate how much you enjoy or are genuinely interested in each activity, from 1 (Strongly dislike) to 5 (Strongly like). These are about interest, not skill. Go with your gut.",
+  "questions": [
+    {
+      "id": "R1",
+      "text": "Building or repairing something with your hands, a shelf, a machine, a piece of furniture, and seeing it come together properly."
+    },
+    {
+      "id": "R2",
+      "text": "Working with tools, machinery, or technical equipment as a regular part of your day."
+    },
+    {
+      "id": "R3",
+      "text": "Operating heavy or specialized equipment, vehicles, industrial machines, or complex physical systems."
+    },
+    {
+      "id": "R4",
+      "text": "Working outside with plants, animals, land, or the natural environment in some capacity."
+    },
+    {
+      "id": "R5",
+      "text": "Figuring out what is wrong with an engine, an appliance, or an electronic device and fixing it."
+    },
+    {
+      "id": "R6",
+      "text": "Taking a blueprint, a plan, or a set of specifications and turning it into something physical."
+    },
+    {
+      "id": "R7",
+      "text": "Work that is primarily physical and hands on, rather than desk based or screen based."
+    },
+    {
+      "id": "R8",
+      "text": "Working with your hands to construct, assemble, or maintain physical systems where you can see and measure the results directly."
+    },
+    {
+      "id": "I1",
+      "text": "Conducting research to get to the bottom of a difficult or poorly understood problem."
+    },
+    {
+      "id": "I2",
+      "text": "Analyzing data or results to find patterns that explain what is actually going on."
+    },
+    {
+      "id": "I3",
+      "text": "Reading and thinking carefully about abstract or complex ideas over an extended period."
+    },
+    {
+      "id": "I4",
+      "text": "Developing theories or frameworks that explain why things work the way they do."
+    },
+    {
+      "id": "I5",
+      "text": "Working in a lab or investigative setting, studying something that isn't yet well understood."
+    },
+    {
+      "id": "I6",
+      "text": "Using mathematics or logic to work through real world problems systematically."
+    },
+    {
+      "id": "I7",
+      "text": "Diagnosing why something isn't working by testing hypotheses and narrowing down the cause."
+    },
+    {
+      "id": "I8",
+      "text": "Exploring a question in depth, gathering information, and synthesizing it into a clear and well-supported explanation."
+    },
+    {
+      "id": "A1",
+      "text": "Creating art, music, or writing as a form of genuine personal expression, not just as a task."
+    },
+    {
+      "id": "A2",
+      "text": "Performing in front of others, whether through acting, music, dance, spoken word, or another medium."
+    },
+    {
+      "id": "A3",
+      "text": "Designing things with an aesthetic dimension, graphics, interiors, clothing, environments, or experiences."
+    },
+    {
+      "id": "A4",
+      "text": "Writing fiction, poetry, essays, or other creative forms where the language and form matter as much as the content."
+    },
+    {
+      "id": "A5",
+      "text": "Improvising or making things up as you go, finding the form through the process rather than following a plan."
+    },
+    {
+      "id": "A6",
+      "text": "Having a creative medium through which you express something that is genuinely yours."
+    },
+    {
+      "id": "A7",
+      "text": "Working in an environment that values originality and personal vision over convention and precedent."
+    },
+    {
+      "id": "A8",
+      "text": "Bringing your own aesthetic sense or creative vision to a project, shaping how something looks, sounds, or feels."
+    },
+    {
+      "id": "S1",
+      "text": "Helping people work through something difficult in their personal or emotional life."
+    },
+    {
+      "id": "S2",
+      "text": "Teaching, coaching, or mentoring someone through a process of learning or growth."
+    },
+    {
+      "id": "S3",
+      "text": "Working in healthcare, counseling, education, or social services in some capacity."
+    },
+    {
+      "id": "S4",
+      "text": "Volunteering or contributing time to the wellbeing of a community or a cause."
+    },
+    {
+      "id": "S5",
+      "text": "Facilitating a group, running a workshop, or guiding people through a structured experience."
+    },
+    {
+      "id": "S6",
+      "text": "Advising or guiding people through important decisions in their life or work."
+    },
+    {
+      "id": "S7",
+      "text": "Work where building and maintaining relationships is a core part of what you do, not a side element."
+    },
+    {
+      "id": "S8",
+      "text": "Being the person someone comes to when they need support, guidance, or a thoughtful listener."
+    },
+    {
+      "id": "E1",
+      "text": "Leading a team or managing a project from start to finish and being responsible for the outcome."
+    },
+    {
+      "id": "E2",
+      "text": "Pitching or selling an idea, a product, or a service and persuading people to get behind it."
+    },
+    {
+      "id": "E3",
+      "text": "Negotiating an agreement or influencing a decision through conversation and persuasion."
+    },
+    {
+      "id": "E4",
+      "text": "Starting something new, a business, a project, an initiative, and driving it forward from an early stage."
+    },
+    {
+      "id": "E5",
+      "text": "Taking charge in high pressure situations where someone needs to make decisions quickly."
+    },
+    {
+      "id": "E6",
+      "text": "Competing against others in a context where results are clearly measurable."
+    },
+    {
+      "id": "E7",
+      "text": "Setting ambitious targets and pushing a team or yourself to hit them."
+    },
+    {
+      "id": "E8",
+      "text": "Operating in an environment where you can have real influence over how people, projects, or resources are directed."
+    },
+    {
+      "id": "C1",
+      "text": "Organizing files, records, or information into a precise and reliable system."
+    },
+    {
+      "id": "C2",
+      "text": "Following clear procedures and well established processes in your day to day work."
+    },
+    {
+      "id": "C3",
+      "text": "Working with spreadsheets, databases, or financial records in a careful and methodical way."
+    },
+    {
+      "id": "C4",
+      "text": "Checking work carefully for errors, inconsistencies, or anything that doesn't add up."
+    },
+    {
+      "id": "C5",
+      "text": "Keeping track of many small tasks, details, and deadlines simultaneously without losing the thread."
+    },
+    {
+      "id": "C6",
+      "text": "Working within a clear structure where roles, responsibilities, and expectations are well defined."
+    },
+    {
+      "id": "C7",
+      "text": "Preparing detailed documentation, reports, schedules, or plans that others can rely on."
+    },
+    {
+      "id": "C8",
+      "text": "Maintaining accurate records and systems so that information is always correct, consistent, and easy to find."
+    }
+  ]
+}

@@ -1,0 +1,100 @@
+{
+  "id": "pvq",
+  "name": "Core Values",
+  "subtitle": "Schwartz Portrait Values Questionnaire",
+  "instructions": "For each description, rate how much the person sounds like you, from 1 (very much like me) to 6 (not like me at all).",
+  "scale": [
+    "Very much like me",
+    "Like me",
+    "Somewhat like me",
+    "A little like me",
+    "Not like me",
+    "Not like me at all"
+  ],
+  "questions": [
+    {
+      "id": "Q1",
+      "text": "Thinking up new ideas and being creative is important to them. They like to do things in their own original way."
+    },
+    {
+      "id": "Q2",
+      "text": "It is important to them to be rich. They want to have a lot of money and expensive things."
+    },
+    {
+      "id": "Q3",
+      "text": "They think it is important that every person in the world be treated equally. They believe everyone should have equal opportunities in life."
+    },
+    {
+      "id": "Q4",
+      "text": "It is important to them to show their abilities. They want people to admire what they do."
+    },
+    {
+      "id": "Q5",
+      "text": "It is important to them to live in secure surroundings. They avoid anything that might endanger their safety."
+    },
+    {
+      "id": "Q6",
+      "text": "They think it is important to do lots of different things in life. They always look for new things to try."
+    },
+    {
+      "id": "Q7",
+      "text": "They believe that people should do what they're told. They think people should follow rules at all times, even when no one is watching."
+    },
+    {
+      "id": "Q8",
+      "text": "It is important to them to listen to people who are different from them. Even when they disagree with someone, they still want to understand that person."
+    },
+    {
+      "id": "Q9",
+      "text": "It is important to them to be humble and modest. They try not to draw attention to themselves."
+    },
+    {
+      "id": "Q10",
+      "text": "Having a good time is important to them. They like to spoil themselves."
+    },
+    {
+      "id": "Q11",
+      "text": "It is important to them to make their own decisions about what they do. They like to be free and not depend on others."
+    },
+    {
+      "id": "Q12",
+      "text": "It is very important to them to help the people around them. They want to care for others' well-being."
+    },
+    {
+      "id": "Q13",
+      "text": "Being very successful is important to them. They hope people will recognize their achievements."
+    },
+    {
+      "id": "Q14",
+      "text": "It is important to them that the government ensures their safety against all threats. They want the state to be strong so it can defend its citizens."
+    },
+    {
+      "id": "Q15",
+      "text": "They look for adventures and like to take risks. They want to have an exciting life."
+    },
+    {
+      "id": "Q16",
+      "text": "It is important to them always to behave properly. They want to avoid doing anything people would say is wrong."
+    },
+    {
+      "id": "Q17",
+      "text": "It is important to them to get respect from others. They want people to do what they say."
+    },
+    {
+      "id": "Q18",
+      "text": "It is important to them to be loyal to their friends. They want to devote themselves to people close to them."
+    },
+    {
+      "id": "Q19",
+      "text": "They strongly believe that people should care for nature. Looking after the environment is important to them."
+    },
+    {
+      "id": "Q20",
+      "text": "Tradition is important to them. They try to follow the customs handed down by their religion or their family."
+    },
+    {
+      "id": "Q21",
+      "text": "They seek every chance they can to have fun. It is important to them to do things that give them pleasure."
+    }
+  ]
+}

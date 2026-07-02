@@ -1,0 +1,171 @@
+{
+  "id": "kims",
+  "name": "Mindfulness Skills",
+  "subtitle": "Kentucky Inventory of Mindfulness Skills",
+  "instructions": "Rate each statement from 1 (never or very rarely true) to 5 (very often or always true).",
+  "scale": [
+    "Never or very rarely true",
+    "Rarely true",
+    "Sometimes true",
+    "Often true",
+    "Very often or always true"
+  ],
+  "questions": [
+    {
+      "id": "Q1",
+      "text": "I notice changes in my body, such as whether my breathing slows down or speeds up."
+    },
+    {
+      "id": "Q2",
+      "text": "I'm good at finding the words to describe my feelings."
+    },
+    {
+      "id": "Q3",
+      "text": "When I do things, my mind wanders off and I'm easily distracted."
+    },
+    {
+      "id": "Q4",
+      "text": "I criticize myself for having irrational or inappropriate emotions."
+    },
+    {
+      "id": "Q5",
+      "text": "I pay attention to whether my muscles are tense or relaxed."
+    },
+    {
+      "id": "Q6",
+      "text": "I can easily put my beliefs, opinions, and expectations into words."
+    },
+    {
+      "id": "Q7",
+      "text": "When I'm doing something, I'm only focused on what I'm doing, nothing else."
+    },
+    {
+      "id": "Q8",
+      "text": "I tend to evaluate whether my perceptions are right or wrong."
+    },
+    {
+      "id": "Q9",
+      "text": "When I'm walking, I deliberately notice the sensations of my body moving."
+    },
+    {
+      "id": "Q10",
+      "text": "I'm good at thinking of words to express my perceptions, such as how things taste, smell, or sound."
+    },
+    {
+      "id": "Q11",
+      "text": "I drive on “automatic pilot” without paying attention to what I'm doing."
+    },
+    {
+      "id": "Q12",
+      "text": "I tell myself that I shouldn't be feeling the way I'm feeling."
+    },
+    {
+      "id": "Q13",
+      "text": "When I take a shower or bath, I stay alert to the sensations of water on my body."
+    },
+    {
+      "id": "Q14",
+      "text": "It's hard for me to find the words to describe what I'm thinking."
+    },
+    {
+      "id": "Q15",
+      "text": "When I'm reading, I focus all my attention on what I'm reading."
+    },
+    {
+      "id": "Q16",
+      "text": "I believe some of my thoughts are abnormal or bad and I shouldn't think that way."
+    },
+    {
+      "id": "Q17",
+      "text": "I notice how foods and drinks affect my thoughts, bodily sensations, and emotions."
+    },
+    {
+      "id": "Q18",
+      "text": "I have trouble thinking of the right words to express how I feel about things."
+    },
+    {
+      "id": "Q19",
+      "text": "When I do things, I get totally wrapped up in them and don't think about  anything else."
+    },
+    {
+      "id": "Q20",
+      "text": "I make judgments about whether my thoughts are good or bad."
+    },
+    {
+      "id": "Q21",
+      "text": "I pay attention to sensations, such as the wind in my hair or sun on my face"
+    },
+    {
+      "id": "Q22",
+      "text": "When I have a sensation in my body, it's difficult for me to describe it because I can't find the right words."
+    },
+    {
+      "id": "Q23",
+      "text": "I don't pay attention to what I'm doing because I'm daydreaming, worrying, or otherwise distracted."
+    },
+    {
+      "id": "Q24",
+      "text": "I tend to make judgments about how worthwhile or worthless my experiences are."
+    },
+    {
+      "id": "Q25",
+      "text": "I pay attention to sounds, such as clocks ticking, birds chirping, or cars passing."
+    },
+    {
+      "id": "Q26",
+      "text": "Even when I'm feeling terribly upset, I can find a way to put it into words."
+    },
+    {
+      "id": "Q27",
+      "text": "When I'm doing chores, such as cleaning or laundry, I tend to daydream or think of other things."
+    },
+    {
+      "id": "Q28",
+      "text": "I tell myself that I shouldn't be thinking the way I'm thinking."
+    },
+    {
+      "id": "Q29",
+      "text": "I notice the smells and aromas of things."
+    },
+    {
+      "id": "Q30",
+      "text": "I intentionally stay aware of my feelings."
+    },
+    {
+      "id": "Q31",
+      "text": "I tend to do several things at once rather than focusing on one thing at a time."
+    },
+    {
+      "id": "Q32",
+      "text": "I think some of my emotions are bad or inappropriate and I shouldn't feel them."
+    },
+    {
+      "id": "Q33",
+      "text": "I notice visual elements in art or nature, such as colors, shapes, textures, or patterns of light and shadow."
+    },
+    {
+      "id": "Q34",
+      "text": "My natural tendency is to put my experiences into words."
+    },
+    {
+      "id": "Q35",
+      "text": "When I'm working on something, part of my mind is occupied with other topics, such as what I'll be doing later, or things I'd rather be doing."
+    },
+    {
+      "id": "Q36",
+      "text": "I disapprove of myself when I have irrational ideas."
+    },
+    {
+      "id": "Q37",
+      "text": "I pay attention to how my emotions affect my thoughts and behavior."
+    },
+    {
+      "id": "Q38",
+      "text": "I get completely absorbed in what I'm doing, so that all my attention is focused  on it."
+    },
+    {
+      "id": "Q39",
+      "text": "I notice when my moods begin to change."
+    }
+  ]
+}

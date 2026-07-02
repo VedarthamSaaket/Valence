@@ -1,0 +1,115 @@
+{
+  "id": "pid5",
+  "name": "Five Trait Styles",
+  "subtitle": "Personality Inventory for DSM-5 (Brief Form)",
+  "instructions": "Rate each statement from 0 (very false or often false) to 3 (very true or often true). This describes personality styles, not clinical disorders. Not a diagnosis.",
+  "scale": [
+    "Very false or often false",
+    "Sometimes or somewhat false",
+    "Sometimes or somewhat true",
+    "Very true or often true"
+  ],
+  "disclaimer": "This describes personality styles, not clinical disorders. Not a diagnosis.",
+  "questions": [
+    {
+      "id": "Q1",
+      "text": "People would describe me as reckless."
+    },
+    {
+      "id": "Q2",
+      "text": "I feel like I act totally on impulse."
+    },
+    {
+      "id": "Q3",
+      "text": "Even though I know better, I can't stop making rash decisions."
+    },
+    {
+      "id": "Q4",
+      "text": "I often feel like nothing I do really matters."
+    },
+    {
+      "id": "Q5",
+      "text": "Others see me as irresponsible."
+    },
+    {
+      "id": "Q6",
+      "text": "I'm not good at planning ahead."
+    },
+    {
+      "id": "Q7",
+      "text": "My thoughts often don't make sense to others."
+    },
+    {
+      "id": "Q8",
+      "text": "I worry about almost everything."
+    },
+    {
+      "id": "Q9",
+      "text": "I get emotional easily, often for very little reason."
+    },
+    {
+      "id": "Q10",
+      "text": "I fear being alone in life more than anything else."
+    },
+    {
+      "id": "Q11",
+      "text": "I get stuck on one way of doing things, even when it's clear it won't work."
+    },
+    {
+      "id": "Q12",
+      "text": "I have seen things that weren't really there."
+    },
+    {
+      "id": "Q13",
+      "text": "I steer clear of romantic relationships."
+    },
+    {
+      "id": "Q14",
+      "text": "I'm not interested in making friends."
+    },
+    {
+      "id": "Q15",
+      "text": "I get irritated easily by all sorts of things."
+    },
+    {
+      "id": "Q16",
+      "text": "I don't like to get too close to people."
+    },
+    {
+      "id": "Q17",
+      "text": "It's no big deal if I hurt other people's feelings."
+    },
+    {
+      "id": "Q18",
+      "text": "I rarely get enthusiastic about anything."
+    },
+    {
+      "id": "Q19",
+      "text": "I crave attention."
+    },
+    {
+      "id": "Q20",
+      "text": "I often have to deal with people who are less important than me."
+    },
+    {
+      "id": "Q21",
+      "text": "I often have thoughts that make sense to me but that other people say are strange."
+    },
+    {
+      "id": "Q22",
+      "text": "I use people to get what I want."
+    },
+    {
+      "id": "Q23",
+      "text": "I often zone out and then suddenly come to and realize that a lot of time has passed."
+    },
+    {
+      "id": "Q24",
+      "text": "Things around me often feel unreal, or more real than usual."
+    },
+    {
+      "id": "Q25",
+      "text": "It is easy for me to take advantage of others."
+    }
+  ]
+}

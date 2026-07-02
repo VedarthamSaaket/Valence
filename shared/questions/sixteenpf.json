@@ -1,0 +1,660 @@
+{
+  "id": "sixteenpf",
+  "name": "Sixteen Personality Traits",
+  "subtitle": "Personality Factor Analysis",
+  "instructions": "Rate each statement from 1 (Not at all like me) to 5 (Very much like me). Go with your first honest reaction rather than thinking too long.",
+  "questions": [
+    {
+      "id": "A1",
+      "text": "At a dinner with people you don't know well, you find yourself curious about who they are and what their lives are like."
+    },
+    {
+      "id": "A2",
+      "text": "When someone is talking through a problem with you, you find it easy to stay genuinely engaged rather than waiting for them to finish."
+    },
+    {
+      "id": "A3",
+      "text": "You tend to feel most comfortable around people you already know rather than around strangers."
+    },
+    {
+      "id": "A4",
+      "text": "When a group is trying to sort something out, you often find yourself drawing people together rather than staying to one side."
+    },
+    {
+      "id": "A5",
+      "text": "You feel naturally at ease in situations where you have to mix with people you've never met."
+    },
+    {
+      "id": "A6",
+      "text": "Being around others tends to energize you rather than wear you out."
+    },
+    {
+      "id": "A7",
+      "text": "You find it easy to show warmth toward people, even ones you've only recently met."
+    },
+    {
+      "id": "A8",
+      "text": "You tend to keep a certain distance even in friendships, preferring not to get too close too quickly."
+    },
+    {
+      "id": "A9",
+      "text": "People often describe you as warm or easy to be around."
+    },
+    {
+      "id": "A10",
+      "text": "You find it genuinely interesting to learn about how other people think and what shapes their views."
+    },
+    {
+      "id": "B1",
+      "text": "You generally find it easy to work out the rule behind a sequence of numbers, like which number comes next in a pattern."
+    },
+    {
+      "id": "B2",
+      "text": "When faced with a complex problem, you can usually break it down into its parts without too much difficulty."
+    },
+    {
+      "id": "B3",
+      "text": "Abstract puzzles, things with no clear right or wrong, tend to frustrate you more than engage you."
+    },
+    {
+      "id": "B4",
+      "text": "You pick up on logical inconsistencies in an argument fairly quickly."
+    },
+    {
+      "id": "B5",
+      "text": "When someone explains a complex idea, you tend to follow it without needing it repeated."
+    },
+    {
+      "id": "B6",
+      "text": "Working through problems that require step-by-step reasoning tends to come naturally to you."
+    },
+    {
+      "id": "B7",
+      "text": "You find it harder than most people to hold several pieces of information in mind at once."
+    },
+    {
+      "id": "B8",
+      "text": "Spotting the flaw in a line of reasoning is something you tend to do without much effort."
+    },
+    {
+      "id": "B9",
+      "text": "If someone gives you a set of facts, you can usually draw out the logical conclusion fairly quickly."
+    },
+    {
+      "id": "B10",
+      "text": "When things are explained clearly, you grasp them quickly, but dense or abstract material takes you much longer."
+    },
+    {
+      "id": "C1",
+      "text": "When something frustrating happens during the day, you tend to move past it without it affecting the rest of your day much."
+    },
+    {
+      "id": "C2",
+      "text": "Your mood tends to be fairly consistent, not particularly tied to what happens around you."
+    },
+    {
+      "id": "C3",
+      "text": "You can feel off or unsettled without being able to identify what exactly triggered it."
+    },
+    {
+      "id": "C4",
+      "text": "Even when things go wrong, you generally manage to stay composed and functional."
+    },
+    {
+      "id": "C5",
+      "text": "You tend to handle uncertainty and ambiguity without it making you particularly anxious."
+    },
+    {
+      "id": "C6",
+      "text": "You rarely feel overwhelmed, even during particularly demanding stretches."
+    },
+    {
+      "id": "C7",
+      "text": "You can feel unsettled for reasons that are difficult to explain, even when your circumstances are fine."
+    },
+    {
+      "id": "C8",
+      "text": "Small irritations throughout the day can accumulate and affect your overall mood by the evening."
+    },
+    {
+      "id": "C9",
+      "text": "Your emotional baseline tends toward stability rather than ups and downs."
+    },
+    {
+      "id": "C10",
+      "text": "When you are going through a stressful period, it tends to show in your behavior or mood."
+    },
+    {
+      "id": "E1",
+      "text": "In most situations you find yourself in, you tend to naturally take the lead rather than wait for someone else to."
+    },
+    {
+      "id": "E2",
+      "text": "When you disagree with someone in authority, you are fairly comfortable saying so."
+    },
+    {
+      "id": "E3",
+      "text": "You would describe yourself as someone who asserts their opinions rather than keeping them to themselves."
+    },
+    {
+      "id": "E4",
+      "text": "When a decision needs to be made and no one is stepping up, you tend to be the one who moves things forward."
+    },
+    {
+      "id": "E5",
+      "text": "You find it uncomfortable to push back against people who are more experienced or more senior than you."
+    },
+    {
+      "id": "E6",
+      "text": "You tend to hold your ground in disagreements rather than adjusting your view to match the room."
+    },
+    {
+      "id": "E7",
+      "text": "People who know you would describe you as someone who takes charge, not someone who waits to be told what to do."
+    },
+    {
+      "id": "E8",
+      "text": "When something feels unfair, you are more likely to say something than to let it go."
+    },
+    {
+      "id": "E9",
+      "text": "You feel comfortable setting the direction in situations where no clear structure exists."
+    },
+    {
+      "id": "E10",
+      "text": "You would rather follow a path someone else has set up than have to chart your own."
+    },
+    {
+      "id": "F1",
+      "text": "People who know you well would say you are generally upbeat and easy to be around."
+    },
+    {
+      "id": "F2",
+      "text": "You tend to find humor or lightness in situations where others stay serious."
+    },
+    {
+      "id": "F3",
+      "text": "When you are in a group, you are often one of the louder or more animated voices."
+    },
+    {
+      "id": "F4",
+      "text": "You tend to be spontaneous and enjoy doing things on the spur of the moment."
+    },
+    {
+      "id": "F5",
+      "text": "You are generally described as a serious person more than a playful one."
+    },
+    {
+      "id": "F6",
+      "text": "You find it easy to be expressive and enthusiastic, even with people you don't know well."
+    },
+    {
+      "id": "F7",
+      "text": "You prefer to think carefully before you act rather than trusting your impulse in the moment."
+    },
+    {
+      "id": "F8",
+      "text": "When you're with people you're comfortable around, you tend to be the one keeping the energy up."
+    },
+    {
+      "id": "F9",
+      "text": "You approach most situations with a light touch rather than taking them too seriously."
+    },
+    {
+      "id": "F10",
+      "text": "Your mood tends toward the subdued rather than the expressive end of the spectrum."
+    },
+    {
+      "id": "G1",
+      "text": "You tend to follow through on your commitments even when no one would notice if you didn't."
+    },
+    {
+      "id": "G2",
+      "text": "Rules that exist for a clear reason feel worth following, even when they're inconvenient."
+    },
+    {
+      "id": "G3",
+      "text": "You have been known to take shortcuts when the outcome would be the same either way."
+    },
+    {
+      "id": "G4",
+      "text": "Your behavior tends to stay consistent whether or not you know you're being observed."
+    },
+    {
+      "id": "G5",
+      "text": "You hold yourself to a fairly clear personal code, and it doesn't shift much based on context."
+    },
+    {
+      "id": "G6",
+      "text": "When something feels morally unclear to you, you tend to err on the cautious side."
+    },
+    {
+      "id": "G7",
+      "text": "There are certain things you simply won't do regardless of the benefit involved."
+    },
+    {
+      "id": "G8",
+      "text": "You tend to judge a situation by its outcome rather than whether the process was followed correctly."
+    },
+    {
+      "id": "G9",
+      "text": "You feel genuinely uncomfortable when you do something that conflicts with your own standards, even if no one finds out."
+    },
+    {
+      "id": "G10",
+      "text": "Being seen as a responsible and reliable person matters to you."
+    },
+    {
+      "id": "H1",
+      "text": "Situations that put you in the spotlight, speaking in front of a group or being the center of attention, don't particularly unsettle you."
+    },
+    {
+      "id": "H2",
+      "text": "You tend to approach risky or unfamiliar situations with curiosity rather than hesitation."
+    },
+    {
+      "id": "H3",
+      "text": "Before trying something new, you usually think through what could go wrong."
+    },
+    {
+      "id": "H4",
+      "text": "You are generally comfortable in high-pressure or high-stakes situations."
+    },
+    {
+      "id": "H5",
+      "text": "You would describe yourself as someone who finds challenge energizing rather than draining."
+    },
+    {
+      "id": "H6",
+      "text": "Situations that involve competition or being evaluated tend to make you anxious."
+    },
+    {
+      "id": "H7",
+      "text": "You feel at ease meeting people in positions of authority or status."
+    },
+    {
+      "id": "H8",
+      "text": "You are generally more comfortable with the familiar than you are seeking out new or uncertain experiences."
+    },
+    {
+      "id": "H9",
+      "text": "You can usually hold your nerve in difficult situations that would rattle most people."
+    },
+    {
+      "id": "H10",
+      "text": "Taking on a challenge where there is a real possibility of failing is something you find energizing rather than off-putting."
+    },
+    {
+      "id": "I1",
+      "text": "When you make a decision, how things feel tends to carry at least as much weight as what the facts say."
+    },
+    {
+      "id": "I2",
+      "text": "You tend to notice the aesthetic qualities of things, whether a space is well-designed, whether something looks right."
+    },
+    {
+      "id": "I3",
+      "text": "You find that imagination and possibility matter to you in a way that pure practicality sometimes can't satisfy."
+    },
+    {
+      "id": "I4",
+      "text": "You are drawn more toward ideas and what could be than toward systems and what is."
+    },
+    {
+      "id": "I5",
+      "text": "You tend to trust practical evidence over intuition when the two point in different directions."
+    },
+    {
+      "id": "I6",
+      "text": "Art, music, or literature has a genuine effect on your inner state, not just your intellectual appreciation."
+    },
+    {
+      "id": "I7",
+      "text": "You tend to approach things practically and concretely rather than through feeling or imagination."
+    },
+    {
+      "id": "I8",
+      "text": "You are more swayed by how something feels in practice than by what the theory says."
+    },
+    {
+      "id": "I9",
+      "text": "You find yourself drawn to things that are beautiful or moving, not just useful."
+    },
+    {
+      "id": "I10",
+      "text": "Hard facts and evidence feel more reliable to you than instinct or emotional impression."
+    },
+    {
+      "id": "L1",
+      "text": "When something goes wrong in a group you're part of, your first instinct is to work out who dropped the ball."
+    },
+    {
+      "id": "L2",
+      "text": "You tend to assume that people's motives are mostly self-interested unless you have reason to think otherwise."
+    },
+    {
+      "id": "L3",
+      "text": "When someone is very kind to you without an obvious reason, you sometimes find yourself wondering what they want."
+    },
+    {
+      "id": "L4",
+      "text": "You have a fairly clear sense of who in your life is actually on your side and who isn't."
+    },
+    {
+      "id": "L5",
+      "text": "You tend to take what people say at face value rather than reading into it."
+    },
+    {
+      "id": "L6",
+      "text": "You have sometimes felt that people were getting credit for things that were more yours than theirs."
+    },
+    {
+      "id": "L7",
+      "text": "You tend to interpret ambiguous situations charitably rather than assuming the worst."
+    },
+    {
+      "id": "L8",
+      "text": "You are fairly alert to the possibility that people around you might not have your best interests at heart."
+    },
+    {
+      "id": "L9",
+      "text": "When a colleague takes a different approach to yours, your first instinct is competition rather than curiosity."
+    },
+    {
+      "id": "L10",
+      "text": "You generally trust people until they give you a reason not to."
+    },
+    {
+      "id": "M1",
+      "text": "Your mind tends to wander toward ideas and possibilities even when the situation calls for you to stay focused on what's in front of you."
+    },
+    {
+      "id": "M2",
+      "text": "You tend to prefer working through the practical realities of a situation rather than speculating about possibilities."
+    },
+    {
+      "id": "M3",
+      "text": "You find it easy to get absorbed in a thought or idea even when other things are demanding your attention."
+    },
+    {
+      "id": "M4",
+      "text": "You tend to notice when you're drifting from the practical matter at hand and pull yourself back quickly."
+    },
+    {
+      "id": "M5",
+      "text": "When thinking through a situation, you tend to consider the details of what's actually happening more than the broader meaning behind it."
+    },
+    {
+      "id": "M6",
+      "text": "You find yourself drawn to the abstract or conceptual aspects of things, even in practical contexts."
+    },
+    {
+      "id": "M7",
+      "text": "You tend to be more comfortable working with concrete facts and real situations than with speculation or theory."
+    },
+    {
+      "id": "M8",
+      "text": "Your mind tends toward breadth and possibility rather than depth and precision in any one area."
+    },
+    {
+      "id": "M9",
+      "text": "You find you function better when focused on real, immediate tasks rather than open-ended possibilities."
+    },
+    {
+      "id": "M10",
+      "text": "Being absorbed in your own thoughts is a fairly familiar state for you, even when you're around other people."
+    },
+    {
+      "id": "N1",
+      "text": "You tend to be fairly discreet about your own affairs, not sharing more than is necessary even with people you trust."
+    },
+    {
+      "id": "N2",
+      "text": "In social situations, you tend to observe the dynamics of what's happening rather than simply participating in them."
+    },
+    {
+      "id": "N3",
+      "text": "You find it fairly easy to read between the lines of what people say, noticing what they're not saying as much as what they are."
+    },
+    {
+      "id": "N4",
+      "text": "You can usually tell when someone is trying to manage an impression rather than being straightforwardly themselves."
+    },
+    {
+      "id": "N5",
+      "text": "You tend to say what you mean fairly directly rather than shaping what you say to what others want to hear."
+    },
+    {
+      "id": "N6",
+      "text": "You find it natural to adjust how you present yourself depending on who you're talking to."
+    },
+    {
+      "id": "N7",
+      "text": "You are generally more open and transparent with people than you are guarded or reserved."
+    },
+    {
+      "id": "N8",
+      "text": "You tend to keep your own counsel, sharing your real views selectively rather than broadly."
+    },
+    {
+      "id": "N9",
+      "text": "You are fairly attentive to how you come across in any given situation."
+    },
+    {
+      "id": "N10",
+      "text": "You find it easy to take a step back in a conversation and notice the social dynamics playing out."
+    },
+    {
+      "id": "O1",
+      "text": "You tend to worry about things more than most people around you seem to."
+    },
+    {
+      "id": "O2",
+      "text": "When something is unresolved, you can find it difficult to fully switch off and stop thinking about it."
+    },
+    {
+      "id": "O3",
+      "text": "You handle uncertainty well and don't particularly need things to be resolved before you can feel settled."
+    },
+    {
+      "id": "O4",
+      "text": "There is usually something sitting in the back of your mind that you feel mildly concerned about."
+    },
+    {
+      "id": "O5",
+      "text": "Your mind tends to run through possible problems or complications even when things are going fine."
+    },
+    {
+      "id": "O6",
+      "text": "You feel settled and at ease most of the time, without much of a background sense of unease."
+    },
+    {
+      "id": "O7",
+      "text": "When you're waiting to hear about something important, it tends to occupy your thinking more than it probably should."
+    },
+    {
+      "id": "O8",
+      "text": "You tend to imagine worst-case scenarios more often than you'd prefer."
+    },
+    {
+      "id": "O9",
+      "text": "Things that go wrong rarely stay with you for long."
+    },
+    {
+      "id": "O10",
+      "text": "The idea that something might be going wrong somewhere in your life tends to sit uneasily with you until it's resolved."
+    },
+    {
+      "id": "Q1_1",
+      "text": "You find yourself questioning established ways of doing things when there might be a better approach."
+    },
+    {
+      "id": "Q1_2",
+      "text": "You are generally skeptical of things done a certain way simply because they've always been done that way."
+    },
+    {
+      "id": "Q1_3",
+      "text": "You tend to be more comfortable with convention and proven approaches than with experimenting or changing things."
+    },
+    {
+      "id": "Q1_4",
+      "text": "You find it interesting to debate established ideas rather than accepting them."
+    },
+    {
+      "id": "Q1_5",
+      "text": "You are more likely to follow a tried-and-tested method than to try something new when the outcome matters."
+    },
+    {
+      "id": "Q1_6",
+      "text": "You tend to seek out new information that might change how you understand something."
+    },
+    {
+      "id": "Q1_7",
+      "text": "Being intellectually challenged and having your assumptions tested feels stimulating rather than threatening."
+    },
+    {
+      "id": "Q1_8",
+      "text": "You tend to think that things work well enough as they are rather than needing to be questioned or reimagined."
+    },
+    {
+      "id": "Q1_9",
+      "text": "When you hear a new idea that contradicts what you already think, your first instinct is usually curiosity rather than resistance."
+    },
+    {
+      "id": "Q1_10",
+      "text": "You find comfort in clear, established ways of doing things rather than experimenting with alternatives."
+    },
+    {
+      "id": "Q2_1",
+      "text": "You feel more comfortable making decisions on your own than through a group process."
+    },
+    {
+      "id": "Q2_2",
+      "text": "Given the choice between reaching a decision through discussion or working it through alone, you tend to prefer working it through alone."
+    },
+    {
+      "id": "Q2_3",
+      "text": "You find it natural to check in with others before committing to a course of action."
+    },
+    {
+      "id": "Q2_4",
+      "text": "When you need to think something through, you tend to do it better in your own head than out loud."
+    },
+    {
+      "id": "Q2_5",
+      "text": "You trust your own judgment fairly strongly and don't feel much need to seek outside input before deciding."
+    },
+    {
+      "id": "Q2_6",
+      "text": "You find it easier to act once you have consulted others rather than going on your own instinct alone."
+    },
+    {
+      "id": "Q2_7",
+      "text": "When something important needs to be worked out, your preference is to think it through privately rather than in discussion."
+    },
+    {
+      "id": "Q2_8",
+      "text": "You often find that talking things through with others muddies your thinking rather than clarifying it."
+    },
+    {
+      "id": "Q2_9",
+      "text": "You find the process of group decision-making slow and frustrating compared to just working it out yourself."
+    },
+    {
+      "id": "Q2_10",
+      "text": "You find that getting input from people you trust helps you reach better decisions than going it alone."
+    },
+    {
+      "id": "Q3_1",
+      "text": "You tend to have a clear internal standard for how things should be done, and you hold yourself to it."
+    },
+    {
+      "id": "Q3_2",
+      "text": "When you set yourself a goal, you follow through on it systematically rather than leaving it to chance."
+    },
+    {
+      "id": "Q3_3",
+      "text": "You find it easier to work in a structured, organized way than in a looser, more flexible one."
+    },
+    {
+      "id": "Q3_4",
+      "text": "You can be fairly exacting about how things are done, not just whether they get done."
+    },
+    {
+      "id": "Q3_5",
+      "text": "You tend to finish what you start rather than moving on before something is fully complete."
+    },
+    {
+      "id": "Q3_6",
+      "text": "Doing something in a disorganized or haphazard way tends to bother you even if the outcome is fine."
+    },
+    {
+      "id": "Q3_7",
+      "text": "You tend to approach your responsibilities in a fairly disciplined, methodical way."
+    },
+    {
+      "id": "Q3_8",
+      "text": "You hold a fairly high standard for your own work and tend to notice when it falls short."
+    },
+    {
+      "id": "Q3_9",
+      "text": "When something is worth doing, you tend to want to do it properly rather than adequately."
+    },
+    {
+      "id": "Q3_10",
+      "text": "You tend to feel restless or dissatisfied if things around you are in disorder or not done to a good standard."
+    },
+    {
+      "id": "Q4_1",
+      "text": "There is usually a background level of tension or restlessness running through your days even when nothing particular is wrong."
+    },
+    {
+      "id": "Q4_2",
+      "text": "You tend to feel tense or keyed-up more often than you feel fully relaxed."
+    },
+    {
+      "id": "Q4_3",
+      "text": "You feel genuinely at ease in your body and mind most of the time."
+    },
+    {
+      "id": "Q4_4",
+      "text": "Your energy levels tend to feel slightly depleted or strained rather than full and steady."
+    },
+    {
+      "id": "Q4_5",
+      "text": "You find it hard to truly switch off, even in situations that are meant to be restful."
+    },
+    {
+      "id": "Q4_6",
+      "text": "Even when life is going reasonably well, there is often a low-level feeling of not quite being able to relax."
+    },
+    {
+      "id": "Q4_7",
+      "text": "You tend to feel comfortable and settled in your own skin most of the time."
+    },
+    {
+      "id": "Q4_8",
+      "text": "There tends to be a slight undercurrent of anxiety in your day-to-day experience."
+    },
+    {
+      "id": "Q4_9",
+      "text": "You can feel wound up or on edge without a clear external cause."
+    },
+    {
+      "id": "Q4_10",
+      "text": "Most of the time you feel relatively calm and free of unnecessary internal pressure."
+    },
+    {
+      "id": "IM1",
+      "text": "You tend to present yourself honestly rather than trying to manage what people think of you."
+    },
+    {
+      "id": "IM2",
+      "text": "There are things about yourself that you would prefer not to examine too closely."
+    },
+    {
+      "id": "IM3",
+      "text": "You tend to answer questions about yourself accurately even when the honest answer is unflattering."
+    }
+  ]
+}

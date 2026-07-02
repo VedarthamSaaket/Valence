@@ -1,0 +1,569 @@
+{
+  "id": "npi",
+  "name": "How You See Yourself",
+  "subtitle": "Narcissistic Personality Inventory",
+  "instructions": "For each pair, choose the statement that fits you better.",
+  "format": "forced_choice",
+  "questions": [
+    {
+      "id": "Q1",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I have a natural talent for influencing people."
+        },
+        {
+          "value": 2,
+          "text": "I am not good at influencing people."
+        }
+      ]
+    },
+    {
+      "id": "Q2",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "Modesty doesn't become me."
+        },
+        {
+          "value": 2,
+          "text": "I am essentially a modest person."
+        }
+      ]
+    },
+    {
+      "id": "Q3",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I would do almost anything on a dare."
+        },
+        {
+          "value": 2,
+          "text": "I tend to be a fairly cautious person."
+        }
+      ]
+    },
+    {
+      "id": "Q4",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "When people compliment me I sometimes get embarrassed."
+        },
+        {
+          "value": 2,
+          "text": "I know that I am good because everybody keeps telling me so."
+        }
+      ]
+    },
+    {
+      "id": "Q5",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "The thought of ruling the world frightens the hell out of me."
+        },
+        {
+          "value": 2,
+          "text": "If I ruled the world it would be a better place."
+        }
+      ]
+    },
+    {
+      "id": "Q6",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I can usually talk my way out of anything."
+        },
+        {
+          "value": 2,
+          "text": "I try to accept the consequences of my behavior."
+        }
+      ]
+    },
+    {
+      "id": "Q7",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I prefer to blend in with the crowd."
+        },
+        {
+          "value": 2,
+          "text": "I like to be the center of attention."
+        }
+      ]
+    },
+    {
+      "id": "Q8",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I will be a success."
+        },
+        {
+          "value": 2,
+          "text": "I am not too concerned about success."
+        }
+      ]
+    },
+    {
+      "id": "Q9",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I am no better or worse than most people."
+        },
+        {
+          "value": 2,
+          "text": "I think I am a special person."
+        }
+      ]
+    },
+    {
+      "id": "Q10",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I am not sure if I would make a good leader."
+        },
+        {
+          "value": 2,
+          "text": "I see myself as a good leader."
+        }
+      ]
+    },
+    {
+      "id": "Q11",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I am assertive."
+        },
+        {
+          "value": 2,
+          "text": "I wish I were more assertive."
+        }
+      ]
+    },
+    {
+      "id": "Q12",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I like to have authority over other people."
+        },
+        {
+          "value": 2,
+          "text": "I don't mind following orders."
+        }
+      ]
+    },
+    {
+      "id": "Q13",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I find it easy to manipulate people."
+        },
+        {
+          "value": 2,
+          "text": "I don't like it when I find myself manipulating people."
+        }
+      ]
+    },
+    {
+      "id": "Q14",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I insist upon getting the respect that is due me."
+        },
+        {
+          "value": 2,
+          "text": "I usually get the respect that I deserve."
+        }
+      ]
+    },
+    {
+      "id": "Q15",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I don't particularly like to show off my body."
+        },
+        {
+          "value": 2,
+          "text": "I like to show off my body."
+        }
+      ]
+    },
+    {
+      "id": "Q16",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I can read people like a book."
+        },
+        {
+          "value": 2,
+          "text": "People are sometimes hard to understand."
+        }
+      ]
+    },
+    {
+      "id": "Q17",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "If I feel competent I am willing to take responsibility for making decisions."
+        },
+        {
+          "value": 2,
+          "text": "I like to take responsibility for making decisions."
+        }
+      ]
+    },
+    {
+      "id": "Q18",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I just want to be reasonably happy."
+        },
+        {
+          "value": 2,
+          "text": "I want to amount to something in the eyes of the world."
+        }
+      ]
+    },
+    {
+      "id": "Q19",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "My body is nothing special."
+        },
+        {
+          "value": 2,
+          "text": "I like to look at my body."
+        }
+      ]
+    },
+    {
+      "id": "Q20",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I try not to be a show off."
+        },
+        {
+          "value": 2,
+          "text": "I will usually show off if I get the chance."
+        }
+      ]
+    },
+    {
+      "id": "Q21",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I always know what I am doing."
+        },
+        {
+          "value": 2,
+          "text": "Sometimes I am not sure of what I am doing."
+        }
+      ]
+    },
+    {
+      "id": "Q22",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I sometimes depend on people to get things done."
+        },
+        {
+          "value": 2,
+          "text": "I rarely depend on anyone else to get things done."
+        }
+      ]
+    },
+    {
+      "id": "Q23",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "Sometimes I tell good stories."
+        },
+        {
+          "value": 2,
+          "text": "Everybody likes to hear my stories."
+        }
+      ]
+    },
+    {
+      "id": "Q24",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I expect a great deal from other people."
+        },
+        {
+          "value": 2,
+          "text": "I like to do things for other people."
+        }
+      ]
+    },
+    {
+      "id": "Q25",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I will never be satisfied until I get all that I deserve."
+        },
+        {
+          "value": 2,
+          "text": "I take my satisfactions as they come."
+        }
+      ]
+    },
+    {
+      "id": "Q26",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "Compliments embarrass me."
+        },
+        {
+          "value": 2,
+          "text": "I like to be complimented."
+        }
+      ]
+    },
+    {
+      "id": "Q27",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I have a strong will to power."
+        },
+        {
+          "value": 2,
+          "text": "Power for its own sake doesn't interest me."
+        }
+      ]
+    },
+    {
+      "id": "Q28",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I don't care about new fads and fashions."
+        },
+        {
+          "value": 2,
+          "text": "I like to start new fads and fashions."
+        }
+      ]
+    },
+    {
+      "id": "Q29",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I like to look at myself in the mirror."
+        },
+        {
+          "value": 2,
+          "text": "I am not particularly interested in looking at myself in the mirror."
+        }
+      ]
+    },
+    {
+      "id": "Q30",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I really like to be the center of attention."
+        },
+        {
+          "value": 2,
+          "text": "It makes me uncomfortable to be the center of attention."
+        }
+      ]
+    },
+    {
+      "id": "Q31",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I can live my life in any way I want to."
+        },
+        {
+          "value": 2,
+          "text": "People can't always live their lives in terms of what they want."
+        }
+      ]
+    },
+    {
+      "id": "Q32",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "Being an authority doesn't mean that much to me."
+        },
+        {
+          "value": 2,
+          "text": "People always seem to recognize my authority."
+        }
+      ]
+    },
+    {
+      "id": "Q33",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I would prefer to be a leader."
+        },
+        {
+          "value": 2,
+          "text": "It makes little difference to me whether I am a leader or not."
+        }
+      ]
+    },
+    {
+      "id": "Q34",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I am going to be a great person."
+        },
+        {
+          "value": 2,
+          "text": "I hope I am going to be successful."
+        }
+      ]
+    },
+    {
+      "id": "Q35",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "People sometimes believe what I tell them."
+        },
+        {
+          "value": 2,
+          "text": "I can make anybody believe anything I want them to."
+        }
+      ]
+    },
+    {
+      "id": "Q36",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I am a born leader."
+        },
+        {
+          "value": 2,
+          "text": "Leadership is a quality that takes a long time to develop."
+        }
+      ]
+    },
+    {
+      "id": "Q37",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I wish somebody would someday write my biography."
+        },
+        {
+          "value": 2,
+          "text": "I don't like people to pry into my life for any reason."
+        }
+      ]
+    },
+    {
+      "id": "Q38",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I get upset when people don't notice how I look when I go out in public."
+        },
+        {
+          "value": 2,
+          "text": "I don't mind blending into the crowd when I go out in public."
+        }
+      ]
+    },
+    {
+      "id": "Q39",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I am more capable than other people."
+        },
+        {
+          "value": 2,
+          "text": "There is a lot that I can learn from other people."
+        }
+      ]
+    },
+    {
+      "id": "Q40",
+      "type": "forced_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "I am much like everybody else."
+        },
+        {
+          "value": 2,
+          "text": "I am an extraordinary person."
+        }
+      ]
+    }
+  ]
+}

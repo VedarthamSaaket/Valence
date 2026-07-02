@@ -1,0 +1,176 @@
+{
+  "id": "dass",
+  "name": "Mood and Stress",
+  "subtitle": "Stress, Anxiety and Mood",
+  "instructions": "Think about the past week specifically. For each statement, rate how often it applied to you during that time. Use 1 (Rarely or not at all) to 4 (Most of the time).",
+  "questions": [
+    {
+      "id": "S1",
+      "text": "Even tasks that feel well within your ability have required noticeably more effort than usual to start or finish."
+    },
+    {
+      "id": "A1",
+      "text": "You have noticed your mouth going dry in situations that shouldn't really be stressful, like a routine meeting, a phone call, or just waiting for something."
+    },
+    {
+      "id": "D1",
+      "text": "Things that would normally make you feel something, a good meal, a message from a friend, a piece of music you like, just haven't been landing the way they usually do."
+    },
+    {
+      "id": "A2",
+      "text": "Your breathing has felt slightly off at certain moments, shorter or faster than the situation seems to call for."
+    },
+    {
+      "id": "D2",
+      "text": "There has been a kind of inertia to the week, a gap between knowing what you should do and actually being able to get moving on it."
+    },
+    {
+      "id": "S2",
+      "text": "Small things, a slow connection, someone running a few minutes late, a minor inconvenience, have set you off more than they normally would."
+    },
+    {
+      "id": "A3",
+      "text": "There has been a physical unsteadiness at times, a slight tremor or a feeling that your legs are less solid than usual."
+    },
+    {
+      "id": "S3",
+      "text": "Even when the day is over and nothing is demanding your attention, switching off has felt harder than it should be."
+    },
+    {
+      "id": "D3",
+      "text": "Things coming up that would normally give you something to look forward to, plans with people, upcoming events, haven't been generating much genuine anticipation."
+    },
+    {
+      "id": "A4",
+      "text": "You have found yourself in situations that seemed fine on paper but that you were quietly relieved to get out of, like a social event or a meeting."
+    },
+    {
+      "id": "S4",
+      "text": "You have felt like you are running on reserves this week, doing what needs to be done but aware that it is costing more than it usually does."
+    },
+    {
+      "id": "D4",
+      "text": "When you try to picture the near future, next week or next month, there is not much there that feels genuinely worth waiting for."
+    },
+    {
+      "id": "S5",
+      "text": "There has been a restlessness, a sense of being just slightly on edge, sitting below the surface for most of the day."
+    },
+    {
+      "id": "A5",
+      "text": "At certain points, a wave of something close to panic has come over you, a sudden sense that things are about to go badly."
+    },
+    {
+      "id": "D5",
+      "text": "There has been a flatness to the week, a heaviness that is hard to name but that has made everything feel a bit more effortful than usual."
+    },
+    {
+      "id": "S6",
+      "text": "Getting to a point in the evening where your mind genuinely quiets down has been harder than it normally is."
+    },
+    {
+      "id": "A6",
+      "text": "In certain situations, a presentation or a gathering, you have been quietly preoccupied with the idea of losing composure in front of others."
+    },
+    {
+      "id": "D6",
+      "text": "At points during the week, it has been difficult to see what the point of things is, or what you are actually working toward."
+    },
+    {
+      "id": "S7",
+      "text": "Interruptions, a noise, a question, someone needing something while you are mid task, have been harder to absorb without irritation."
+    },
+    {
+      "id": "A7",
+      "text": "Your hands or another part of your body have had a slight trembling quality at moments when you are under any kind of pressure."
+    },
+    {
+      "id": "D7",
+      "text": "The week has felt emotionally flat overall, not necessarily bad, but with very little in the way of genuine positive feeling."
+    },
+    {
+      "id": "S8",
+      "text": "You have found it hard to wind down after something demanding, your body or mind stays activated even when the situation is over."
+    },
+    {
+      "id": "A8",
+      "text": "You have felt afraid without being able to point to a clear or reasonable cause for it."
+    },
+    {
+      "id": "D8",
+      "text": "There have been moments where life has felt meaningless, not catastrophic, but empty in a way that is hard to shake."
+    },
+    {
+      "id": "S9",
+      "text": "You have been more reactive than usual, finding that things get under your skin faster and more intensely than they normally would."
+    },
+    {
+      "id": "A9",
+      "text": "You have noticed that your heart has been racing or pounding at moments that don't obviously call for it, sitting quietly, preparing for something routine."
+    },
+    {
+      "id": "D9",
+      "text": "You have noticed that you don't feel much enthusiasm about anything this week, even things you would normally look forward to."
+    },
+    {
+      "id": "S10",
+      "text": "You have felt easily agitated this week. Things that usually wash over you have been catching and holding in a way they don't normally."
+    },
+    {
+      "id": "A10",
+      "text": "There have been moments where you felt genuinely afraid that something terrible was about to happen, without anything in the situation that would fully account for it."
+    },
+    {
+      "id": "D10",
+      "text": "You have felt like you don't have much worth as a person this week, a quiet but persistent sense that you are falling short in some fundamental way."
+    },
+    {
+      "id": "S11",
+      "text": "You have been less patient this week. The usual tolerance you have for friction or delay has been thinner than normal."
+    },
+    {
+      "id": "A11",
+      "text": "You have been aware of your own swallowing more than usual, a kind of self-consciousness about something as ordinary as that."
+    },
+    {
+      "id": "D11",
+      "text": "You have found it hard to feel genuinely good about anything you have done this week, even things that went well."
+    },
+    {
+      "id": "S12",
+      "text": "You have found it hard to relax even in downtime, your mind or body still carrying tension from the day."
+    },
+    {
+      "id": "A12",
+      "text": "There have been moments where you felt like you might faint or lose your footing, a sudden physical instability without a clear cause."
+    },
+    {
+      "id": "D12",
+      "text": "You have felt like life holds very little interest or reward for you this week, that things are going through the motions rather than feeling alive."
+    },
+    {
+      "id": "S13",
+      "text": "You have felt on edge in a way that is difficult to account for, as though something is building without a specific reason behind it."
+    },
+    {
+      "id": "A13",
+      "text": "There have been moments where you were aware of your pulse in places you don't normally notice it, your throat, your temples, your chest."
+    },
+    {
+      "id": "D13",
+      "text": "There have been moments this week where you felt close to tears without a clear trigger, a general heaviness that surfaces unprompted."
+    },
+    {
+      "id": "S14",
+      "text": "You have found it hard to tolerate anything that delays or disrupts your plans, even minor changes have felt more frustrating than they should."
+    },
+    {
+      "id": "A14",
+      "text": "You have felt genuinely scared at certain points this week without being able to fully explain what you were scared of."
+    },
+    {
+      "id": "D14",
+      "text": "You have found it difficult to feel any genuine interest or investment in the things in front of you this week, a flatness that makes even ordinary tasks feel pointless."
+    }
+  ]
+}

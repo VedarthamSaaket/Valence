@@ -1,0 +1,29 @@
+# ---------- FRONTEND ----------
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/*.log
+frontend/*.txt
+frontend/vite.config.js.timestamp-*.mjs
+
+# ---------- BACKEND ----------
+backend/__pycache__/
+backend/.env
+backend/*.pyc
+backend/*.pyo
+backend/datasets/
+backend/models/
+
+# ---------- GLOBAL ----------
+.env
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+backend/**/__pycache__/ 
+*.db 
+*.env.example 
+__pycache__/ 
+*.pyc 

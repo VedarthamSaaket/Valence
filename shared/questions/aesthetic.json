@@ -1,0 +1,128 @@
+{
+  "id": "aesthetic",
+  "name": "Aesthetic Taste",
+  "subtitle": "Aesthetic Sensitivity",
+  "instructions": "Rate each statement from 1 (Strongly Disagree) to 5 (Strongly Agree), based on your genuine reactions, not what sounds sophisticated or culturally appropriate.",
+  "questions": [
+    {
+      "id": "RA1",
+      "text": "When you hear something loud and energetic in music, with distorted guitars or aggressive drumming, it draws you in rather than putting you off."
+    },
+    {
+      "id": "RA2",
+      "text": "There is something in the rawness and intensity of harder music that you find genuinely appealing, a sense of energy that softer music doesn't give you."
+    },
+    {
+      "id": "RA3",
+      "text": "You find yourself attracted to music that has a rebellious or defiant quality to it, something that feels like it's pushing against something."
+    },
+    {
+      "id": "RA4",
+      "text": "The boldness and directness of harder, louder music speaks to something in you that more polished or gentle music often misses."
+    },
+    {
+      "id": "RA5",
+      "text": "When a piece of music is abrasive or uncomfortable on purpose, you find that more interesting than something that goes out of its way to be pleasant."
+    },
+    {
+      "id": "RA6",
+      "text": "You are drawn to art or music that has an edge to it, something with tension or darkness that makes it feel more alive."
+    },
+    {
+      "id": "RA7",
+      "text": "The kind of music that feels almost physically intense, where you can feel the energy in your chest, appeals to you."
+    },
+    {
+      "id": "RA8",
+      "text": "You find that work which is deliberately unconventional or provocative tends to interest you more than work that stays within familiar boundaries."
+    },
+    {
+      "id": "LP1",
+      "text": "When a song has a hook that stays with you all day, something simple and immediately catchy, you find that genuinely satisfying rather than cheap."
+    },
+    {
+      "id": "LP2",
+      "text": "Music that is produced to sound polished and radio-ready has a kind of pleasure in it that you don't feel the need to apologize for."
+    },
+    {
+      "id": "LP3",
+      "text": "You find that upbeat, danceable music puts you in a better mood in a way that more serious or complex music often doesn't."
+    },
+    {
+      "id": "LP4",
+      "text": "There is something enjoyable about music that is openly emotional and sentimental, even when it doesn't try to be subtle about it."
+    },
+    {
+      "id": "LP5",
+      "text": "You find yourself drawn to music that is designed to be enjoyed widely, something people can share and sing along to."
+    },
+    {
+      "id": "LP6",
+      "text": "When a song is melodically strong and immediately satisfying, you value that quality even if it isn't particularly complex."
+    },
+    {
+      "id": "LP7",
+      "text": "You have genuine affection for music that is fun and light in a deliberate way, without needing it to be deep."
+    },
+    {
+      "id": "LP8",
+      "text": "You find that music which is warm, familiar in its structure, and designed to feel good does exactly that for you."
+    },
+    {
+      "id": "MF1",
+      "text": "Music that feels rooted in something older, folk traditions, acoustic instruments, a sense of place or history, appeals to you in a way that more modern styles don't always reach."
+    },
+    {
+      "id": "MF2",
+      "text": "You find music that tells a story or has a strong connection to a particular culture or tradition more interesting than music that avoids those roots."
+    },
+    {
+      "id": "MF3",
+      "text": "There is something in music that sounds like it grew out of a specific community or landscape, rather than being made in a studio, that you find genuinely moving."
+    },
+    {
+      "id": "MF4",
+      "text": "Acoustic, stripped-back music, where you can hear the room or the breath of the performer, tends to feel more real to you than heavily produced music."
+    },
+    {
+      "id": "MF5",
+      "text": "You are drawn to music that has an improvisational or spontaneous quality, where it sounds like the musicians are responding to each other in real time."
+    },
+    {
+      "id": "MF6",
+      "text": "Music that reflects real life experiences, loss, work, place, time passing, connects with you more than music that keeps things abstract or aspirational."
+    },
+    {
+      "id": "MF7",
+      "text": "You find something appealing about musical forms that have been passed down and refined over generations, rather than invented recently."
+    },
+    {
+      "id": "MF8",
+      "text": "The sound of traditional instruments played in their natural context, a fiddle in a folk setting, a banjo on a porch, has an authenticity that appeals to you."
+    },
+    {
+      "id": "V1",
+      "text": "Standing in front of a painting or photograph that is genuinely well made produces something more than intellectual appreciation in you, it actually moves you."
+    },
+    {
+      "id": "V2",
+      "text": "You notice visual quality in everyday things, the way light falls, the proportions of an object, the color of a surface, in places where most people see nothing remarkable."
+    },
+    {
+      "id": "V3",
+      "text": "You have strong preferences about visual things. Certain colors, compositions, and styles feel right to you in a way that others clearly don't."
+    },
+    {
+      "id": "V4",
+      "text": "The visual quality of your surroundings has a real effect on your mood. An ugly space or a beautiful one makes a genuine difference to how you feel in it."
+    },
+    {
+      "id": "V5",
+      "text": "You notice visual details that most people pass over entirely, texture, the quality of light, how a space is balanced."
+    },
+    {
+      "id": "V6",
+      "text": "You can lose yourself in looking at something visually striking. Time disappears when you are standing in front of a painting or looking out at a landscape."
+    }
+  ]
+}

@@ -13,6 +13,8 @@ backend/*.pyc
 backend/*.pyo
 backend/datasets/
 backend/models/
+backend/specialty_quota.json
+backend/ml/finetune_data/
 
 # ---------- GLOBAL ----------
 .env

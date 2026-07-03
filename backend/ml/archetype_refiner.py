@@ -70,17 +70,38 @@ class ArchetypeRefiner:
             except Exception:
                 pass
 
+            cuda = torch.cuda.is_available()
+
+            # Dtype choice is a correctness matter here, not just speed. On
+            # some CPU builds, converting the refiner's native weights to
+            # fp32 (either at load time or via a later .float()) crashes the
+            # process. Loading and running in the weights' native precision
+            # avoids that path: keep bf16 on CPU and never convert; use fp16
+            # on GPU. Override with ARCHETYPE_REFINER_DTYPE if a host needs it.
+            dtype_env = (os.getenv("ARCHETYPE_REFINER_DTYPE") or "").strip().lower()
+            dtype_map = {
+                "float32": torch.float32, "fp32": torch.float32,
+                "float16": torch.float16, "fp16": torch.float16,
+                "bfloat16": torch.bfloat16, "bf16": torch.bfloat16,
+                "auto": "auto",
+            }
+            if dtype_env in dtype_map:
+                load_dtype = dtype_map[dtype_env]
+            else:
+                load_dtype = torch.float16 if cuda else torch.bfloat16
+
             model_id = os.getenv(
                 "ARCHETYPE_REFINER_ID", "Qwen/Qwen2.5-1.5B-Instruct"
             )
             self._tokenizer = AutoTokenizer.from_pretrained(model_id)
             self._model = AutoModelForCausalLM.from_pretrained(
                 model_id,
-                torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
-                device_map="auto" if torch.cuda.is_available() else None,
+                torch_dtype=load_dtype,
+                device_map="auto" if cuda else None,
                 low_cpu_mem_usage=True,
             )
-            if not torch.cuda.is_available():
+            if not cuda:
+                # Move device only — do NOT change dtype (no .float()).
                 self._model = self._model.to("cpu")
             self._model.eval()
 
@@ -100,6 +121,25 @@ class ArchetypeRefiner:
         finally:
             self._ready.set()
 
+        # Pre-warm cluster profiles for every test so the first submit of
+        # each test does not pay the matrix-load + predict cost.
+        if self._model is not None:
+            t1 = time.time()
+            import json as _json
+            for fn in os.listdir(MODELS_DIR):
+                if not fn.endswith("_meta.json"):
+                    continue
+                test_id = fn[:-len("_meta.json")]
+                try:
+                    with open(os.path.join(MODELS_DIR, fn), encoding="utf-8") as f:
+                        meta = _json.load(f)
+                    names = meta.get("trait_names")
+                    if names:
+                        self._get_cluster_profiles(test_id, names)
+                except Exception:
+                    pass
+            print(f"[refiner] cluster profiles pre-warmed in {time.time() - t1:.1f}s")
+
     @property
     def available(self) -> bool:
         return self._model is not None
@@ -113,6 +153,16 @@ class ArchetypeRefiner:
             self.warm_up(background=True)
         self._ready.wait(timeout)
         return self.available
+
+    def status(self) -> Dict[str, bool]:
+        """Instant, non-blocking readiness snapshot for the warmup endpoint.
+        Lets the questionnaire's periodic ping confirm the refiner is hot
+        (or still loading) alongside the psychology layer, without waiting."""
+        return {
+            "started": self._load_started,
+            "ready": self._ready.is_set(),
+            "available": self.available,
+        }
 
     # ------------------------------------------------------------ profiles
 
@@ -264,23 +314,73 @@ class ArchetypeRefiner:
             f"The scored trait profile is the primary evidence. "
             f"If the person provided extra context, weigh it only where it genuinely "
             f"clarifies or qualifies their scores, and keep the current assignment "
-            f"unless the combined evidence clearly points to a better-fitting group.\n"
-            f"Which group (0-{k - 1}) best matches this person psychologically? "
-            f"Reply with ONLY the number."
+            f"unless the combined evidence clearly points to a better-fitting group.\n\n"
+            f"Reply with ONE line of strict JSON, nothing else, in this form:\n"
+            f'{{"group": <0-{k - 1}>, "name": "The <2-4 word archetype name>", '
+            f'"tagline": "<one short sentence>", "adjustments": {{"<trait>": <-5 to 5>}}}}\n'
+            f"Rules: name must be dignified and specific to THIS profile. "
+            f"adjustments may nudge at most 2 trait percentiles, only when the "
+            f"volunteered context clearly justifies it; otherwise use {{}}."
         )
 
         try:
             t0 = time.time()
-            response = self._generate(prompt, max_new_tokens=4, sample=False)
+            # Output is one short JSON line; 64 tokens covers it with margin
+            # and shaves CPU generation time off the synchronous submit path.
+            response = self._generate(prompt, max_new_tokens=64, sample=False)
             print(f"[refiner] refine({test_id}) took {time.time() - t0:.1f}s")
-
-            for ch in response:
-                if ch.isdigit() and ch in profiles:
-                    return ch
-            return None
+            return self._parse_refine(response, profiles, trait_scores)
         except Exception as e:
             print(f"[refiner] {e}")
             return None
+
+    @staticmethod
+    def _parse_refine(response: str, profiles: Dict, trait_scores: Dict) -> Optional[Dict]:
+        """Defensive parse of the structured refine reply. Any failure
+        degrades gracefully to whatever fields did parse."""
+        import json as _json
+        import re as _re
+
+        out = {"group": None, "name": None, "tagline": None, "adjustments": {}}
+
+        m = _re.search(r"\{.*\}", response, _re.DOTALL)
+        if m:
+            try:
+                data = _json.loads(m.group(0))
+                g = str(data.get("group", "")).strip()
+                if g.isdigit() and g in profiles:
+                    out["group"] = g
+                name = (data.get("name") or "").strip()
+                if 3 <= len(name) <= 60:
+                    if not name.lower().startswith("the "):
+                        name = "The " + name
+                    out["name"] = name
+                tagline = (data.get("tagline") or "").strip()
+                if 3 <= len(tagline) <= 160:
+                    out["tagline"] = tagline
+                adj = data.get("adjustments") or {}
+                if isinstance(adj, dict):
+                    cleaned = {}
+                    for k_, v_ in list(adj.items())[:2]:
+                        if k_ in trait_scores:
+                            try:
+                                cleaned[k_] = max(-5, min(5, int(round(float(v_)))))
+                            except (TypeError, ValueError):
+                                continue
+                    out["adjustments"] = cleaned
+            except Exception:
+                pass
+
+        # Last resort: pull a bare group number out of free text.
+        if out["group"] is None:
+            for ch in response:
+                if ch.isdigit() and ch in profiles:
+                    out["group"] = ch
+                    break
+
+        if out["group"] is None and not out["name"]:
+            return None
+        return out
 
     # -------------------------------------------------------------- enrich
 
@@ -322,7 +422,10 @@ class ArchetypeRefiner:
 
         try:
             t0 = time.time()
-            response = self._generate(prompt, max_new_tokens=180, sample=True)
+            # 1-2 sentences of context enrichment fit in ~120 tokens; the old
+            # 180 mostly generated tokens that got trimmed anyway. Fewer tokens
+            # = a shorter wait on the synchronous submit path.
+            response = self._generate(prompt, max_new_tokens=120, sample=True)
             print(f"[refiner] enrich({test_id}) took {time.time() - t0:.1f}s")
 
             enriched = list(base_insights)

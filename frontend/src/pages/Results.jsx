@@ -489,8 +489,10 @@ function TraitHeatmap({ percentiles, accent, metal }) {
   )
 }
 
-// Archetype Constellation,star map of archetypes
-function ArchetypeConstellation({ testType, userArchetype, accent, names: providedNames }) {
+// Archetype Constellation,star map of archetypes. When compatibility data
+// is available, DISTANCE FROM YOUR STAR ENCODES COMPATIBILITY: the higher
+// the score, the closer the star.
+function ArchetypeConstellation({ testType, userArchetype, accent, names: providedNames, sameTest }) {
   const canvasRef = useRef()
 
   // Generate deterministic constellation of 8–14 archetypes per test
@@ -520,31 +522,53 @@ function ArchetypeConstellation({ testType, userArchetype, accent, names: provid
     ? providedNames
     : (archetypeSeeds[testType] || archetypeSeeds.hexaco)
 
-  // Build stable star positions using name as seed
   const userNorm = (userArchetype || '').trim().toLowerCase()
-  const stars = names.map((name, i) => {
-    const angle = (i / names.length) * Math.PI * 2 + (name.charCodeAt(0) % 10) * 0.1
-    const dist = 60 + (name.length % 5) * 16 + (i % 3) * 12
-    return {
-      name,
-      x: Math.cos(angle) * dist,
-      y: Math.sin(angle) * dist,
-      size: 2 + (name.charCodeAt(0) % 3),
-      // Exact match only. A fuzzy prefix match ("The ") used to flag EVERY
-      // star as the user's and label them all with the user's archetype.
-      isUser: name.trim().toLowerCase() === userNorm,
-    }
-  })
+  const hasScores = Array.isArray(sameTest) && sameTest.length > 0
 
-  // Exactly one user star: the exact match, or the first as fallback.
-  const userStar = stars.find(s => s.isUser) || stars[0]
-  stars.forEach(s => { s.isUser = (s === userStar) })
+  let stars
+  if (hasScores) {
+    // Score-driven layout: your archetype at the center, siblings placed at
+    // a radius proportional to (100 - score). Closer star = more compatible.
+    const GOLDEN = Math.PI * (3 - Math.sqrt(5))
+    stars = sameTest.map((c, i) => {
+      const radius = 52 + Math.min(96, Math.max(6, (100 - c.score) * 1.15))
+      const angle = i * GOLDEN + 0.65
+      return {
+        name: c.name,
+        score: c.score,
+        x: Math.cos(angle) * radius,
+        y: Math.sin(angle) * radius * 0.68,
+        size: 2.5 + (c.score / 50),
+        isUser: false,
+      }
+    })
+    stars.unshift({ name: userArchetype || 'You', score: 100, x: 0, y: 0, size: 4.5, isUser: true })
+  } else {
+    // Fallback: seed-based ring layout, exact-name match for the user star.
+    stars = names.map((name, i) => {
+      const angle = (i / names.length) * Math.PI * 2 + (name.charCodeAt(0) % 10) * 0.1
+      const dist = 60 + (name.length % 5) * 16 + (i % 3) * 12
+      return {
+        name,
+        score: null,
+        x: Math.cos(angle) * dist,
+        y: Math.sin(angle) * dist,
+        size: 2 + (name.charCodeAt(0) % 3),
+        // Exact match only. A fuzzy prefix match ("The ") used to flag EVERY
+        // star as the user's and label them all with the user's archetype.
+        isUser: name.trim().toLowerCase() === userNorm,
+      }
+    })
+    const fallbackUser = stars.find(s => s.isUser) || stars[0]
+    stars.forEach(s => { s.isUser = (s === fallbackUser) })
+  }
+  const userStar = stars.find(s => s.isUser)
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const dpr = window.devicePixelRatio || 1
-    const W = 480, H = 300
+    const W = 480, H = 320
     canvas.width = W * dpr
     canvas.height = H * dpr
     const ctx = canvas.getContext('2d')
@@ -560,33 +584,46 @@ function ArchetypeConstellation({ testType, userArchetype, accent, names: provid
       ctx.textAlign = 'center'
       const w = ctx.measureText(text).width
       const pad = 4
-      let lx = Math.min(Math.max(x, pad + w / 2), W - pad - w / 2)
-      let ly = Math.max(y, 12)
+      const lx = Math.min(Math.max(x, pad + w / 2), W - pad - w / 2)
+      const ly = Math.min(Math.max(y, 12), H - 4)
       ctx.fillText(text, lx, ly)
+      return { lx, ly }
     }
 
-    // Draw connection lines from user star
     const ux = cx + userStar.x, uy = cy + userStar.y
-    for (const star of stars) {
-      if (star === userStar) continue
-      const sx = cx + star.x, sy = cy + star.y
-      const dist = Math.hypot(sx - ux, sy - uy)
-      if (dist < 120) {
+
+    // Guide rings around the user star when distance encodes score.
+    if (hasScores) {
+      for (const band of [85, 70, 55]) {
+        const radius = (52 + Math.min(96, Math.max(6, (100 - band) * 1.15)))
         ctx.beginPath()
-        ctx.moveTo(ux, uy)
-        ctx.lineTo(sx, sy)
-        ctx.strokeStyle = `rgba(215,228,242,${0.06 - dist * 0.0003})`
-        ctx.lineWidth = 0.5
+        ctx.ellipse(ux, uy, radius, radius * 0.68, 0, 0, Math.PI * 2)
+        ctx.strokeStyle = 'rgba(215,228,242,0.06)'
+        ctx.lineWidth = 0.7
+        ctx.setLineDash([3, 5])
         ctx.stroke()
+        ctx.setLineDash([])
       }
     }
 
-    // Draw all stars
+    // Connection lines from the user's star, brightness tracks the score.
+    for (const star of stars) {
+      if (star === userStar) continue
+      const sx = cx + star.x, sy = cy + star.y
+      const alpha = star.score != null ? 0.03 + (star.score / 100) * 0.22 : 0.05
+      ctx.beginPath()
+      ctx.moveTo(ux, uy)
+      ctx.lineTo(sx, sy)
+      ctx.strokeStyle = `rgba(215,228,242,${alpha.toFixed(3)})`
+      ctx.lineWidth = star.score != null && star.score >= 70 ? 1 : 0.5
+      ctx.stroke()
+    }
+
+    // Stars + labels. Every star gets its full name, never cropped.
     for (const star of stars) {
       const sx = cx + star.x, sy = cy + star.y
 
       if (star.isUser) {
-        // Glow rings
         for (let ring = 3; ring >= 1; ring--) {
           ctx.beginPath()
           ctx.arc(sx, sy, ring * 7, 0, Math.PI * 2)
@@ -602,28 +639,27 @@ function ArchetypeConstellation({ testType, userArchetype, accent, names: provid
         ctx.fill()
         ctx.shadowBlur = 0
 
-        // Label, always the user's full archetype name, never cropped
-        drawLabel(userArchetype || star.name, sx, sy - star.size - 10, `bold 9px 'Cinzel', serif`, accent)
+        drawLabel(userArchetype || star.name, sx, sy - star.size - 12, `bold 9px 'Cinzel', serif`, accent)
+        drawLabel('YOU', sx, sy + star.size + 14, `7px 'Cinzel', serif`, `${accent}AA`)
       } else {
+        const bright = star.score != null ? 0.22 + (star.score / 100) * 0.35 : 0.30
         ctx.beginPath()
         ctx.arc(sx, sy, star.size, 0, Math.PI * 2)
-        ctx.fillStyle = 'rgba(215,228,242,0.30)'
+        ctx.fillStyle = `rgba(215,228,242,${bright.toFixed(2)})`
         ctx.shadowBlur = 4
         ctx.shadowColor = 'rgba(215,228,242,0.20)'
         ctx.fill()
         ctx.shadowBlur = 0
 
-        // Label only nearby, full name, never cropped
-        const d = Math.hypot(star.x - userStar.x, star.y - userStar.y)
-        if (d < 90) {
-          drawLabel(star.name, cx + star.x, cy + star.y - star.size - 6, `7px 'Cinzel', serif`, 'rgba(215,228,242,0.38)')
-        }
+        // No score labels here — the numbers live in the dedicated
+        // compatibility sections below. Distance already encodes the score.
+        drawLabel(star.name, sx, sy - star.size - 8, `7.5px 'Cinzel', serif`, 'rgba(215,228,242,0.55)')
       }
     }
-  }, [testType, userArchetype, accent, names.join('|')])
+  }, [testType, userArchetype, accent, names.join('|'), hasScores, JSON.stringify(sameTest || null)])
 
   return (
-    <canvas ref={canvasRef} width={480} height={300}
+    <canvas ref={canvasRef} width={480} height={320}
       style={{ width: '100%', maxWidth: 480, display: 'block', margin: '0 auto' }} />
   )
 }
@@ -749,6 +785,77 @@ function StatPill({ value, label, metal, suffix = '' }) {
         {lines.map((l, i) => <div key={i}>{l}</div>)}
       </div>
     </div>
+  )
+}
+
+// Average-member profile of a cluster: trait score + population percentile
+// for the typical person belonging to that cluster.
+function ClusterProfileTable({ profile, accent }) {
+  if (!profile?.length) return null
+  return (
+    <div style={{ marginTop: 10 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 44px 44px', gap: '2px 10px', alignItems: 'baseline' }}>
+        <span style={{ fontFamily: S.fontSC, fontSize: 6.5, letterSpacing: '0.14em', color: S.textMuted, textTransform: 'uppercase' }}>Avg member trait</span>
+        <span style={{ fontFamily: S.fontSC, fontSize: 6.5, letterSpacing: '0.14em', color: S.textMuted, textTransform: 'uppercase', textAlign: 'right' }}>Score</span>
+        <span style={{ fontFamily: S.fontSC, fontSize: 6.5, letterSpacing: '0.14em', color: S.textMuted, textTransform: 'uppercase', textAlign: 'right' }}>Pctile</span>
+        {profile.map(t => (
+          <FragmentRow key={t.trait} t={t} accent={accent} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function FragmentRow({ t, accent }) {
+  return (
+    <>
+      <span style={{ fontFamily: S.fontSC, fontSize: 8, letterSpacing: '0.08em', color: 'rgba(244,247,250,0.45)', textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.trait}</span>
+      <span style={{ fontFamily: S.fontMono, fontSize: 10, color: 'rgba(244,247,250,0.55)', textAlign: 'right' }}>{Number(t.score).toFixed(2)}</span>
+      <span style={{ fontFamily: S.fontMono, fontSize: 10, color: accent, textAlign: 'right' }}>{t.percentile}th</span>
+    </>
+  )
+}
+
+// Deep Dive — the specialty psychology-model enrichment, revealed on demand.
+// Same visual language as the rest of the report, plus bonus context (which
+// model analysed the profile, and the affect signal read from the user's notes).
+function DeepDiveSection({ data, accent }) {
+  const lines = data?.insights || []
+  return (
+    <Section label="Deep Dive · Psychology Model" roman="✦" accent={accent}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: 'rgba(215,228,242,0.04)', border: `1px solid ${accent}33`, borderLeft: `2px solid ${accent}88`, marginBottom: 22 }}>
+        <span style={{ color: accent, fontSize: 12, opacity: 0.8 }}>✦</span>
+        <span style={{ fontFamily: S.fontSC, fontSize: 8.5, letterSpacing: '0.10em', color: S.textSec, textTransform: 'uppercase' }}>{data.model_label}</span>
+      </div>
+
+      {lines.length > 0 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {lines.map((ins, i) => (
+            <div key={i} style={{ display: 'flex', gap: 18, alignItems: 'flex-start', padding: '16px 20px', background: 'rgba(215,228,242,0.04)', border: '1px solid rgba(215,228,242,0.08)', borderLeft: `2px solid ${accent}66` }}>
+              <span style={{ fontFamily: S.fontDisplay, fontSize: 16, fontWeight: 300, color: accent, opacity: 0.6, flexShrink: 0, marginTop: 1 }}>{String(i + 1).padStart(2, '0')}</span>
+              <p style={{ fontFamily: S.fontBody, fontStyle: 'italic', fontSize: 14, color: 'rgba(244,247,250,0.58)', lineHeight: 1.80 }}>{ins}</p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p style={{ fontFamily: S.fontSC, fontSize: 12, color: S.textMuted, lineHeight: 1.75 }}>
+          The psychology model did not return additional analysis for this profile.
+        </p>
+      )}
+
+      {data.affect_context && (
+        <div style={{ marginTop: 18, padding: '14px 18px', background: 'rgba(215,228,242,0.03)', border: '1px solid rgba(215,228,242,0.07)', borderLeft: `2px solid ${accent}44` }}>
+          <div style={{ fontFamily: S.fontSC, fontSize: 7, letterSpacing: '0.18em', color: S.irisDim, textTransform: 'uppercase', marginBottom: 6 }}>
+            Emotional Signal In Your Notes
+          </div>
+          <p style={{ fontFamily: S.fontSC, fontSize: 12, color: 'rgba(244,247,250,0.55)', lineHeight: 1.75 }}>{data.affect_context}</p>
+        </div>
+      )}
+
+      <p style={{ fontFamily: S.fontSC, fontSize: 11, letterSpacing: '0.04em', color: S.textMuted, lineHeight: 1.75, marginTop: 18 }}>
+        Generated by a psychology-specialized language model, separately from your base results. These are reflective observations, not a clinical diagnosis.{data.latency_s ? ` · computed in ${Math.round(data.latency_s)}s` : ''}
+      </p>
+    </Section>
   )
 }
 
@@ -880,9 +987,10 @@ export default function Results() {
   const navigate = useNavigate()
   const [result, setResult] = useState(null)
   const [mapCoords, setMapCoords] = useState([])
-  const [compat, setCompat] = useState(null)
+  const [compat, setCompat] = useState() // undefined = loading, null = failed
   const [revealing, setRevealing] = useState(true)
   const [downloading, setDownloading] = useState(false)
+  const [deepDive, setDeepDive] = useState(false)
   const resultPageRef = useRef()
 
   useEffect(() => {
@@ -898,6 +1006,26 @@ export default function Results() {
       .catch(() => setCompat(null))
     setTimeout(() => setRevealing(false), 2200)
   }, [resultId])
+
+  // Specialty-model enrichment lands asynchronously after submit. While the
+  // row is still 'pending', poll for the enriched insights (bounded).
+  useEffect(() => {
+    if (!result || result.enrichment_status !== 'pending') return
+    let tries = 0
+    const iv = setInterval(() => {
+      tries += 1
+      if (tries > 50) { clearInterval(iv); return }
+      api.get(`/results/${resultId}`)
+        .then(res => {
+          if (res.data.enrichment_status !== 'pending') {
+            clearInterval(iv)
+            setResult(res.data)
+          }
+        })
+        .catch(() => clearInterval(iv))
+    }, 6000)
+    return () => clearInterval(iv)
+  }, [resultId, result?.enrichment_status])
 
   if (revealing || !result) return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 36, position: 'relative' }}>
@@ -931,6 +1059,12 @@ export default function Results() {
   const neighborhood = (() => {
     try { const r = result.neighborhood_traits; if (!r) return null; if (typeof r === 'object') return r; return JSON.parse(r) } catch { return null }
   })()
+
+  // Deep Dive: the specialty psychology-model enrichment lands in the
+  // background after submit and is held separately from the base insights.
+  const deepDiveData = insights.deep_dive
+  const enrichPending = result.enrichment_status === 'pending'
+  const deepDiveReady = deepDiveData?.status === 'ok' && (deepDiveData?.insights?.length > 0)
 
   const stats = computeStats(traitScores, percentiles)
   const plainLines = generatePlainEnglishSummary(testType, traitScores, percentiles, result.archetype_name, result.archetype_description, insights)
@@ -1110,10 +1244,32 @@ export default function Results() {
               userArchetype={compat?.user?.name || result.archetype_name}
               accent={accent}
               names={compat?.all_names}
+              sameTest={compat?.same_test}
             />
             <p style={{ fontFamily: S.fontSC, fontSize: 12, letterSpacing: '0.06em', color: S.textSec, lineHeight: 1.75, marginTop: 20, textAlign: 'center' }}>
-              Your archetype lit up within the full map of personality types for this assessment.
+              {compat?.available
+                ? 'Distance encodes compatibility: the closer a star sits to yours, the higher your compatibility score with that archetype.'
+                : 'Your archetype lit up within the full map of personality types for this assessment.'}
             </p>
+
+            {compat === null && (
+              <div style={{ marginTop: 16, padding: '14px 18px', background: 'rgba(200,170,140,0.06)', border: '1px solid rgba(210,180,150,0.18)', borderLeft: '2px solid rgba(220,190,160,0.45)' }}>
+                <p style={{ fontFamily: S.fontSC, fontSize: 11, letterSpacing: '0.04em', color: 'rgba(230,205,180,0.85)', lineHeight: 1.75 }}>
+                  Compatibility scores could not be loaded. The backend needs a restart to serve the compatibility endpoint. Once it is running, this section shows your top 5 compatibilities with scores out of 100.
+                </p>
+              </div>
+            )}
+
+            {compat?.available && compat.user?.definition && (
+              <div style={{ marginTop: 20, padding: '14px 18px', background: 'rgba(215,228,242,0.04)', border: `1px solid rgba(215,228,242,0.08)`, borderLeft: `2px solid ${accent}66` }}>
+                <div style={{ fontFamily: S.fontSC, fontSize: 7, letterSpacing: '0.18em', color: S.irisDim, textTransform: 'uppercase', marginBottom: 6 }}>
+                  Your Cluster, In One Line
+                </div>
+                <p style={{ fontFamily: S.fontSC, fontSize: 12, letterSpacing: '0.03em', color: 'rgba(244,247,250,0.60)', lineHeight: 1.75 }}>
+                  <span style={{ color: accent, opacity: 0.85 }}>{compat.user.name}</span> — {compat.user.definition}
+                </p>
+              </div>
+            )}
 
             {compat?.available && (
               <div style={{ marginTop: 28 }}>
@@ -1159,6 +1315,12 @@ export default function Results() {
                           <div style={{ height: 2, background: 'rgba(215,228,242,0.07)', marginTop: 8 }}>
                             <div style={{ height: '100%', width: `${c.score}%`, background: accent, opacity: 0.55 }} />
                           </div>
+                          {c.definition && (
+                            <p style={{ fontFamily: S.fontSC, fontSize: 9, letterSpacing: '0.03em', color: 'rgba(244,247,250,0.40)', lineHeight: 1.7, marginTop: 8 }}>
+                              {c.definition}
+                            </p>
+                          )}
+                          <ClusterProfileTable profile={c.avg_profile} accent={accent} />
                         </div>
                       ))}
                     </div>
@@ -1182,6 +1344,12 @@ export default function Results() {
                           <div style={{ height: 2, background: 'rgba(215,228,242,0.07)', marginTop: 8 }}>
                             <div style={{ height: '100%', width: `${c.score}%`, background: accent, opacity: 0.55 }} />
                           </div>
+                          {c.definition && (
+                            <p style={{ fontFamily: S.fontSC, fontSize: 9, letterSpacing: '0.03em', color: 'rgba(244,247,250,0.40)', lineHeight: 1.7, marginTop: 8 }}>
+                              {c.definition}
+                            </p>
+                          )}
+                          <ClusterProfileTable profile={c.avg_profile} accent={accent} />
                         </div>
                       ))}
                     </div>
@@ -1202,6 +1370,14 @@ export default function Results() {
                   Cross-test rows show, for each other assessment, the archetype whose profile shape sits closest to yours. Lower-scoring archetypes are complementary rather than incompatible; in research those pairings create the strongest growth dynamics, since they challenge your blind spots while you challenge theirs.
                 </p>
               </div>
+              {compat?.method?.summary && (
+                <div style={{ padding: '14px 18px', background: 'rgba(215,228,242,0.03)', border: `1px solid rgba(215,228,242,0.07)`, borderLeft: `2px solid ${accent}22` }}>
+                  <div style={{ fontFamily: S.fontSC, fontSize: 7, letterSpacing: '0.18em', color: S.textMuted, textTransform: 'uppercase', marginBottom: 6 }}>Scoring Model</div>
+                  <p style={{ fontFamily: S.fontSC, fontSize: 11, letterSpacing: '0.03em', color: 'rgba(244,247,250,0.42)', lineHeight: 1.80 }}>
+                    {compat.method.summary}
+                  </p>
+                </div>
+              )}
             </div>
           </Section>
 
@@ -1317,6 +1493,37 @@ export default function Results() {
               </p>
             </Section>
           )}
+
+          {/* Deep Dive Mode — psychology-model enrichment, revealed on demand.
+              Base results show instantly; this holds the richer analysis that
+              generated in the background, so the user opts in when curious. */}
+          <div style={{ marginTop: 3 }}>
+            <div data-report-exclude="true">
+              <button
+                onClick={() => { if (deepDiveReady) setDeepDive(v => !v) }}
+                disabled={!deepDiveReady}
+                style={{ width: '100%', padding: '18px 32px', background: deepDiveReady ? `${accent}14` : 'rgba(215,228,242,0.03)', border: `1px solid ${deepDiveReady ? accent + '77' : 'rgba(215,228,242,0.14)'}`, color: deepDiveReady ? S.textPrim : S.textMuted, cursor: deepDiveReady ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, transition: 'all 220ms', fontFamily: S.fontSC, fontSize: 9, letterSpacing: '0.22em', opacity: deepDiveReady ? 1 : 0.65 }}
+                onMouseEnter={e => { if (deepDiveReady) { e.currentTarget.style.background = `${accent}22`; e.currentTarget.style.borderColor = accent } }}
+                onMouseLeave={e => { if (deepDiveReady) { e.currentTarget.style.background = `${accent}14`; e.currentTarget.style.borderColor = `${accent}77` } }}
+              >
+                <span style={{ fontSize: 13, opacity: 0.85 }}>✦</span>
+                {deepDive ? 'HIDE DEEP DIVE'
+                  : deepDiveReady ? 'ENTER DEEP DIVE MODE'
+                  : enrichPending ? 'DEEP DIVE · PREPARING…'
+                  : 'DEEP DIVE · UNAVAILABLE'}
+              </button>
+              {enrichPending && !deepDiveReady && (
+                <p style={{ fontFamily: S.fontSC, fontSize: 10, letterSpacing: '0.04em', color: S.textMuted, lineHeight: 1.7, marginTop: 8, textAlign: 'center' }}>
+                  Your psychology-model analysis is generating in the background (free-tier CPU, ~1–3 min). This unlocks automatically when it's ready — no need to wait on this screen.
+                </p>
+              )}
+            </div>
+            {deepDive && deepDiveReady && (
+              <div style={{ marginTop: 3 }}>
+                <DeepDiveSection data={deepDiveData} accent={accent} />
+              </div>
+            )}
+          </div>
 
           {/* Actions, excluded from the downloaded report */}
           <div data-report-exclude="true" style={{ marginTop: 3, display: 'flex', flexDirection: 'column', gap: 3 }}>

@@ -11,8 +11,38 @@ from routers.tests import load_questions
 from security import assert_owns_result
 import csv
 import os
+import threading
 
 router = APIRouter()
+
+
+def _enrich_result_async(result_id: str, test_type: str, trait_scores: Dict,
+                         percentiles: Dict, archetype: Optional[Dict],
+                         insights: Dict, context_notes) -> None:
+    """Background enrichment: call the specialty psychology model (waiting
+    out a Space wake-up if needed), persist the enriched insights, and flip
+    enrichment_status so the results page can stop polling. Fail-soft — on
+    any error the row keeps its base insights with status 'failed'."""
+    status = "failed"
+    try:
+        from ml.psych_layer import enrich_result
+        enriched = enrich_result(test_type, trait_scores, percentiles,
+                                 archetype or {}, dict(insights),
+                                 context_notes=context_notes)
+        insights = enriched or insights
+        status = "done"
+    except Exception as e:
+        print(f"[psych] background enrichment failed for {result_id}: {e}")
+    try:
+        db = get_db()
+        db.execute(
+            "UPDATE test_results SET insights = ?, enrichment_status = ? WHERE id = ?",
+            (json.dumps(insights), status, result_id),
+        )
+        db.commit()
+        db.close()
+    except Exception as e:
+        print(f"[psych] could not persist enrichment for {result_id}: {e}")
 
 DATASETS_DIR = os.path.join(os.path.dirname(__file__), "../datasets")
 
@@ -73,8 +103,9 @@ def submit_test(body: SubmitTestRequest, current_user=Depends(get_current_user))
             INSERT INTO test_results
             (id, user_id, test_type, raw_responses, trait_scores, percentiles,
              archetype_id, archetype_name, archetype_description,
-             umap_x, umap_y, similarity_pct, rarity_pct, neighborhood_traits, consented_to_dataset, taken_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             umap_x, umap_y, similarity_pct, rarity_pct, neighborhood_traits,
+             consented_to_dataset, taken_at, insights, enrichment_status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             result_id,
             current_user["id"],
@@ -92,6 +123,8 @@ def submit_test(body: SubmitTestRequest, current_user=Depends(get_current_user))
             json.dumps(result["neighborhood"]),
             1 if body.consent_to_dataset else 0,
             datetime.utcnow().isoformat(),
+            json.dumps(result["insights"]),
+            "pending",
         ))
 
         print("[DEBUG] Step 4: Updating profile")
@@ -118,6 +151,19 @@ def submit_test(body: SubmitTestRequest, current_user=Depends(get_current_user))
                 _append_to_dataset(body.test_type, body.responses)
             except Exception as e:
                 print("[dataset crash]", e)
+
+        # Step 6: specialty psychology-model enrichment in the background.
+        # The worker was pre-warmed while the user answered, but even a slow
+        # or waking worker costs the user nothing — this response returns
+        # NOW with the base insights; the enriched version lands in the row
+        # and the results page picks it up when it's ready.
+        threading.Thread(
+            target=_enrich_result_async,
+            args=(result_id, body.test_type, result["trait_scores"],
+                  result["percentiles"], result["archetype"],
+                  result["insights"], context_notes),
+            daemon=True,
+        ).start()
 
         print("[DEBUG] SUCCESS")
 
@@ -185,6 +231,7 @@ def get_latest_result(test_type: str, current_user=Depends(get_current_user)):
     r["trait_scores"]        = json.loads(r["trait_scores"])
     r["percentiles"]         = json.loads(r["percentiles"])
     r["neighborhood_traits"] = json.loads(r["neighborhood_traits"] or "{}")
+    r["insights"]            = json.loads(r["insights"]) if r.get("insights") else None
     return r
 
 
@@ -227,6 +274,21 @@ def get_result(result_id: str, current_user=Depends(get_current_user)):
     r["trait_scores"]        = json.loads(r["trait_scores"])
     r["percentiles"]         = json.loads(r["percentiles"])
     r["neighborhood_traits"] = json.loads(r["neighborhood_traits"] or "{}")
+    r["insights"]            = json.loads(r["insights"]) if r.get("insights") else None
+
+    # Older rows may carry placeholder names from before the archetype
+    # models were named ("Archetype 2" / "LLM enrichment pending").
+    # Refresh them from the current archetype catalogue by cluster id.
+    import re as _re
+    name = r.get("archetype_name") or ""
+    tag  = r.get("archetype_description") or ""
+    if _re.match(r"^Archetype \d+$", name) or "enrichment pending" in tag.lower():
+        catalogue = _load_archetypes(r["test_type"]) or {}
+        for cid, info in catalogue.items():
+            if info.get("id") == r.get("archetype_id") or cid == r.get("archetype_id"):
+                r["archetype_name"]        = info.get("name") or name
+                r["archetype_description"] = info.get("tagline") or tag
+                break
     return r
 
 
@@ -307,43 +369,184 @@ def _load_archetypes(test_id: str) -> Optional[dict]:
     return data
 
 
-def _shape_vector(centroid):
-    """Normalize a cluster centroid to a zero-mean, unit-variance shape
-    vector. Compatibility compares profile SHAPES, so tests whose raw trait
-    scales differ still land on a common footing."""
-    import numpy as np
-    v = np.asarray(centroid, dtype=np.float64)
-    if v.size == 0:
+# Scoring model grounded in peer-reviewed findings:
+#   1. Profile similarity as the base signal: actual similarity predicts
+#      attraction (Byrne, 1971, "The Attraction Paradigm"; Montoya, Horton &
+#      Kirchner, 2008, meta-analysis, J. of Social and Personal Relationships).
+#      Profiles are compared as population z-score vectors per Furr (2008,
+#      J. of Personality) so normativeness does not inflate similarity.
+#   2. Interpersonal circumplex: SIMILARITY on warmth/communion but
+#      COMPLEMENTARITY on dominance/agency predicts smoother interactions
+#      (Sadler & Woody, 2003, JPSP; Markey & Markey, 2007).
+#   3. Partner effects: a partner's low negative-affect and high
+#      steadiness/conscientiousness predict relationship satisfaction
+#      regardless of similarity (Malouff et al., 2010, J. of Research in
+#      Personality; Dyrenforth et al., 2010, JPSP).
+
+WARMTH_KEYS = ("agreeable", "warmth", "affiliat", "social", "relatedness",
+               "benevolence", "secure", "empath", "warm", "helper")
+AGENCY_KEYS = ("dominance", "assertive", "authority", "enterprising",
+               "director", "power", "exhibition", "superiority", "energy",
+               "liveliness", "boldness")
+NEGAFF_KEYS = ("neurotic", "emotionality", "anxiety", "anxious", "depress",
+               "stress", "tension", "apprehension", "negative",
+               "self-defeating", "vigilance", "avoidant")
+STEADY_KEYS = ("conscientious", "stability", "wellbeing", "accepting",
+               "affect regulation", "mindful", "observ", "awareness",
+               "self-enhancing")
+
+_popstats_cache: Dict[str, Optional[dict]] = {}
+_traitnames_cache: Dict[str, Optional[list]] = {}
+
+
+def _trait_names(test_id: str) -> Optional[list]:
+    """Trait names in centroid order: prefer the model meta file, fall back
+    to the distributions file's key order."""
+    if test_id in _traitnames_cache:
+        return _traitnames_cache[test_id]
+    names = None
+    meta_path = os.path.join(MODELS_DIR, f"{test_id}_meta.json")
+    if os.path.exists(meta_path):
+        try:
+            with open(meta_path, encoding="utf-8") as f:
+                names = json.load(f).get("trait_names")
+        except Exception:
+            names = None
+    if not names:
+        dist_path = os.path.join(MODELS_DIR, f"{test_id}_distributions.json")
+        if os.path.exists(dist_path):
+            try:
+                with open(dist_path, encoding="utf-8") as f:
+                    names = list(json.load(f).keys())
+            except Exception:
+                names = None
+    _traitnames_cache[test_id] = names
+    return names
+
+
+def _cluster_avg_profile(test_id: str, info: dict) -> Optional[list]:
+    """Trait scores + population percentiles of the AVERAGE member of a
+    cluster (its centroid). Gives the user the concrete profile behind each
+    compatible archetype instead of just a name and a score."""
+    centroid = info.get("centroid")
+    names = _trait_names(test_id)
+    if not centroid or not names or len(names) != len(centroid):
         return None
+    try:
+        from ml.inference import calc_percentiles
+        scores = {n: float(c) for n, c in zip(names, centroid)}
+        pcts = calc_percentiles(test_id, scores)
+        return [
+            {"trait": n, "score": round(scores[n], 3), "percentile": pcts.get(n, 50)}
+            for n in names
+        ]
+    except Exception as e:
+        print(f"[compat] avg profile for {test_id}: {e}")
+        return None
+
+
+def _cluster_definition(info: dict) -> str:
+    """One-line definition of a cluster — the centroid description generated
+    at training time (which traits sit above/below the population and by how
+    much), falling back to the tagline."""
+    return (info.get("description") or info.get("tagline") or "").strip()
+
+
+def _pop_stats(test_id: str) -> Optional[dict]:
+    """Population mean/std per trait, from the training distributions."""
+    if test_id in _popstats_cache:
+        return _popstats_cache[test_id]
+    import numpy as np
+    path = os.path.join(MODELS_DIR, f"{test_id}_distributions.json")
+    stats = None
+    if os.path.exists(path):
+        try:
+            with open(path, encoding="utf-8") as f:
+                d = json.load(f)
+            stats = {k: (float(np.mean(v)), float(np.std(v)) + 1e-8)
+                     for k, v in d.items()}
+        except Exception as e:
+            print(f"[compat] distributions for {test_id}: {e}")
+    _popstats_cache[test_id] = stats
+    return stats
+
+
+def _z_profile(test_id: str, centroid):
+    """Cluster centroid as z-scores against the test's population
+    (Furr, 2008). Falls back to within-centroid standardisation when no
+    distribution data exists."""
+    import numpy as np
+    stats = _pop_stats(test_id)
+    if stats and len(stats) == len(centroid):
+        traits = list(stats.keys())
+        z = np.array([(c - stats[t][0]) / stats[t][1]
+                      for t, c in zip(traits, centroid)])
+        return traits, z
+    v = np.asarray(centroid, dtype=np.float64)
     sd = v.std()
-    if sd < 1e-9:
-        return np.zeros_like(v)
-    return (v - v.mean()) / sd
+    z = (v - v.mean()) / sd if sd > 1e-9 else np.zeros_like(v)
+    return [f"t{i}" for i in range(len(v))], z
 
 
-def _cosine(a, b) -> float:
+def _class_means(traits, z) -> dict:
     import numpy as np
-    na, nb = np.linalg.norm(a), np.linalg.norm(b)
-    if na < 1e-9 or nb < 1e-9:
+    out = {}
+    for name, keys in (("warmth", WARMTH_KEYS), ("agency", AGENCY_KEYS),
+                       ("negaff", NEGAFF_KEYS), ("steady", STEADY_KEYS)):
+        vals = [zz for tr, zz in zip(traits, z)
+                if any(k in tr.lower() for k in keys)]
+        out[name] = float(np.mean(vals)) if vals else 0.0
+    return out
+
+
+def _pearson(a, b) -> float:
+    import numpy as np
+    if len(a) < 2 or len(b) < 2 or np.std(a) < 1e-9 or np.std(b) < 1e-9:
         return 0.0
-    return float(np.dot(a, b) / (na * nb))
+    return float(np.corrcoef(a, b)[0, 1])
 
 
-def _signature(shape, points: int = 6):
-    """Resample a sorted shape profile onto a fixed number of points so
-    clusters from tests with different trait counts become comparable.
-    Captures how peaked vs flat, and how skewed, a profile is."""
+def _signature(z, points: int = 8):
+    """Sorted z-profile resampled to a fixed length so clusters from tests
+    with different trait counts become comparable (profile elevation and
+    scatter, after Furr, 2008)."""
     import numpy as np
-    s = np.sort(shape)[::-1]
+    s = np.sort(z)[::-1]
     if s.size == 1:
         return np.full(points, float(s[0]))
     xs = np.linspace(0, s.size - 1, points)
     return np.interp(xs, np.arange(s.size), s)
 
 
-def _to_score(cos: float) -> int:
-    """Map cosine similarity [-1, 1] to a compatibility score out of 100."""
-    return int(round(max(0.0, min(100.0, 50.0 + 50.0 * cos))))
+def _compat_score(user_traits, user_z, other_traits, other_z, same_space: bool) -> int:
+    """Composite compatibility score out of 100."""
+    base = (_pearson(user_z, other_z) if same_space
+            else _pearson(_signature(user_z), _signature(other_z)))
+    u = _class_means(user_traits, user_z)
+    o = _class_means(other_traits, other_z)
+    # Similarity on warmth/communion (Sadler & Woody, 2003)
+    warmth_sim = 1.0 - min(abs(u["warmth"] - o["warmth"]) / 2.0, 1.0)
+    # Complementarity on dominance/agency (Sadler & Woody, 2003; Markey 2007)
+    agency_comp = max(-1.0, min(1.0, -u["agency"] * o["agency"]))
+    # Partner effects (Malouff et al., 2010; Dyrenforth et al., 2010)
+    partner = max(-1.0, min(1.0, 0.5 * o["steady"] - 0.8 * o["negaff"]))
+    raw = (0.50 * base
+           + 0.18 * (2.0 * warmth_sim - 1.0)
+           + 0.12 * agency_comp
+           + 0.20 * partner)
+    return int(round(max(5.0, min(98.0, 50.0 + 50.0 * raw))))
+
+
+COMPAT_METHOD = {
+    "summary": ("Scores blend profile similarity (Byrne, 1971; Montoya, "
+                "Horton & Kirchner, 2008; profile metrics after Furr, 2008), "
+                "warmth similarity with dominance complementarity (Sadler & "
+                "Woody, 2003; Markey & Markey, 2007), and partner effects of "
+                "low negative affect and high steadiness (Malouff et al., "
+                "2010; Dyrenforth et al., 2010)."),
+    "weights": {"profile_similarity": 0.50, "warmth_similarity": 0.18,
+                "dominance_complementarity": 0.12, "partner_effects": 0.20},
+}
 
 
 @router.get("/compatibility/{result_id}")
@@ -382,33 +585,33 @@ def get_compatibility(result_id: str, current_user=Depends(get_current_user)):
     if user_key is None:
         user_key = next(iter(archetypes))
 
-    user_info  = archetypes[user_key]
-    user_shape = _shape_vector(user_info.get("centroid") or [])
-    if user_shape is None:
+    user_info = archetypes[user_key]
+    if not user_info.get("centroid"):
         return {"available": False, "reason": "User cluster has no centroid."}
-    user_sig = _signature(user_shape)
+    user_traits, user_z = _z_profile(test_type, user_info["centroid"])
 
-    # Within-test: same trait space, direct shape comparison.
+    # Within-test: same trait space, direct z-profile comparison.
     same_test = []
     for cid, info in archetypes.items():
-        if cid == user_key:
+        if cid == user_key or not info.get("centroid"):
             continue
-        shape = _shape_vector(info.get("centroid") or [])
-        if shape is None or shape.shape != user_shape.shape:
-            continue
-        score = _to_score(_cosine(user_shape, shape))
+        o_traits, o_z = _z_profile(test_type, info["centroid"])
+        same_space = len(o_z) == len(user_z)
+        score = _compat_score(user_traits, user_z, o_traits, o_z, same_space)
         same_test.append({
-            "test_id":   test_type,
-            "test_name": TEST_DISPLAY_NAMES.get(test_type, test_type),
-            "name":      info.get("name"),
-            "tagline":   info.get("tagline"),
-            "color":     info.get("color"),
-            "score":     score,
-            "kind":      "within",
+            "test_id":     test_type,
+            "test_name":   TEST_DISPLAY_NAMES.get(test_type, test_type),
+            "name":        info.get("name"),
+            "tagline":     info.get("tagline"),
+            "definition":  _cluster_definition(info),
+            "avg_profile": _cluster_avg_profile(test_type, info),
+            "color":       info.get("color"),
+            "score":       score,
+            "kind":        "within",
         })
     same_test.sort(key=lambda x: -x["score"])
 
-    # Cross-test: compare fixed-length profile signatures.
+    # Cross-test: fixed-length z-profile signatures + partner effects.
     cross_test = []
     for other_id, display in TEST_DISPLAY_NAMES.items():
         if other_id == test_type:
@@ -418,18 +621,20 @@ def get_compatibility(result_id: str, current_user=Depends(get_current_user)):
             continue
         best = None
         for cid, info in other.items():
-            shape = _shape_vector(info.get("centroid") or [])
-            if shape is None:
+            if not info.get("centroid"):
                 continue
-            score = _to_score(_cosine(user_sig, _signature(shape)))
+            o_traits, o_z = _z_profile(other_id, info["centroid"])
+            score = _compat_score(user_traits, user_z, o_traits, o_z, False)
             entry = {
-                "test_id":   other_id,
-                "test_name": display,
-                "name":      info.get("name"),
-                "tagline":   info.get("tagline"),
-                "color":     info.get("color"),
-                "score":     score,
-                "kind":      "cross",
+                "test_id":     other_id,
+                "test_name":   display,
+                "name":        info.get("name"),
+                "tagline":     info.get("tagline"),
+                "definition":  _cluster_definition(info),
+                "avg_profile": _cluster_avg_profile(other_id, info),
+                "color":       info.get("color"),
+                "score":       score,
+                "kind":        "cross",
             }
             if best is None or score > best["score"]:
                 best = entry
@@ -442,15 +647,18 @@ def get_compatibility(result_id: str, current_user=Depends(get_current_user)):
     return {
         "available":  True,
         "user": {
-            "test_id":   test_type,
-            "test_name": TEST_DISPLAY_NAMES.get(test_type, test_type),
-            "name":      user_info.get("name") or arch_name,
-            "tagline":   user_info.get("tagline"),
+            "test_id":     test_type,
+            "test_name":   TEST_DISPLAY_NAMES.get(test_type, test_type),
+            "name":        user_info.get("name") or arch_name,
+            "tagline":     user_info.get("tagline"),
+            "definition":  _cluster_definition(user_info),
+            "avg_profile": _cluster_avg_profile(test_type, user_info),
         },
         "same_test":  same_test,
         "cross_test": cross_test[:8],
         "top5":       combined[:5],
         "all_names":  [v.get("name") for v in archetypes.values()],
+        "method":     COMPAT_METHOD,
     }
 
 

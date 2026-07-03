@@ -58,6 +58,17 @@ def init_db():
             expires_at TIMESTAMP NOT NULL
         );
     """)
+
+    # Migration: enriched insights are persisted so they survive page
+    # reloads and can be filled in asynchronously after submit.
+    cols = [r[1] for r in cursor.execute("PRAGMA table_info(test_results)").fetchall()]
+    if "insights" not in cols:
+        cursor.execute("ALTER TABLE test_results ADD COLUMN insights TEXT")
+    if "enrichment_status" not in cols:
+        cursor.execute(
+            "ALTER TABLE test_results ADD COLUMN enrichment_status TEXT DEFAULT 'none'"
+        )
+
     conn.commit()
     conn.close()
     print("Database initialized.")

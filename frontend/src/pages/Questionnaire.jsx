@@ -294,6 +294,19 @@ export default function Questionnaire() {
       .catch(() => navigate('/tests'))
   }, [testId])
 
+  // Keep EVERY analysis model warm for the whole time the test is open: the
+  // first ping nudges the general-purpose archetype refiner AND the
+  // psychology layer (HF classifiers + the specialty worker for this
+  // instrument), and the interval re-pings so nothing idles out mid-test. By
+  // submit time everything is resident — "Analyze results" pays no
+  // cold-start latency. Fire-and-forget; failures are invisible.
+  useEffect(() => {
+    const ping = () => api.get(`/psych/warmup/${testId}`).catch(() => {})
+    ping()
+    const iv = setInterval(ping, 4 * 60 * 1000)
+    return () => clearInterval(iv)
+  }, [testId])
+
   const handleLangSelect = useCallback(async (lang) => {
     if (lang.code === activeLang) return
     setActiveLang(lang.code)

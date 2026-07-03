@@ -787,22 +787,33 @@ def assign_archetype(test_id: str, trait_vector: List[float],
                         vec_aligned = np.pad(vec, (0, n_features - vec.shape[0]))
                     cluster_id = str(int(kmeans.predict(vec_aligned.reshape(1, -1))[0]))
 
+            refinement = None
             if trait_scores and percentiles and cluster_id is not None:
                 try:
                     from ml.archetype_refiner import ArchetypeRefiner
-                    refined = ArchetypeRefiner.instance().refine(
+                    refinement = ArchetypeRefiner.instance().refine(
                         test_id, trait_scores, cluster_id, percentiles,
                         context_notes=context_notes,
                         raw_responses=raw_responses,
                     )
-                    if refined is not None and refined in archetypes:
-                        cluster_id = refined
+                    if refinement and refinement.get("group") in archetypes:
+                        cluster_id = refinement["group"]
                 except Exception:
                     pass
 
             if cluster_id is not None:
-                result = archetypes.get(cluster_id)
-                if result:
+                base = archetypes.get(cluster_id)
+                if base:
+                    # Copy so LLM personalisation never mutates the cached
+                    # archetype catalogue on disk / in memory.
+                    result = dict(base)
+                    if refinement:
+                        if refinement.get("name"):
+                            result["name"] = refinement["name"]
+                        if refinement.get("tagline"):
+                            result["tagline"] = refinement["tagline"]
+                        if refinement.get("adjustments"):
+                            result["percentile_adjustments"] = refinement["adjustments"]
                     return result
 
         except Exception as e:
@@ -868,10 +879,28 @@ def run_inference(test_id: str, raw_responses: Dict[str, int],
                                        percentiles=percentiles,
                                        context_notes=context_notes,
                                        raw_responses=raw_responses)
+
+    # LLM-suggested percentile fine-tuning: applied only when volunteered
+    # context justified it, capped at +/-5 points, clamped to [1, 99].
+    if isinstance(archetype, dict) and archetype.get("percentile_adjustments"):
+        adjustments = archetype.pop("percentile_adjustments")
+        for trait, delta in adjustments.items():
+            if trait in percentiles:
+                try:
+                    d = max(-5, min(5, int(delta)))
+                    percentiles[trait] = int(max(1, min(99, round(percentiles[trait] + d))))
+                except (TypeError, ValueError):
+                    continue
     umap_x, umap_y = project_umap(test_id, trait_vector)
     similarity_pct  = calc_similarity(test_id, trait_vector)
     neighborhood    = get_neighborhood_traits(test_id, trait_vector, trait_names)
     rarity_pct      = round(100 - similarity_pct, 1)
+
+    # Specialty psychology-model enrichment happens AFTER submit, in a
+    # background thread (routers/results.py), and is persisted to the row —
+    # the submit response never waits on a remote model.
+    insights = generate_insights(test_id, trait_scores, percentiles, archetype,
+                                 context_notes=context_notes)
 
     return {
         "trait_scores":   trait_scores,
@@ -882,8 +911,7 @@ def run_inference(test_id: str, raw_responses: Dict[str, int],
         "similarity_pct": similarity_pct,
         "rarity_pct":     rarity_pct,
         "neighborhood":   neighborhood,
-        "insights":       generate_insights(test_id, trait_scores, percentiles, archetype,
-                                            context_notes=context_notes),
+        "insights":       insights,
     }
 
 

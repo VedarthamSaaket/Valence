@@ -1,0 +1,14 @@
+{
+  "id": "sket311/valence-psych-host",
+  "title": "valence-psych-host",
+  "code_file": "valence_psych_host.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_internet": true,
+  "dataset_sources": [],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": []
+}

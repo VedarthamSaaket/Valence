@@ -7,7 +7,7 @@ opens, and keeps pinging while the user answers. By submit time the Layer A
 classifiers are warm and the Layer B specialty worker has this test's model
 resident in VRAM, so "Analyze results" pays no cold-start latency.
 
-Endpoints are idempotent and cheap — spamming them is fine.
+Endpoints are idempotent and cheap , spamming them is fine.
 
 The /internal/specialty/* endpoints are how GPU workers (Kaggle kernel,
 manual Colab) self-report their public URL, and how idle workers report
@@ -32,7 +32,7 @@ def _ensure_refiner() -> dict:
     report its readiness, so a single questionnaire ping keeps BOTH the
     refiner and the psychology models hot. Idempotent and fail-soft: the
     refiner loads once in a background thread, so repeated calls just report
-    status. Never raises — a warmup ping must never error."""
+    status. Never raises , a warmup ping must never error."""
     try:
         from ml.archetype_refiner import ArchetypeRefiner
         refiner = ArchetypeRefiner.instance()

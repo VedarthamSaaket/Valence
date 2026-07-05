@@ -897,7 +897,7 @@ def run_inference(test_id: str, raw_responses: Dict[str, int],
     rarity_pct      = round(100 - similarity_pct, 1)
 
     # Specialty psychology-model enrichment happens AFTER submit, in a
-    # background thread (routers/results.py), and is persisted to the row —
+    # background thread (routers/results.py), and is persisted to the row ,
     # the submit response never waits on a remote model.
     insights = generate_insights(test_id, trait_scores, percentiles, archetype,
                                  context_notes=context_notes)

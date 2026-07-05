@@ -21,7 +21,7 @@ def _enrich_result_async(result_id: str, test_type: str, trait_scores: Dict,
                          insights: Dict, context_notes) -> None:
     """Background enrichment: call the specialty psychology model (waiting
     out a Space wake-up if needed), persist the enriched insights, and flip
-    enrichment_status so the results page can stop polling. Fail-soft — on
+    enrichment_status so the results page can stop polling. Fail-soft , on
     any error the row keeps its base insights with status 'failed'."""
     status = "failed"
     try:
@@ -154,7 +154,7 @@ def submit_test(body: SubmitTestRequest, current_user=Depends(get_current_user))
 
         # Step 6: specialty psychology-model enrichment in the background.
         # The worker was pre-warmed while the user answered, but even a slow
-        # or waking worker costs the user nothing — this response returns
+        # or waking worker costs the user nothing , this response returns
         # NOW with the base insights; the enriched version lands in the row
         # and the results page picks it up when it's ready.
         threading.Thread(
@@ -190,7 +190,7 @@ def submit_test(body: SubmitTestRequest, current_user=Depends(get_current_user))
 
 @router.get("/my")
 def get_my_results(current_user=Depends(get_current_user)):
-    """Returns ONLY the authenticated user's own results – never another user's."""
+    """Returns ONLY the authenticated user's own results - never another user's."""
     db   = get_db()
     rows = db.execute(
         "SELECT * FROM test_results WHERE user_id = ? ORDER BY taken_at DESC",
@@ -237,7 +237,7 @@ def get_latest_result(test_type: str, current_user=Depends(get_current_user)):
 
 @router.get("/map/{test_type}")
 def get_map_coords(test_type: str, current_user=Depends(get_current_user)):
-    """Map coordinates are aggregate/anonymous – no per-user data leaked here."""
+    """Map coordinates are aggregate/anonymous - no per-user data leaked here."""
     coords_path = os.path.join(
         os.path.dirname(__file__), f"../models/{test_type}_map_coords.json"
     )
@@ -446,7 +446,7 @@ def _cluster_avg_profile(test_id: str, info: dict) -> Optional[list]:
 
 
 def _cluster_definition(info: dict) -> str:
-    """One-line definition of a cluster — the centroid description generated
+    """One-line definition of a cluster , the centroid description generated
     at training time (which traits sit above/below the population and by how
     much), falling back to the tagline."""
     return (info.get("description") or info.get("tagline") or "").strip()

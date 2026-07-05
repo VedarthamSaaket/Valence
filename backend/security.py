@@ -2,11 +2,11 @@
 Valence Security Layer
 ======================
 Covers:
-  1. Auth Security        – session hardening, brute-force protection
-  2. Access Control       – IDOR ownership enforcement on every data-touching route
-  3. Secrets / Env guard  – startup audit that refuses to run if keys are exposed
-  4. Bot Defense          – rate limiting (login, register, API, AI endpoints)
-  5. Deployment           – HTTPS redirect, security headers, anomaly logging
+  1. Auth Security        - session hardening, brute-force protection
+  2. Access Control       - IDOR ownership enforcement on every data-touching route
+  3. Secrets / Env guard  - startup audit that refuses to run if keys are exposed
+  4. Bot Defense          - rate limiting (login, register, API, AI endpoints)
+  5. Deployment           - HTTPS redirect, security headers, anomaly logging
 
 Drop this file alongside main.py and wire it in as shown at the bottom.
 """
@@ -82,10 +82,10 @@ def audit_secrets() -> None:
         for e in errors:
             security_log.critical(e)
         raise RuntimeError(
-            "Security audit failed – fix the above secrets before starting the server."
+            "Security audit failed - fix the above secrets before starting the server."
         )
 
-    security_log.info("[SECRETS] Audit passed – all required secrets present.")
+    security_log.info("[SECRETS] Audit passed - all required secrets present.")
 
 
 # ===========================================================================
@@ -96,7 +96,7 @@ def audit_secrets() -> None:
 class _RateLimiter:
     """
     Simple in-memory sliding-window rate limiter.
-    Not distributed – fine for a single-process deployment.
+    Not distributed - fine for a single-process deployment.
     For multi-process / multi-instance deployments swap the store for Redis.
     """
 
@@ -260,7 +260,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 "[BOT] Suspicious User-Agent '%s' from %s on %s",
                 ua, _get_client_ip(request), request.url.path,
             )
-            # Don't hard-block UA checks – bots can spoof. Just log.
+            # Don't hard-block UA checks - bots can spoof. Just log.
             # Uncomment next line to hard-block:
             # return JSONResponse(status_code=403, content={"detail": "Forbidden"})
 

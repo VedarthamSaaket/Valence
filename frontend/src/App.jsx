@@ -8,6 +8,7 @@ import Auth from './pages/Auth'
 import Tests from './pages/Tests'
 import Questionnaire from './pages/Questionnaire'
 import Results from './pages/Results'
+import DeepDive from './pages/DeepDive'
 import Dashboard from './pages/Dashboard'
 import AuthCallback from './pages/AuthCallback'
 
@@ -49,6 +50,9 @@ function AppRoutes() {
         />
         <Route path="/results/:resultId"
           element={<ProtectedRoute><Results key={location.key} /></ProtectedRoute>}
+        />
+        <Route path="/deep-dive/:resultId"
+          element={<ProtectedRoute><DeepDive key={location.key} /></ProtectedRoute>}
         />
         <Route path="/dashboard"
           element={<ProtectedRoute><Dashboard key={location.key} /></ProtectedRoute>}

@@ -298,12 +298,15 @@ export default function Questionnaire() {
   // first ping nudges the general-purpose archetype refiner AND the
   // psychology layer (HF classifiers + the specialty worker for this
   // instrument), and the interval re-pings so nothing idles out mid-test. By
-  // submit time everything is resident — "Analyze results" pays no
+  // submit time everything is resident , "Analyze results" pays no
   // cold-start latency. Fire-and-forget; failures are invisible.
   useEffect(() => {
     const ping = () => api.get(`/psych/warmup/${testId}`).catch(() => {})
     ping()
-    const iv = setInterval(ping, 4 * 60 * 1000)
+    // Aggressive warmup: HF Space needs about 3 min to boot from cold, so
+    // pinging every 30 s while the questionnaire is open keeps the wake
+    // request queued and the worker resident by the time the user submits.
+    const iv = setInterval(ping, 30 * 1000)
     return () => clearInterval(iv)
   }, [testId])
 

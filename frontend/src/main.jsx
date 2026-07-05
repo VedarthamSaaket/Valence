@@ -29,6 +29,8 @@ import '@fontsource/playfair-display/700.css'
 // JetBrains Mono, numerals / code
 import '@fontsource/jetbrains-mono/400.css'
 import '@fontsource/jetbrains-mono/500.css'
+// Press Start 2P, retro arcade pixel font (Deep Dive minigame)
+import '@fontsource/press-start-2p/400.css'
 // Libre Baskerville, italic accent voice (dashboard copy, journal prompts)
 import '@fontsource/libre-baskerville/400.css'
 import '@fontsource/libre-baskerville/400-italic.css'

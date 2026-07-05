@@ -21,7 +21,7 @@ def get_profile(current_user=Depends(get_current_user)):
     ).fetchone()
 
     recent_results = db.execute(
-        """SELECT test_type, taken_at, archetype_name, trait_scores, percentiles
+        """SELECT id, test_type, taken_at, archetype_name, trait_scores, percentiles
            FROM test_results
            WHERE user_id = ?
            ORDER BY taken_at DESC
@@ -30,7 +30,7 @@ def get_profile(current_user=Depends(get_current_user)):
     ).fetchall()
     db.close()
 
-    # Ownership check – the WHERE clause already isolates the user's row,
+    # Ownership check - the WHERE clause already isolates the user's row,
     # but we validate explicitly so any future refactor cannot silently break this.
     if profile:
         assert_owns_profile(dict(profile), current_user["id"])
@@ -42,6 +42,7 @@ def get_profile(current_user=Depends(get_current_user)):
     results_formatted = []
     for r in recent_results:
         results_formatted.append({
+            "id":            r["id"],
             "test_type":     r["test_type"],
             "taken_at":      r["taken_at"],
             "archetype_name": r["archetype_name"],

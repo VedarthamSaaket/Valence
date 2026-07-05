@@ -44,6 +44,27 @@ function gaussianY(x, mean, sigma) {
   return Math.exp(-0.5 * Math.pow((x - mean) / sigma, 2)) / (sigma * Math.sqrt(2 * Math.PI))
 }
 
+// Two-line behavioural sketch of a compatibility cluster, derived from the
+// average member's trait percentiles. Highlights the two strongest and the
+// weakest trait so the reader can see the archetype's tendency without
+// duplicating the percentile table underneath.
+function behaviorSummary(profile) {
+  if (!Array.isArray(profile) || profile.length === 0) return ''
+  const sorted = [...profile].sort((a, b) => (b.percentile || 0) - (a.percentile || 0))
+  const highs = sorted.filter(t => (t.percentile || 0) >= 60).slice(0, 2).map(t => t.trait)
+  const lows = sorted.filter(t => (t.percentile || 0) <= 40).slice(-1).map(t => t.trait)
+  const parts = []
+  if (highs.length) {
+    parts.push(`Leads with ${highs.join(' and ')} that visibly shape day-to-day behaviour.`)
+  } else {
+    parts.push('Runs a moderate profile with no single trait dominating behaviour.')
+  }
+  if (lows.length) {
+    parts.push(`Runs lower on ${lows[0]}, expect that gap to show in matching situations.`)
+  }
+  return parts.join(' ')
+}
+
 function computeStats(traitScores, percentiles) {
   const pctVals = Object.values(percentiles)
   if (!pctVals.length) return { topPct: 50, topTrait: '', medianPct: 50 }
@@ -495,7 +516,7 @@ function TraitHeatmap({ percentiles, accent, metal }) {
 function ArchetypeConstellation({ testType, userArchetype, accent, names: providedNames, sameTest }) {
   const canvasRef = useRef()
 
-  // Generate deterministic constellation of 8–14 archetypes per test
+  // Generate deterministic constellation of 8-14 archetypes per test
   const archetypeSeeds = {
     hexaco: ['The Principled Steward', 'The Warm Connector', 'The Thoughtful Observer', 'The Open Explorer', 'The Grounded Idealist', 'The Conscientious Anchor', 'The Empathic Strategist', 'The Bold Innovator'],
     sixteenpf: ['The Warm Strategist', 'The Bold Pioneer', 'The Grounded Analyst', 'The Expressive Idealist', 'The Vigilant Planner', 'The Social Catalyst', 'The Private Architect', 'The Tense Achiever'],
@@ -651,7 +672,7 @@ function ArchetypeConstellation({ testType, userArchetype, accent, names: provid
         ctx.fill()
         ctx.shadowBlur = 0
 
-        // No score labels here — the numbers live in the dedicated
+        // No score labels here , the numbers live in the dedicated
         // compatibility sections below. Distance already encodes the score.
         drawLabel(star.name, sx, sy - star.size - 8, `7.5px 'Cinzel', serif`, 'rgba(215,228,242,0.55)')
       }
@@ -754,7 +775,7 @@ function TraitBar({ trait, score, percentile, metal, accent, glow, index }) {
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
         <span style={{ fontFamily: S.fontBody, fontStyle: 'italic', fontSize: 11, color: S.textMuted }}>Low</span>
-        <span style={{ fontFamily: S.fontSC, fontSize: 7, letterSpacing: '0.12em', color: S.textMuted }}>{pct}th percentile,higher than {pct}% of people</span>
+        <span style={{ fontFamily: S.fontSC, fontSize: 7, letterSpacing: '0.12em', color: S.textMuted }}>{pct}th percentile · your score is above {pct}% of the sample on this trait</span>
         <span style={{ fontFamily: S.fontBody, fontStyle: 'italic', fontSize: 11, color: S.textMuted }}>High</span>
       </div>
     </div>
@@ -813,49 +834,6 @@ function FragmentRow({ t, accent }) {
       <span style={{ fontFamily: S.fontMono, fontSize: 10, color: 'rgba(244,247,250,0.55)', textAlign: 'right' }}>{Number(t.score).toFixed(2)}</span>
       <span style={{ fontFamily: S.fontMono, fontSize: 10, color: accent, textAlign: 'right' }}>{t.percentile}th</span>
     </>
-  )
-}
-
-// Deep Dive — the specialty psychology-model enrichment, revealed on demand.
-// Same visual language as the rest of the report, plus bonus context (which
-// model analysed the profile, and the affect signal read from the user's notes).
-function DeepDiveSection({ data, accent }) {
-  const lines = data?.insights || []
-  return (
-    <Section label="Deep Dive · Psychology Model" roman="✦" accent={accent}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: 'rgba(215,228,242,0.04)', border: `1px solid ${accent}33`, borderLeft: `2px solid ${accent}88`, marginBottom: 22 }}>
-        <span style={{ color: accent, fontSize: 12, opacity: 0.8 }}>✦</span>
-        <span style={{ fontFamily: S.fontSC, fontSize: 8.5, letterSpacing: '0.10em', color: S.textSec, textTransform: 'uppercase' }}>{data.model_label}</span>
-      </div>
-
-      {lines.length > 0 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {lines.map((ins, i) => (
-            <div key={i} style={{ display: 'flex', gap: 18, alignItems: 'flex-start', padding: '16px 20px', background: 'rgba(215,228,242,0.04)', border: '1px solid rgba(215,228,242,0.08)', borderLeft: `2px solid ${accent}66` }}>
-              <span style={{ fontFamily: S.fontDisplay, fontSize: 16, fontWeight: 300, color: accent, opacity: 0.6, flexShrink: 0, marginTop: 1 }}>{String(i + 1).padStart(2, '0')}</span>
-              <p style={{ fontFamily: S.fontBody, fontStyle: 'italic', fontSize: 14, color: 'rgba(244,247,250,0.58)', lineHeight: 1.80 }}>{ins}</p>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p style={{ fontFamily: S.fontSC, fontSize: 12, color: S.textMuted, lineHeight: 1.75 }}>
-          The psychology model did not return additional analysis for this profile.
-        </p>
-      )}
-
-      {data.affect_context && (
-        <div style={{ marginTop: 18, padding: '14px 18px', background: 'rgba(215,228,242,0.03)', border: '1px solid rgba(215,228,242,0.07)', borderLeft: `2px solid ${accent}44` }}>
-          <div style={{ fontFamily: S.fontSC, fontSize: 7, letterSpacing: '0.18em', color: S.irisDim, textTransform: 'uppercase', marginBottom: 6 }}>
-            Emotional Signal In Your Notes
-          </div>
-          <p style={{ fontFamily: S.fontSC, fontSize: 12, color: 'rgba(244,247,250,0.55)', lineHeight: 1.75 }}>{data.affect_context}</p>
-        </div>
-      )}
-
-      <p style={{ fontFamily: S.fontSC, fontSize: 11, letterSpacing: '0.04em', color: S.textMuted, lineHeight: 1.75, marginTop: 18 }}>
-        Generated by a psychology-specialized language model, separately from your base results. These are reflective observations, not a clinical diagnosis.{data.latency_s ? ` · computed in ${Math.round(data.latency_s)}s` : ''}
-      </p>
-    </Section>
   )
 }
 
@@ -990,7 +968,6 @@ export default function Results() {
   const [compat, setCompat] = useState() // undefined = loading, null = failed
   const [revealing, setRevealing] = useState(true)
   const [downloading, setDownloading] = useState(false)
-  const [deepDive, setDeepDive] = useState(false)
   const resultPageRef = useRef()
 
   useEffect(() => {
@@ -1266,7 +1243,7 @@ export default function Results() {
                   Your Cluster, In One Line
                 </div>
                 <p style={{ fontFamily: S.fontSC, fontSize: 12, letterSpacing: '0.03em', color: 'rgba(244,247,250,0.60)', lineHeight: 1.75 }}>
-                  <span style={{ color: accent, opacity: 0.85 }}>{compat.user.name}</span> — {compat.user.definition}
+                  <span style={{ color: accent, opacity: 0.85 }}>{compat.user.name}</span> , {compat.user.definition}
                 </p>
               </div>
             )}
@@ -1306,7 +1283,9 @@ export default function Results() {
                       Within This Test
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 8 }}>
-                      {compat.same_test.map(c => (
+                      {compat.same_test.map(c => {
+                        const behavior = behaviorSummary(c.avg_profile)
+                        return (
                         <div key={c.name} style={{ padding: '12px 16px', background: 'rgba(215,228,242,0.03)', border: '1px solid rgba(215,228,242,0.08)' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
                             <span style={{ fontFamily: S.fontDisplay, fontStyle: 'italic', fontSize: 14, fontWeight: 300, color: S.textSec, lineHeight: 1.35 }}>{c.name}</span>
@@ -1315,14 +1294,15 @@ export default function Results() {
                           <div style={{ height: 2, background: 'rgba(215,228,242,0.07)', marginTop: 8 }}>
                             <div style={{ height: '100%', width: `${c.score}%`, background: accent, opacity: 0.55 }} />
                           </div>
-                          {c.definition && (
-                            <p style={{ fontFamily: S.fontSC, fontSize: 9, letterSpacing: '0.03em', color: 'rgba(244,247,250,0.40)', lineHeight: 1.7, marginTop: 8 }}>
-                              {c.definition}
+                          {behavior && (
+                            <p style={{ fontFamily: S.fontBody, fontStyle: 'italic', fontSize: 12, color: 'rgba(244,247,250,0.55)', lineHeight: 1.65, marginTop: 10 }}>
+                              {behavior}
                             </p>
                           )}
                           <ClusterProfileTable profile={c.avg_profile} accent={accent} />
                         </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   </div>
                 )}
@@ -1334,7 +1314,9 @@ export default function Results() {
                       Across Other Tests
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 8 }}>
-                      {compat.cross_test.map(c => (
+                      {compat.cross_test.map(c => {
+                        const behavior = behaviorSummary(c.avg_profile)
+                        return (
                         <div key={`${c.test_id}-${c.name}`} style={{ padding: '12px 16px', background: 'rgba(215,228,242,0.03)', border: '1px solid rgba(215,228,242,0.08)' }}>
                           <div style={{ fontFamily: S.fontSC, fontSize: 7, letterSpacing: '0.16em', color: S.textMuted, textTransform: 'uppercase', marginBottom: 5 }}>{c.test_name}</div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
@@ -1344,14 +1326,15 @@ export default function Results() {
                           <div style={{ height: 2, background: 'rgba(215,228,242,0.07)', marginTop: 8 }}>
                             <div style={{ height: '100%', width: `${c.score}%`, background: accent, opacity: 0.55 }} />
                           </div>
-                          {c.definition && (
-                            <p style={{ fontFamily: S.fontSC, fontSize: 9, letterSpacing: '0.03em', color: 'rgba(244,247,250,0.40)', lineHeight: 1.7, marginTop: 8 }}>
-                              {c.definition}
+                          {behavior && (
+                            <p style={{ fontFamily: S.fontBody, fontStyle: 'italic', fontSize: 12, color: 'rgba(244,247,250,0.55)', lineHeight: 1.65, marginTop: 10 }}>
+                              {behavior}
                             </p>
                           )}
                           <ClusterProfileTable profile={c.avg_profile} accent={accent} />
                         </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   </div>
                 )}
@@ -1494,34 +1477,26 @@ export default function Results() {
             </Section>
           )}
 
-          {/* Deep Dive Mode — psychology-model enrichment, revealed on demand.
-              Base results show instantly; this holds the richer analysis that
-              generated in the background, so the user opts in when curious. */}
-          <div style={{ marginTop: 3 }}>
-            <div data-report-exclude="true">
-              <button
-                onClick={() => { if (deepDiveReady) setDeepDive(v => !v) }}
-                disabled={!deepDiveReady}
-                style={{ width: '100%', padding: '18px 32px', background: deepDiveReady ? `${accent}14` : 'rgba(215,228,242,0.03)', border: `1px solid ${deepDiveReady ? accent + '77' : 'rgba(215,228,242,0.14)'}`, color: deepDiveReady ? S.textPrim : S.textMuted, cursor: deepDiveReady ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, transition: 'all 220ms', fontFamily: S.fontSC, fontSize: 9, letterSpacing: '0.22em', opacity: deepDiveReady ? 1 : 0.65 }}
-                onMouseEnter={e => { if (deepDiveReady) { e.currentTarget.style.background = `${accent}22`; e.currentTarget.style.borderColor = accent } }}
-                onMouseLeave={e => { if (deepDiveReady) { e.currentTarget.style.background = `${accent}14`; e.currentTarget.style.borderColor = `${accent}77` } }}
-              >
-                <span style={{ fontSize: 13, opacity: 0.85 }}>✦</span>
-                {deepDive ? 'HIDE DEEP DIVE'
-                  : deepDiveReady ? 'ENTER DEEP DIVE MODE'
-                  : enrichPending ? 'DEEP DIVE · PREPARING…'
-                  : 'DEEP DIVE · UNAVAILABLE'}
-              </button>
-              {enrichPending && !deepDiveReady && (
-                <p style={{ fontFamily: S.fontSC, fontSize: 10, letterSpacing: '0.04em', color: S.textMuted, lineHeight: 1.7, marginTop: 8, textAlign: 'center' }}>
-                  Your psychology-model analysis is generating in the background (free-tier CPU, ~1–3 min). This unlocks automatically when it's ready — no need to wait on this screen.
-                </p>
-              )}
-            </div>
-            {deepDive && deepDiveReady && (
-              <div style={{ marginTop: 3 }}>
-                <DeepDiveSection data={deepDiveData} accent={accent} />
-              </div>
+          {/* Deep Dive Mode , psychology-model enrichment lives on its own
+              page (/deep-dive/:id). If it's still generating, that page runs
+              an arcade minigame while the user waits. */}
+          <div style={{ marginTop: 3 }} data-report-exclude="true">
+            <button
+              onClick={() => { if (deepDiveReady || enrichPending) navigate(`/deep-dive/${resultId}`) }}
+              disabled={!deepDiveReady && !enrichPending}
+              style={{ width: '100%', padding: '18px 32px', background: (deepDiveReady || enrichPending) ? `${accent}14` : 'rgba(215,228,242,0.03)', border: `1px solid ${(deepDiveReady || enrichPending) ? accent + '77' : 'rgba(215,228,242,0.14)'}`, color: (deepDiveReady || enrichPending) ? S.textPrim : S.textMuted, cursor: (deepDiveReady || enrichPending) ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, transition: 'all 220ms', fontFamily: S.fontSC, fontSize: 9, letterSpacing: '0.22em', opacity: (deepDiveReady || enrichPending) ? 1 : 0.65 }}
+              onMouseEnter={e => { if (deepDiveReady || enrichPending) { e.currentTarget.style.background = `${accent}22`; e.currentTarget.style.borderColor = accent } }}
+              onMouseLeave={e => { if (deepDiveReady || enrichPending) { e.currentTarget.style.background = `${accent}14`; e.currentTarget.style.borderColor = `${accent}77` } }}
+            >
+              <span style={{ fontSize: 13, opacity: 0.85 }}>✦</span>
+              {deepDiveReady ? 'ENTER DEEP DIVE MODE'
+                : enrichPending ? 'DEEP DIVE · GENERATING, PLAY WHILE YOU WAIT'
+                : 'DEEP DIVE · UNAVAILABLE'}
+            </button>
+            {enrichPending && !deepDiveReady && (
+              <p style={{ fontFamily: S.fontSC, fontSize: 10, letterSpacing: '0.04em', color: S.textMuted, lineHeight: 1.7, marginTop: 8, textAlign: 'center' }}>
+                Deep Dive gives a more psychology-compliant read on your profile. Enter now and play the arcade while it finishes, or come back later from your dashboard.
+              </p>
             )}
           </div>
 

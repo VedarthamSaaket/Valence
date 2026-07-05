@@ -4,15 +4,15 @@ Psychology model augmentation layer for Valence.
 
 Two layers, mirroring the proven Lumina architecture:
 
-Layer A — small HuggingFace Inference API classifiers (free serverless tier).
+Layer A , small HuggingFace Inference API classifiers (free serverless tier).
     Used to classify the user's volunteered context notes (emotion / mental
     state spectrum) so the heavier models receive an affect signal alongside
     the raw trait profile.
 
-Layer B — specialty psychology LLMs (too heavy for the serverless tier),
+Layer B , specialty psychology LLMs (too heavy for the serverless tier),
     hosted on a dedicated Hugging Face Space (Docker, llama.cpp, GGUF quants,
     static *.hf.space URL). The Space sleeps when unused and wakes on any
-    HTTP request — no public backend, no callbacks, no Kaggle quota:
+    HTTP request , no public backend, no callbacks, no Kaggle quota:
 
         Instrument family        | Model                    | Spec
         -------------------------|--------------------------|-----------------------------------------
@@ -58,7 +58,7 @@ HF_API_KEY = os.getenv("HF_API_KEY", "")
 ENABLE_PSYCH_AUGMENT = os.getenv("ENABLE_PSYCH_AUGMENT", "true").lower() in ("1", "true", "yes")
 ENABLE_SPECIALTY_PSYCH = os.getenv("ENABLE_SPECIALTY_PSYCH", "true").lower() in ("1", "true", "yes")
 
-# Layer A classifiers — per-signal pins, env-overridable.
+# Layer A classifiers , per-signal pins, env-overridable.
 PSYCH_MODEL_NOTES     = os.getenv("PSYCH_MODEL_NOTES",     "mental/mental-bert-base-uncased")
 PSYCH_MODEL_EMOTION   = os.getenv("PSYCH_MODEL_EMOTION",   "SamLowe/roberta-base-go_emotions")
 PSYCH_MODEL_SENTIMENT = os.getenv("PSYCH_MODEL_SENTIMENT", "cardiffnlp/twitter-roberta-base-sentiment-latest")
@@ -74,7 +74,7 @@ COLAB_URL_MENTALLAMA    = os.getenv("COLAB_URL_MENTALLAMA", "")
 SPECIALTY_REGISTRY_SECRET = os.getenv("SPECIALTY_REGISTRY_SECRET", "")
 
 # The dedicated Hugging Face Space hosting the specialty models. Static URL,
-# reachable from anywhere, wakes from sleep on any HTTP request — the local
+# reachable from anywhere, wakes from sleep on any HTTP request , the local
 # backend never needs to be publicly reachable. Deploy with deploy_space.py.
 SPECIALTY_SPACE_URL = os.getenv(
     "SPECIALTY_SPACE_URL", "https://vaedarth-valence-psych-host.hf.space"
@@ -90,13 +90,13 @@ HF_BASE = "https://api-inference.huggingface.co/models"
 MODEL_KEYS = ("psyllm", "psychocounsel", "psycholex", "mentallama")
 PRIORITY = ("lightning", "space", "kaggle", "colab")
 
-# Human-facing labels for the "Deep Dive" panel — which specialty psychology
+# Human-facing labels for the "Deep Dive" panel , which specialty psychology
 # model produced the enrichment, and what it specialises in.
 MODEL_LABELS = {
-    "psyllm":        "PsyLLM — personality-science model (trait theory + DSM-5 dimensional framing)",
-    "psychocounsel": "PsychoCounsel — psychotherapist-aligned relational model",
-    "psycholex":     "PsychoLex — academic psychology model",
-    "mentallama":    "MentaLLaMA — interpretable mental-health model",
+    "psyllm":        "PsyLLM , personality-science model (trait theory + DSM-5 dimensional framing)",
+    "psychocounsel": "PsychoCounsel , psychotherapist-aligned relational model",
+    "psycholex":     "PsychoLex , academic psychology model",
+    "mentallama":    "MentaLLaMA , interpretable mental-health model",
 }
 
 # Which specialty model owns which instrument.
@@ -206,23 +206,35 @@ async def hf_warmup(model: str) -> bool:
 
 
 async def _network_reachable() -> bool:
-    try:
-        async with httpx.AsyncClient(timeout=3.0) as client:
-            await client.head(HF_BASE)
-        return True
-    except Exception:
-        return False
+    """Probe api-inference.huggingface.co with GET and a small retry budget.
+    HEAD on the bare /models path returns spuriously (or DNS drops), so we
+    hit the API root and accept any HTTP response as evidence the host is
+    reachable, only network/DNS errors count as unreachable."""
+    for attempt in range(2):
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                r = await client.get("https://api-inference.huggingface.co/",
+                                      headers={"User-Agent": "valence-warmup"})
+            return r.status_code < 600
+        except Exception:
+            if attempt == 0:
+                await asyncio.sleep(1.5)
+                continue
+            return False
+    return False
 
 
 async def warmup_all_hf() -> None:
     """Concurrent warmup for every Layer A model. Fire-and-forget at boot and
-    on every test-open ping."""
+    on every test-open ping. Reachability failure no longer short-circuits,
+    the classifier calls are already fail-soft and one may succeed even when
+    a shallow HEAD/GET probe reports the host as down (transient DNS)."""
     if not _augment_enabled():
-        print("[psych] augmentation disabled or HF_API_KEY missing — skipping HF warmup.")
+        print("[psych] augmentation disabled or HF_API_KEY missing, skipping HF warmup.")
         return
-    if not await _network_reachable():
-        print("[psych] HuggingFace unreachable — skipping warmup, will retry on first call.")
-        return
+    reachable = await _network_reachable()
+    if not reachable:
+        print("[psych] HuggingFace reachability probe failed, attempting warmup anyway (probe may be a false negative).")
     results = await asyncio.gather(*[hf_warmup(m) for m in HF_MODELS], return_exceptions=True)
     for model, ok in zip(HF_MODELS, results):
         print(f"[psych] {model}: {'ready' if ok is True else 'unavailable'}")
@@ -297,7 +309,7 @@ def registry_snapshot() -> dict:
 # ─── Layer B: Space wake-on-demand ────────────────────────────────────────────
 # A sleeping HF Space restarts on ANY incoming HTTP request; while it boots,
 # requests get non-200 responses. Wake = probe /health with patience. No
-# quota tracking needed — the free CPU tier is not metered.
+# quota tracking needed , the free CPU tier is not metered.
 
 _wake_lock = threading.Lock()
 _wake_state = {"in_flight_until": 0.0, "last_attempt": 0.0}
@@ -415,10 +427,10 @@ async def specialty_health_snapshot() -> dict:
     }
 
 
-def _call_worker_sync(model_key: str, prompt: str, max_new_tokens: int = 160,
-                      temperature: float = 0.4,
+def _call_worker_sync(model_key: str, prompt: str, max_new_tokens: int = 420,
+                      temperature: float = 0.5,
                       timeout: Optional[float] = None) -> Optional[str]:
-    """Synchronous inference call — runs in the post-submit enrichment
+    """Synchronous inference call , runs in the post-submit enrichment
     thread, so it can afford to wait out a Space wake-up. Fail-soft: None
     on any failure."""
     if not _specialty_enabled():
@@ -443,10 +455,10 @@ def _call_worker_sync(model_key: str, prompt: str, max_new_tokens: int = 160,
     try:
         data = _infer()
     except Exception as first_err:
-        # Space was likely asleep — the failed request queued its restart.
+        # Space was likely asleep , the failed request queued its restart.
         # Wait for /health to come back (bounded), then retry once.
         print(f"[psych {model_key} @ {base_url}] {type(first_err).__name__}: "
-              f"{first_err} — waiting for worker to wake")
+              f"{first_err} , waiting for worker to wake")
         deadline = time.time() + 180
         while time.time() < deadline:
             if _health_ok_sync(base_url):
@@ -514,10 +526,11 @@ def _build_prompt(test_id: str, model_key: str, trait_scores: Dict[str, float],
             "You are MentaLLaMA. A person completed the "
             f"{test_label} self-report instrument.\n\n"
             f"Scored profile:\n{trait_lines}\n\n{notes_block}"
-            "Give 2 short lines, each starting with 'BECAUSE:', that justify one "
+            "Give 6 short lines, each starting with 'BECAUSE:', that justify one "
             "observation about their current affective pattern with a specific "
             "score and connect it to a recognised mental-health construct. "
-            "Neutral tone, no diagnosis, no alarmism.\n\nJustifications:"
+            "Neutral tone, no diagnosis, no alarmism. Each line must be one "
+            "complete sentence, distinct from the others.\n\nJustifications:"
         )
     if model_key == "psychocounsel":
         return (
@@ -525,18 +538,21 @@ def _build_prompt(test_id: str, model_key: str, trait_scores: Dict[str, float],
             f"norms. A person completed the {test_label} assessment and was "
             f"assigned the profile '{arch_name}' ({arch_tag}).\n\n"
             f"Scored profile:\n{trait_lines}\n\n{notes_block}"
-            "Write 2 one-sentence observations about how this relational/needs "
-            "profile likely shows up in close relationships, phrased warmly and "
-            "without diagnostic claims.\n\nObservations:"
+            "Write 6 one-sentence observations about how this relational/needs "
+            "profile likely shows up in close relationships, work, and everyday "
+            "self-regulation, phrased warmly and without diagnostic claims. "
+            "Cover at least three different life domains across the six lines.\n\nObservations:"
         )
     if model_key == "psycholex":
         return (
             "You are PsychoLexLLaMA. A person completed the "
             f"{test_label} instrument and was assigned '{arch_name}' ({arch_tag}).\n\n"
             f"Scored profile:\n{trait_lines}\n\n{notes_block}"
-            "Drawing on academic psychological literature, write 2 one-sentence "
-            "notes naming the theoretical construct most relevant to this "
-            "profile and one well-supported implication. No diagnoses.\n\nNotes:"
+            "Drawing on academic psychological literature, write 6 one-sentence "
+            "notes: two naming the theoretical constructs most relevant to this "
+            "profile, two describing well-supported behavioural implications, "
+            "and two connecting the most distinctive scores to concrete life "
+            "situations. No diagnoses, no repetition.\n\nNotes:"
         )
     # psyllm default
     return (
@@ -544,19 +560,27 @@ def _build_prompt(test_id: str, model_key: str, trait_scores: Dict[str, float],
         f"(trait theory, DSM-5 dimensional models where relevant) to a person's "
         f"{test_label} results, assigned '{arch_name}' ({arch_tag}).\n\n"
         f"Scored profile:\n{trait_lines}\n\n{notes_block}"
-        "Write 2 one-sentence, personalised observations that connect their "
-        "most distinctive scores to concrete day-to-day tendencies. "
-        "No diagnoses, no repetition of the archetype tagline.\n\nObservations:"
+        "Write 6 one-sentence, personalised observations that connect their "
+        "most distinctive scores to concrete day-to-day tendencies across work, "
+        "relationships, and self-regulation. No diagnoses, no repetition of the "
+        "archetype tagline, each line must stand alone.\n\nObservations:"
     )
 
 
-def _extract_lines(response: str, limit: int = 2) -> List[str]:
+def _extract_lines(response: str, limit: int = 6) -> List[str]:
     out = []
+    seen = set()
     for line in (response or "").split("\n"):
         line = line.strip().lstrip("-•· 0123456789.)")
         line = line.strip()
-        if line and 20 < len(line) < 300:
-            out.append(line)
+        if not line or len(line) <= 20 or len(line) >= 320:
+            continue
+        # Deduplicate near-identical sentences.
+        key = line.lower()[:80]
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(line)
         if len(out) >= limit:
             break
     return out
@@ -603,7 +627,7 @@ def enrich_result(test_id: str, trait_scores: Dict[str, float],
         "model_key":      model_key,
         "model_label":    MODEL_LABELS.get(model_key, model_key),
         "insights":       lines,
-        # Layer-A affect classification of the user's volunteered notes — bonus
+        # Layer-A affect classification of the user's volunteered notes , bonus
         # context shown only in the deep dive. None when no notes were given.
         "affect_context": (notes_block.strip() or None),
         "latency_s":      latency,

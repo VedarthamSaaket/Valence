@@ -101,7 +101,7 @@ class ArchetypeRefiner:
                 low_cpu_mem_usage=True,
             )
             if not cuda:
-                # Move device only — do NOT change dtype (no .float()).
+                # Move device only , do NOT change dtype (no .float()).
                 self._model = self._model.to("cpu")
             self._model.eval()
 

@@ -1,7 +1,7 @@
 import sys
 import os
 from dotenv import load_dotenv
-# Load .env BEFORE any router/ml imports — ml.psych_layer reads its env vars
+# Load .env BEFORE any router/ml imports , ml.psych_layer reads its env vars
 # at import time.
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"), override=True)
 
@@ -45,7 +45,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Valence API", version="1.0.0", lifespan=lifespan)
 
-# CORS – only allow known origins.
+# CORS - only allow known origins.
 # In production set ALLOWED_ORIGINS env var to a comma-separated list of real domains.
 _raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000")
 ALLOWED_ORIGINS = [o.strip() for o in _raw_origins.split(",") if o.strip()]

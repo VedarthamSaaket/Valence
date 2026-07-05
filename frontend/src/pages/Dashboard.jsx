@@ -123,13 +123,29 @@ function ResultCard({ result, meta }) {
           </div>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           <span style={{ fontFamily: S.fontSC, fontSize: 7, letterSpacing: '0.14em', color: S.textMuted }}>{date}</span>
-          <Link to={`/tests/${result.test_type}`} style={{ fontFamily: S.fontSC, fontSize: 7, letterSpacing: '0.18em', color: accent, textDecoration: 'none', padding: '5px 12px', border: `1px solid ${accent}33`, transition: 'all 200ms' }}
-            onMouseEnter={e => { e.currentTarget.style.background = `${accent}18`; e.currentTarget.style.borderColor = `${accent}77` }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = `${accent}33` }}>
-            Retake
-          </Link>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {result.id && (
+              <>
+                <Link to={`/results/${result.id}`} style={{ fontFamily: S.fontSC, fontSize: 7, letterSpacing: '0.18em', color: accent, textDecoration: 'none', padding: '5px 12px', border: `1px solid ${accent}55`, background: `${accent}0d`, transition: 'all 200ms' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = `${accent}22`; e.currentTarget.style.borderColor = accent }}
+                  onMouseLeave={e => { e.currentTarget.style.background = `${accent}0d`; e.currentTarget.style.borderColor = `${accent}55` }}>
+                  Results
+                </Link>
+                <Link to={`/deep-dive/${result.id}`} style={{ fontFamily: S.fontSC, fontSize: 7, letterSpacing: '0.18em', color: accent, textDecoration: 'none', padding: '5px 12px', border: `1px solid ${accent}55`, background: `${accent}0d`, transition: 'all 200ms', display: 'inline-flex', alignItems: 'center', gap: 5 }}
+                  onMouseEnter={e => { e.currentTarget.style.background = `${accent}22`; e.currentTarget.style.borderColor = accent }}
+                  onMouseLeave={e => { e.currentTarget.style.background = `${accent}0d`; e.currentTarget.style.borderColor = `${accent}55` }}>
+                  <span style={{ fontSize: 9 }}>✦</span>Deep Dive
+                </Link>
+              </>
+            )}
+            <Link to={`/tests/${result.test_type}`} style={{ fontFamily: S.fontSC, fontSize: 7, letterSpacing: '0.18em', color: accent, textDecoration: 'none', padding: '5px 12px', border: `1px solid ${accent}33`, transition: 'all 200ms' }}
+              onMouseEnter={e => { e.currentTarget.style.background = `${accent}18`; e.currentTarget.style.borderColor = `${accent}77` }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = `${accent}33` }}>
+              Retake
+            </Link>
+          </div>
         </div>
       </div>
     </div>

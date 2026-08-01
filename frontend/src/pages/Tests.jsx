@@ -135,7 +135,7 @@ export default function Tests() {
             fontStyle: 'italic',
             fontSize: 18,
             fontWeight: 300,
-            color: 'rgba(215,232,248,0.40)',
+            color: 'rgba(232,240,250,0.80)',
             maxWidth: 480,
             lineHeight: 1.75,
             letterSpacing: '0.01em',
@@ -185,7 +185,7 @@ export default function Tests() {
                     fontStyle: 'italic',
                     fontSize: 14,
                     fontWeight: 300,
-                    color: 'rgba(215,232,248,0.30)',
+                    color: 'rgba(232,240,250,0.72)',
                     letterSpacing: '0.02em',
                   }}>
                     {cat.sublabel}
@@ -225,7 +225,7 @@ export default function Tests() {
             fontFamily: FONT_DISPLAY,
             fontStyle: 'italic',
             fontSize: 14,
-            color: 'rgba(215,232,248,0.28)',
+            color: 'rgba(232,240,250,0.72)',
             lineHeight: 1.7,
           }}>
             Results are most meaningful with honest, reflective responses. All data is stored privately in your dashboard. Complete all seventeen tests to unlock your unified master archetype.
@@ -267,10 +267,10 @@ function TestCard({ test, globalNum, iconColor, delay, onClick }) {
       onClick={onClick}
       style={{
         padding: '28px 32px',
-        background: 'rgba(4,4,6,0.28)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
-        border: '1px solid rgba(215,232,248,0.07)',
+        background: 'rgba(4,4,6,0.62)',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+        border: '1px solid rgba(215,232,248,0.16)',
         cursor: 'pointer',
         position: 'relative',
         overflow: 'hidden',
@@ -318,7 +318,7 @@ function TestCard({ test, globalNum, iconColor, delay, onClick }) {
               fontSize: 22,
               fontWeight: 400,
               letterSpacing: '-0.01em',
-              color: 'rgba(244,247,250,0.88)',
+              color: 'rgba(248,251,254,0.98)',
               lineHeight: 1.1,
             }}>
               {test.name}
@@ -327,14 +327,14 @@ function TestCard({ test, globalNum, iconColor, delay, onClick }) {
               fontFamily: FONT_SC,
               fontSize: 8,
               letterSpacing: '0.20em',
-              color: 'rgba(215,232,248,0.24)',
+              color: 'rgba(215,232,248,0.62)',
             }}>{test.subtitle.toUpperCase()}</span>
           </div>
           <p style={{
             fontFamily: FONT_DISPLAY,
             fontStyle: 'italic',
             fontSize: 14,
-            color: 'rgba(244,247,250,0.36)',
+            color: 'rgba(244,247,250,0.80)',
             lineHeight: 1.65,
             marginBottom: 12,
           }}>
@@ -347,10 +347,10 @@ function TestCard({ test, globalNum, iconColor, delay, onClick }) {
                 fontSize: 7,
                 letterSpacing: '0.16em',
                 padding: '2px 8px',
-                border: '1px solid rgba(215,232,248,0.08)',
+                border: '1px solid rgba(215,232,248,0.22)',
                 borderRadius: 2,
-                color: 'rgba(215,232,248,0.22)',
-                background: 'rgba(215,232,248,0.015)',
+                color: 'rgba(215,232,248,0.72)',
+                background: 'rgba(215,232,248,0.05)',
               }}>{tr}</span>
             ))}
           </div>
@@ -358,7 +358,7 @@ function TestCard({ test, globalNum, iconColor, delay, onClick }) {
             fontFamily: FONT_SC,
             fontSize: 8,
             letterSpacing: '0.18em',
-            color: 'rgba(215,232,248,0.22)',
+            color: 'rgba(215,232,248,0.62)',
           }}>
             {test.questions} Questions, {test.duration}
           </div>

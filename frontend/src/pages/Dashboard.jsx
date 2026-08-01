@@ -178,6 +178,7 @@ export default function Dashboard() {
   const { user } = useAuth()
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [showAllHistory, setShowAllHistory] = useState(false)
 
   useEffect(() => {
     api.get('/user/profile')
@@ -197,6 +198,13 @@ export default function Dashboard() {
   recentResults.forEach(r => { if (!latestByTest[r.test_type]) latestByTest[r.test_type] = r })
   const completedWithResults = ALL_TESTS.filter(t => completedTests.includes(t.id) && latestByTest[t.id])
   const remaining = ALL_TESTS.filter(t => !completedTests.includes(t.id))
+  // Full history: every historical run of every test, newest first. Used
+  // when the user expands "Show All History".
+  const testMetaById = Object.fromEntries(ALL_TESTS.map(t => [t.id, t]))
+  const fullHistory = recentResults
+    .map(r => ({ result: r, meta: testMetaById[r.test_type] }))
+    .filter(row => row.meta)
+  const olderRuns = fullHistory.filter(row => latestByTest[row.result.test_type]?.id !== row.result.id).length
 
   return (
     <div className="page" style={{ paddingBottom: 80, position: 'relative', minHeight: '100vh' }}>
@@ -290,6 +298,87 @@ export default function Dashboard() {
                 <ResultCard key={test.id} result={latestByTest[test.id]} meta={test} />
               ))}
             </div>
+
+            {/* Full historical timeline, hidden until requested so the top of
+                the dashboard stays focused on the latest run per test. */}
+            {fullHistory.length > 0 && (
+              <div style={{ marginTop: 24 }}>
+                {!showAllHistory ? (
+                  olderRuns > 0 && (
+                    <button
+                      onClick={() => setShowAllHistory(true)}
+                      style={{
+                        width: '100%', padding: '14px 22px',
+                        fontFamily: S.fontSC, fontSize: 9, letterSpacing: '0.22em',
+                        color: 'rgba(232,240,250,0.85)',
+                        background: 'rgba(215,228,242,0.06)',
+                        border: '1px solid rgba(215,228,242,0.24)',
+                        cursor: 'pointer',
+                        transition: 'all 220ms',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(215,228,242,0.12)'; e.currentTarget.style.borderColor = 'rgba(215,228,242,0.40)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(215,228,242,0.06)'; e.currentTarget.style.borderColor = 'rgba(215,228,242,0.24)' }}
+                    >
+                      SHOW ALL HISTORY · {fullHistory.length} RUNS ({olderRuns} EARLIER)
+                    </button>
+                  )
+                ) : (
+                  <div>
+                    <div className="animate-fade-up" style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 16, marginBottom: 20 }}>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 16 }}>
+                        <h2 style={{ fontFamily: S.fontDisplay, fontStyle: 'italic', fontSize: 22, fontWeight: 300, color: 'rgba(248,251,254,0.95)' }}>Full History</h2>
+                        <span style={{ fontFamily: S.fontSC, fontSize: 8, letterSpacing: '0.20em', color: 'rgba(232,240,250,0.70)' }}>{fullHistory.length} total runs</span>
+                      </div>
+                      <button
+                        onClick={() => setShowAllHistory(false)}
+                        style={{
+                          fontFamily: S.fontSC, fontSize: 8, letterSpacing: '0.18em',
+                          color: 'rgba(232,240,250,0.75)',
+                          background: 'transparent',
+                          border: '1px solid rgba(215,228,242,0.24)',
+                          padding: '7px 14px', cursor: 'pointer',
+                        }}
+                      >
+                        COLLAPSE
+                      </button>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                      {fullHistory.map(({ result, meta }) => {
+                        const isLatest = latestByTest[result.test_type]?.id === result.id
+                        const date = new Date(result.taken_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                        return (
+                          <Link key={result.id} to={`/results/${result.id}`} style={{ textDecoration: 'none' }}>
+                            <div style={{
+                              display: 'flex', alignItems: 'center', gap: 16,
+                              padding: '14px 20px',
+                              background: 'rgba(215,228,242,0.04)',
+                              border: `1px solid rgba(215,228,242,0.14)`,
+                              borderLeft: `3px solid ${meta.accent}88`,
+                              transition: 'all 200ms',
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.background = `${meta.accent}18`; e.currentTarget.style.borderColor = meta.accent }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(215,228,242,0.04)'; e.currentTarget.style.borderColor = 'rgba(215,228,242,0.14)' }}>
+                              <span style={{ fontFamily: S.fontDisplay, fontSize: 14, color: meta.accent, letterSpacing: '0.04em', minWidth: 32 }}>{meta.roman}</span>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+                                  <span style={{ fontFamily: S.fontDisplay, fontStyle: 'italic', fontSize: 16, fontWeight: 300, color: 'rgba(248,251,254,0.95)' }}>{result.archetype_name || meta.name}</span>
+                                  <span style={{ fontFamily: S.fontSC, fontSize: 7, letterSpacing: '0.18em', color: meta.accent, textTransform: 'uppercase' }}>{meta.short}</span>
+                                  {isLatest && (
+                                    <span style={{ fontFamily: S.fontSC, fontSize: 6.5, letterSpacing: '0.20em', color: '#c8e2c8', padding: '2px 7px', border: '1px solid rgba(140,200,160,0.5)', textTransform: 'uppercase' }}>Latest</span>
+                                  )}
+                                </div>
+                                <div style={{ fontFamily: S.fontSC, fontSize: 8, letterSpacing: '0.16em', color: 'rgba(232,240,250,0.60)', marginTop: 5 }}>{date}</div>
+                              </div>
+                              <span style={{ color: meta.accent, fontSize: 14 }}>↗</span>
+                            </div>
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {remaining.length > 0 && (
               <div style={{ marginTop: 36 }}>

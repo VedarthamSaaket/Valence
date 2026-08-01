@@ -20,12 +20,14 @@ def get_profile(current_user=Depends(get_current_user)):
         (current_user["id"],)
     ).fetchone()
 
+    # Full history: the dashboard shows the most recent take by default but
+    # exposes an expandable "show all" view over every historical run of
+    # every test, so the limit is dropped here.
     recent_results = db.execute(
         """SELECT id, test_type, taken_at, archetype_name, trait_scores, percentiles
            FROM test_results
            WHERE user_id = ?
-           ORDER BY taken_at DESC
-           LIMIT 8""",
+           ORDER BY taken_at DESC""",
         (current_user["id"],)
     ).fetchall()
     db.close()

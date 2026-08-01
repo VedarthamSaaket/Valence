@@ -86,6 +86,11 @@ SPECIALTY_INFER_TIMEOUT = float(os.getenv("SPECIALTY_INFER_TIMEOUT", "240"))
 FINETUNE_DIR = os.path.join(os.path.dirname(__file__), "finetune_data")
 
 HF_BASE = "https://api-inference.huggingface.co/models"
+# Fallback endpoint. HF migrated many hosted classifiers to router.hf.co in
+# 2024, on Windows resolvers where api-inference.huggingface.co DNS drops
+# (getaddrinfo failed), the .hf.space wildcard usually still resolves, and
+# router.huggingface.co is on the same edge network.
+HF_ROUTER_BASE = "https://router.huggingface.co/hf-inference/models"
 
 MODEL_KEYS = ("psyllm", "psychocounsel", "psycholex", "mentallama")
 PRIORITY = ("lightning", "space", "kaggle", "colab")
@@ -153,10 +158,38 @@ def _cache_put(key: str, value) -> None:
             _CACHE.popitem(last=False)
 
 
+# Session-level circuit breaker for Layer A. When both the primary
+# api-inference.huggingface.co host and the router.hf.co fallback fail with
+# DNS or connect errors this many times in a row, further calls short-circuit
+# to None immediately instead of hammering an unreachable host. State resets
+# whenever any classifier call succeeds.
+_HF_LAYERA_FAIL_STREAK = {"count": 0}
+_HF_LAYERA_CIRCUIT_OPEN_AT = 5
+
+
+def _layer_a_disabled() -> bool:
+    return _HF_LAYERA_FAIL_STREAK["count"] >= _HF_LAYERA_CIRCUIT_OPEN_AT
+
+
+def _record_layer_a(success: bool) -> None:
+    if success:
+        _HF_LAYERA_FAIL_STREAK["count"] = 0
+    else:
+        _HF_LAYERA_FAIL_STREAK["count"] += 1
+
+
 async def hf_classify(model: str, text: str, timeout: float = 3.0,
                       wait_for_model: bool = False) -> Optional[list]:
-    """Full [{label, score}, ...] distribution. None on any failure."""
+    """Full [{label, score}, ...] distribution. None on any failure.
+
+    Tries the legacy api-inference.huggingface.co endpoint first, then
+    router.huggingface.co/hf-inference as a fallback for DNS setups where
+    only the router subdomain resolves. The classifier is optional
+    enrichment (affect spectrum of user-volunteered notes), any failure is
+    fail-soft and never blocks base results or the deep dive."""
     if not _augment_enabled():
+        return None
+    if _layer_a_disabled():
         return None
     text = (text or "").strip()
     if not text:
@@ -172,30 +205,58 @@ async def hf_classify(model: str, text: str, timeout: float = 3.0,
     body = {"inputs": payload_text, "options": {"use_cache": True, "wait_for_model": wait_for_model}}
     effective_timeout = 25.0 if wait_for_model else timeout
 
-    try:
-        async with httpx.AsyncClient(timeout=effective_timeout) as client:
-            resp = await client.post(f"{HF_BASE}/{model}", json=body, headers=headers)
-        if resp.status_code == 503 and not wait_for_model:
-            body["options"]["wait_for_model"] = True
-            async with httpx.AsyncClient(timeout=25.0) as client:
-                resp = await client.post(f"{HF_BASE}/{model}", json=body, headers=headers)
-        if resp.status_code == 429:
-            print(f"[HF {model}] rate limited (429). Skipping augmentation.")
+    async def _try_base(base: str) -> Optional[list]:
+        try:
+            async with httpx.AsyncClient(timeout=effective_timeout) as client:
+                resp = await client.post(f"{base}/{model}", json=body, headers=headers)
+            if resp.status_code == 503 and not wait_for_model:
+                body["options"]["wait_for_model"] = True
+                async with httpx.AsyncClient(timeout=25.0) as client:
+                    resp = await client.post(f"{base}/{model}", json=body, headers=headers)
+            if resp.status_code == 429:
+                print(f"[HF {model}] rate limited (429). Skipping augmentation.")
+                return None
+            resp.raise_for_status()
+            data = resp.json()
+        except Exception as e:
+            raise e
+
+        if isinstance(data, dict) and "error" in data:
+            print(f"[HF {model}] {data.get('error')}")
             return None
-        resp.raise_for_status()
-        data = resp.json()
-    except Exception as e:
-        print(f"[HF {model} error] {type(e).__name__}: {e}")
+        if isinstance(data, list) and data:
+            result = data[0] if isinstance(data[0], list) else data
+            if all(isinstance(i, dict) and "label" in i and "score" in i for i in result):
+                _cache_put(key, result)
+                return result
         return None
 
-    if isinstance(data, dict) and "error" in data:
-        print(f"[HF {model}] {data.get('error')}")
+    first_err = None
+    try:
+        out = await _try_base(HF_BASE)
+        if out is not None:
+            _record_layer_a(True)
+            return out
+    except Exception as e:
+        first_err = e
+
+    # DNS drops on the legacy endpoint are common on some Windows resolvers.
+    # Retry the same call against the newer router.hf.co edge before giving up.
+    try:
+        out = await _try_base(HF_ROUTER_BASE)
+        if out is not None:
+            _record_layer_a(True)
+            return out
+    except Exception as e:
+        second_err = e
+        print(f"[HF {model} unreachable] primary={type(first_err).__name__ if first_err else 'ok'} "
+              f"router={type(second_err).__name__}. Skipping optional affect enrichment.")
+        _record_layer_a(False)
         return None
-    if isinstance(data, list) and data:
-        result = data[0] if isinstance(data[0], list) else data
-        if all(isinstance(i, dict) and "label" in i and "score" in i for i in result):
-            _cache_put(key, result)
-            return result
+
+    if first_err is not None:
+        # Primary raised, fallback returned None cleanly.
+        _record_layer_a(False)
     return None
 
 
@@ -226,18 +287,30 @@ async def _network_reachable() -> bool:
 
 async def warmup_all_hf() -> None:
     """Concurrent warmup for every Layer A model. Fire-and-forget at boot and
-    on every test-open ping. Reachability failure no longer short-circuits,
-    the classifier calls are already fail-soft and one may succeed even when
-    a shallow HEAD/GET probe reports the host as down (transient DNS)."""
+    on every test-open ping. Layer A is optional enrichment (affect spectrum
+    of user-volunteered notes), base results and the deep dive do NOT depend
+    on it, any failure is fail-soft. Once the session-level circuit breaker
+    trips after repeated failures, further warmups are skipped silently until
+    the process restarts."""
     if not _augment_enabled():
-        print("[psych] augmentation disabled or HF_API_KEY missing, skipping HF warmup.")
+        print("[psych] Layer A augmentation disabled or HF_API_KEY missing, skipping HF warmup.")
         return
-    reachable = await _network_reachable()
-    if not reachable:
-        print("[psych] HuggingFace reachability probe failed, attempting warmup anyway (probe may be a false negative).")
+    if _layer_a_disabled():
+        # Circuit already open, quiet skip. No log spam.
+        return
     results = await asyncio.gather(*[hf_warmup(m) for m in HF_MODELS], return_exceptions=True)
-    for model, ok in zip(HF_MODELS, results):
-        print(f"[psych] {model}: {'ready' if ok is True else 'unavailable'}")
+    ok_count = sum(1 for ok in results if ok is True)
+    if ok_count == len(HF_MODELS):
+        print(f"[psych] Layer A classifiers ready ({ok_count}/{len(HF_MODELS)}).")
+    elif ok_count == 0:
+        if _layer_a_disabled():
+            print("[psych] Layer A classifiers unreachable. Circuit opened, further Layer A warmup pings suppressed. "
+                  "Base results and Deep Dive are unaffected.")
+        else:
+            print(f"[psych] Layer A classifiers all failed this round (streak {_HF_LAYERA_FAIL_STREAK['count']}"
+                  f"/{_HF_LAYERA_CIRCUIT_OPEN_AT}). Base results and Deep Dive are unaffected.")
+    else:
+        print(f"[psych] Layer A partial: {ok_count}/{len(HF_MODELS)} ready.")
 
 
 def format_spectrum(scores: Optional[list], min_score: float = 0.05) -> str:
@@ -481,8 +554,9 @@ def _call_worker_sync(model_key: str, prompt: str, max_new_tokens: int = 420,
 
 def _classify_notes_sync(context_notes: Optional[List[Dict]]) -> str:
     """Layer A spectrum of the user's volunteered notes, rendered as a compact
-    prompt block. Empty string when unavailable."""
-    if not context_notes or not _augment_enabled():
+    prompt block. Empty string when unavailable. Silently skipped when the
+    Layer A circuit breaker has opened for this session."""
+    if not context_notes or not _augment_enabled() or _layer_a_disabled():
         return ""
     text = " ".join((n.get("note") or "").strip() for n in context_notes if n.get("note"))
     if not text.strip():

@@ -44,23 +44,146 @@ function gaussianY(x, mean, sigma) {
   return Math.exp(-0.5 * Math.pow((x - mean) / sigma, 2)) / (sigma * Math.sqrt(2 * Math.PI))
 }
 
-// Two-line behavioural sketch of a compatibility cluster, derived from the
-// average member's trait percentiles. Highlights the two strongest and the
-// weakest trait so the reader can see the archetype's tendency without
-// duplicating the percentile table underneath.
+// Natural-language mapping from trait names to everyday-behaviour phrases.
+// Used to turn a compatibility cluster's average-member profile into a plain
+// two-sentence description a lay reader can understand, without dropping to
+// psychology jargon like "elevated Machiavellianism" or "low Detachment".
+const TRAIT_BEHAVIOR = {
+  // HEXACO
+  'Honesty-Humility': { high: 'plays fair and dislikes cutting corners', low: 'is willing to play strategically to get what they want' },
+  Emotionality:        { high: 'feels things strongly and gets attached quickly', low: 'stays cool under pressure and rarely fusses' },
+  Extraversion:        { high: 'lights up around other people', low: 'recharges best on their own' },
+  Agreeableness:       { high: 'is patient, forgiving, and easy to get along with', low: 'holds their ground and pushes back when needed' },
+  Conscientiousness:   { high: 'is organised, dependable, and gets things finished', low: 'is spontaneous and treats plans as loose suggestions' },
+  Openness:            { high: 'is curious about new ideas and unusual experiences', low: 'knows what they like and sticks with the familiar' },
+  // Dark triad
+  Machiavellianism:    { high: 'thinks a few moves ahead and reads people strategically', low: 'takes situations at face value without much scheming' },
+  Narcissism:          { high: 'carries a strong sense of their own importance', low: 'is comfortable letting others take the spotlight' },
+  Psychopathy:         { high: 'stays emotionally detached and cool with risk', low: 'is empathic and cautious about hurting others' },
+  // FTI
+  Explorer:            { high: 'craves novelty and chases new experiences', low: 'prefers a familiar rhythm to constant change' },
+  Builder:             { high: 'is steady, loyal, and follows through on commitments', low: 'is looser with routines and long-term plans' },
+  Director:            { high: 'decides quickly and takes charge without hesitation', low: 'holds off on decisions and prefers to consult first' },
+  Negotiator:          { high: 'reads a room intuitively and puts others at ease', low: 'takes a more direct, less mood-reading approach' },
+  // NPI
+  Authority:           { high: 'steps into leadership without needing a push', low: 'is happy in supporting rather than commanding roles' },
+  'Self-Sufficiency':  { high: 'trusts their own judgement without needing outside approval', low: 'looks to others for validation and input' },
+  Superiority:         { high: 'quietly believes they operate at a higher level than most', low: 'sees themselves as roughly on par with peers' },
+  Exhibitionism:       { high: 'enjoys being noticed and knows how to make it happen', low: 'stays out of the spotlight by choice' },
+  Exploitativeness:    { high: 'is willing to use an edge when they see one', low: 'is careful not to take advantage of anyone' },
+  Vanity:              { high: 'puts real care into how they look and present themselves', low: 'gives image and appearance little thought' },
+  Entitlement:         { high: 'has a strong sense of what they deserve from others', low: 'expects to earn things rather than be handed them' },
+  // Attachment
+  Secure:              { high: 'is comfortable being close without losing themselves', low: 'finds close relationships harder to relax into' },
+  Anxious:             { high: 'worries about where they stand with the people they love', low: 'rarely stresses about what others think of them' },
+  Avoidant:            { high: 'keeps some emotional distance even in close relationships', low: 'is happy to let people in fully' },
+  // PID-5
+  'Negative Affectivity': { high: 'feels difficult emotions strongly and holds them longer', low: 'lets bad moods pass without lingering' },
+  Detachment:          { high: 'is content keeping their own company', low: 'seeks connection and gets energised by it' },
+  Antagonism:          { high: 'is unbothered about managing what others think of them', low: 'works to keep relationships smooth' },
+  Disinhibition:       { high: 'acts on impulse more than they plan', low: 'thinks things through before acting' },
+  Psychoticism:        { high: 'thinks in unconventional ways others sometimes find hard to follow', low: 'thinks in fairly conventional, predictable ways' },
+  // Wellbeing / DASS / WHO-5
+  Depression:          { high: 'is carrying real emotional heaviness right now', low: 'feels emotionally settled and motivated' },
+  Anxiety:             { high: 'is running with a lot of worry lately', low: 'takes life in stride without much anxious noise' },
+  Stress:              { high: 'is dealing with more pressure than is comfortable', low: 'is under a manageable amount of pressure' },
+  Wellbeing:           { high: 'is broadly thriving lately', low: 'is running low on energy and mood' },
+  // RIASEC
+  Realistic:           { high: 'would rather build or make than sit and discuss', low: 'is drawn away from hands-on, mechanical work' },
+  Investigative:       { high: 'loves figuring out how things work', low: 'is less pulled toward analytical work' },
+  Artistic:            { high: 'needs a creative outlet to feel like themselves', low: 'is less drawn to expressive, artistic work' },
+  Social:              { high: 'is at their best when helping other people', low: 'is less energised by direct people-work' },
+  Enterprising:        { high: 'is a natural persuader and enjoys leading initiatives', low: 'is less interested in selling or leading' },
+  Conventional:        { high: 'thrives with structure, order, and clear systems', low: 'is less at home with strict procedures' },
+  // KIMS
+  Observing:           { high: 'notices small shifts in mood, body, and surroundings', low: 'pays less attention to inner and sensory detail' },
+  Describing:          { high: 'puts inner experience into words easily', low: 'finds it hard to describe what they feel' },
+  'Acting with Awareness': { high: 'is present in what they are doing rather than on autopilot', low: 'often runs through activities half-elsewhere' },
+  'Accepting without Judgment': { high: 'lets experience be what it is instead of fighting it', low: 'tends to fight or judge their own reactions' },
+  // Humor
+  Affiliative:         { high: 'uses humor to bring people together', low: 'is less playful in group settings' },
+  'Self-Enhancing':    { high: 'finds the funny angle when things get hard', low: 'processes difficulty without much humor buffer' },
+  Aggressive:          { high: 'has a sharper, edgier sense of humor', low: 'keeps humor gentle and inclusive' },
+  'Self-Defeating':    { high: 'often makes themselves the butt of the joke', low: 'protects their own dignity even in humor' },
+  // 16PF
+  Warmth:              { high: 'is instantly approachable and easy to be around', low: 'is more reserved and takes time to warm up' },
+  Reasoning:           { high: 'moves quickly through abstract problems', low: 'prefers concrete, worked-out thinking' },
+  Stability:           { high: 'is emotionally grounded and hard to rattle', low: 'is more reactive when things get stressful' },
+  Dominance:           { high: 'takes charge naturally and directs the room', low: 'defers to others and prefers a supporting role' },
+  Liveliness:          { high: 'brings energy and playfulness into a room', low: 'has a calmer, more serious presence' },
+  Sensitivity:         { high: 'is emotionally attuned to nuance and mood', low: 'is more matter-of-fact and less mood-tracking' },
+  Vigilance:           { high: 'is naturally cautious about people trusting too fast', low: 'gives people the benefit of the doubt easily' },
+  Privateness:         { high: 'guards their inner world carefully', low: 'is open about what is going on inside' },
+  Apprehension:        { high: 'second-guesses themselves and worries more than they show', low: 'is self-assured and stops replaying decisions' },
+  'Openness-to-Change': { high: 'welcomes new ways of doing things', low: 'trusts what has worked before and resists change for its own sake' },
+  'Self-Reliance':     { high: 'prefers to figure things out alone', low: 'draws heavily on their circle to think things through' },
+  Perfectionism:       { high: 'holds a high bar for how work should turn out', low: 'is comfortable calling something good enough' },
+  Tension:             { high: 'is often wound up under the surface', low: 'is relaxed and hard to rattle' },
+  // Values
+  'Self-Direction':    { high: 'needs to think for themselves and do things their own way', low: 'is comfortable working within others\' plans' },
+  Universalism:        { high: 'cares about fairness at a broad, societal scale', low: 'focuses attention closer to home' },
+  Achievement:         { high: 'is driven by concrete accomplishments', low: 'measures themselves less by outward achievement' },
+  Security:            { high: 'prizes stability, predictability, and safety', low: 'is less bothered by uncertainty' },
+  Stimulation:         { high: 'needs novelty and intensity to feel alive', low: 'is content with a lower-key life' },
+  Conformity:          { high: 'respects the norms that hold groups together', low: 'is less concerned with social rules for their own sake' },
+  Tradition:           { high: 'finds meaning in inherited practices and values', low: 'is not particularly attached to tradition' },
+  Hedonism:            { high: 'is unapologetic about seeking pleasure and enjoyment', low: 'is more restrained about pleasure-seeking' },
+  Power:               { high: 'wants status and influence over decisions', low: 'is not chasing rank or authority' },
+  Benevolence:         { high: 'is deeply invested in the wellbeing of their inner circle', low: 'is more independent from close-group loyalties' },
+  // Needs
+  Autonomy:            { high: 'is getting to make their own choices day to day', low: 'feels boxed in by external demands' },
+  Competence:          { high: 'feels effective and capable in what they do', low: 'is not currently using their skills fully' },
+  Relatedness:         { high: 'feels genuinely connected to the people around them', low: 'is running low on real connection' },
+  // Aesthetic
+  Intense:             { high: 'is drawn to raw, powerful, edgy work', low: 'prefers softer, more polished aesthetics' },
+  Mainstream:          { high: 'genuinely enjoys widely popular tastes', low: 'gravitates away from mainstream taste' },
+  Traditional:         { high: 'is moved by classical, rooted forms of beauty', low: 'is less drawn to traditional aesthetic forms' },
+  Visual:              { high: 'has a trained eye for design, colour, and composition', low: 'is less visually oriented in their tastes' },
+  // Conspiracy beliefs
+  'Government Malfeasance': { high: 'is skeptical of what governments say vs. do', low: 'gives official channels the benefit of the doubt' },
+  'Malevolent Global':      { high: 'sees coordinated agendas behind big global events', low: 'is skeptical of grand-scheme explanations' },
+  'Extraterrestrial Coverup': { high: 'suspects there is more to unexplained phenomena than admitted', low: 'trusts official science on unexplained phenomena' },
+  'Personal Wellbeing Threats': { high: 'is alert to hidden threats that institutions downplay', low: 'trusts institutions to disclose real threats' },
+  'Control of Information': { high: 'believes public information is managed to serve powerful interests', low: 'takes public information mostly at face value' },
+  // AMBI
+  'Affect Regulation':  { high: 'manages emotional state calmly under pressure', low: 'gets shaken by pressure more visibly' },
+  'Social Drive':       { high: 'is pulled toward people and gets energy from them', low: 'is drained by heavy social exposure' },
+  'Energy Drive':       { high: 'operates at high output and initiates things', low: 'moves at a lower-key, less driven pace' },
+  'Identity Coherence': { high: 'has a stable sense of who they are under pressure', low: 'is still working out who they are in different rooms' },
+}
+
+// Natural-language behavioural sketch of a compatibility cluster, derived
+// from the average member's trait percentiles. Prefers plain-English phrasing
+// from TRAIT_BEHAVIOR over jargon so a lay reader can grasp the archetype
+// without decoding trait names. Falls back to a generic trait-list phrasing
+// only when no mapped phrases are available.
 function behaviorSummary(profile) {
   if (!Array.isArray(profile) || profile.length === 0) return ''
   const sorted = [...profile].sort((a, b) => (b.percentile || 0) - (a.percentile || 0))
-  const highs = sorted.filter(t => (t.percentile || 0) >= 60).slice(0, 2).map(t => t.trait)
-  const lows = sorted.filter(t => (t.percentile || 0) <= 40).slice(-1).map(t => t.trait)
+  const highs = []
+  for (const t of sorted) {
+    if ((t.percentile || 0) < 60) break
+    const phrase = TRAIT_BEHAVIOR[t.trait]?.high
+    if (phrase) highs.push(phrase)
+    if (highs.length >= 2) break
+  }
+  const lows = []
+  for (let i = sorted.length - 1; i >= 0 && lows.length < 1; i--) {
+    if ((sorted[i].percentile || 0) > 40) break
+    const phrase = TRAIT_BEHAVIOR[sorted[i].trait]?.low
+    if (phrase) lows.push(phrase)
+  }
   const parts = []
   if (highs.length) {
-    parts.push(`Leads with ${highs.join(' and ')} that visibly shape day-to-day behaviour.`)
-  } else {
-    parts.push('Runs a moderate profile with no single trait dominating behaviour.')
+    const joined = highs.length === 2 ? `${highs[0]}, and ${highs[1]}` : highs[0]
+    parts.push(`Usually ${joined}.`)
   }
   if (lows.length) {
-    parts.push(`Runs lower on ${lows[0]}, expect that gap to show in matching situations.`)
+    parts.push(`On the other hand, ${lows[0]}.`)
+  }
+  if (parts.length === 0) {
+    // Fully moderate profile.
+    return 'Runs a balanced profile without any single trait dominating how they show up.'
   }
   return parts.join(' ')
 }

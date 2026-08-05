@@ -45,6 +45,7 @@ import asyncio
 import hashlib
 import json
 import os
+import re
 import threading
 import time
 from collections import OrderedDict
@@ -79,9 +80,15 @@ SPECIALTY_REGISTRY_SECRET = os.getenv("SPECIALTY_REGISTRY_SECRET", "")
 SPECIALTY_SPACE_URL = os.getenv(
     "SPECIALTY_SPACE_URL", "https://vaedarth-valence-psych-host.hf.space"
 )
-# CPU inference on the free Space tier is slow (tens of seconds); enrichment
-# runs in a background thread after submit, so a long timeout costs nothing.
-SPECIALTY_INFER_TIMEOUT = float(os.getenv("SPECIALTY_INFER_TIMEOUT", "240"))
+# CPU-basic Space (2 vCPU, llama.cpp on a 7-8B Q4 GGUF) sustains roughly
+# 3-6 tokens per second. Deep-dive prompts ask for five 70-120 word
+# paragraphs (~700 output tokens) which lands at 150-250s of pure
+# generation; add worker lock queueing behind other requests and 240s
+# was too tight, the client timed out with the worker still cooking.
+# The whole enrichment runs on a background thread after submit, so a
+# generous ceiling costs nothing but keeps us from bailing on nearly-done
+# generations.
+SPECIALTY_INFER_TIMEOUT = float(os.getenv("SPECIALTY_INFER_TIMEOUT", "600"))
 
 FINETUNE_DIR = os.path.join(os.path.dirname(__file__), "finetune_data")
 
@@ -527,9 +534,21 @@ def _call_worker_sync(model_key: str, prompt: str, max_new_tokens: int = 420,
 
     try:
         data = _infer()
+    except httpx.ReadTimeout:
+        # Special case: the socket-read timed out but /health may well be
+        # green , the worker is up and still generating behind its serial
+        # _infer_lock. Retrying immediately would just re-queue the SAME
+        # prompt behind the request that's cooking now and burn another
+        # full timeout. Prefer to bail cleanly and let the caller mark the
+        # enrichment failed; the user gets the Base Results fallback and
+        # can re-run enrichment from the dashboard once the worker is idle.
+        print(f"[psych {model_key} @ {base_url}] ReadTimeout after {timeout}s , "
+              f"worker still generating, not retrying")
+        return None
     except Exception as first_err:
-        # Space was likely asleep , the failed request queued its restart.
-        # Wait for /health to come back (bounded), then retry once.
+        # Genuine cold-start / DNS / connect error , the failed request
+        # already queued the Space's restart. Wait for /health to come
+        # back (bounded), then retry once.
         print(f"[psych {model_key} @ {base_url}] {type(first_err).__name__}: "
               f"{first_err} , waiting for worker to wake")
         deadline = time.time() + 180
@@ -595,16 +614,39 @@ def _build_prompt(test_id: str, model_key: str, trait_scores: Dict[str, float],
     arch_tag = (archetype or {}).get("tagline", "")
     test_label = test_id.replace("_", " ")
 
+    # Shared contract: every specialty model must return a genuinely DETAILED
+    # deep dive , the whole point of routing to a psychologically trained model
+    # is depth the base results cannot give. Each point is a short paragraph,
+    # grounded in the person's actual scores and named psychological constructs.
+    depth_contract = (
+        "FORMAT (mandatory): Produce EXACTLY 5 numbered points. Each point must "
+        "be a self-contained paragraph of 3 to 4 full sentences (roughly 70-120 "
+        "words) , NOT a single sentence. A one-line answer is a failure. "
+        "In every point you must: (a) name the specific psychological "
+        "construct, trait facet, or theoretical framework it draws on; (b) cite "
+        "the person's actual score or percentile from the profile above as the "
+        "evidence; (c) explain the underlying mechanism using precise "
+        "psychological terminology; and (d) translate it into a concrete, "
+        "observable day-to-day tendency. Cover a DIFFERENT facet of the cluster "
+        "in each point, span work, close relationships, and self-regulation "
+        "across the five, do not repeat the archetype tagline, and give no "
+        "clinical diagnosis."
+    )
+
     if model_key == "mentallama":
         return (
-            "You are MentaLLaMA. A person completed the "
-            f"{test_label} self-report instrument.\n\n"
+            "You are MentaLLaMA, an interpretable mental-health model. A person "
+            f"completed the {test_label} self-report instrument and was assigned "
+            f"the profile '{arch_name}' ({arch_tag}).\n\n"
             f"Scored profile:\n{trait_lines}\n\n{notes_block}"
-            "Give 6 short lines, each starting with 'BECAUSE:', that justify one "
-            "observation about their current affective pattern with a specific "
-            "score and connect it to a recognised mental-health construct. "
-            "Neutral tone, no diagnosis, no alarmism. Each line must be one "
-            "complete sentence, distinct from the others.\n\nJustifications:"
+            "Write a DETAILED deep dive into this affective/clinical-dimensional "
+            "profile. For each point, tie an observation about their current "
+            "affective pattern to a recognised mental-health construct (e.g. "
+            "negative affectivity, affect regulation, rumination, distress "
+            "tolerance, the tripartite model of anxiety and depression), justify "
+            "it with the specific score, and describe how it plausibly colours "
+            "daily functioning. Neutral, non-alarmist, explicitly non-diagnostic."
+            f"\n\n{depth_contract}\n\nDeep dive:"
         )
     if model_key == "psychocounsel":
         return (
@@ -612,49 +654,86 @@ def _build_prompt(test_id: str, model_key: str, trait_scores: Dict[str, float],
             f"norms. A person completed the {test_label} assessment and was "
             f"assigned the profile '{arch_name}' ({arch_tag}).\n\n"
             f"Scored profile:\n{trait_lines}\n\n{notes_block}"
-            "Write 6 one-sentence observations about how this relational/needs "
-            "profile likely shows up in close relationships, work, and everyday "
-            "self-regulation, phrased warmly and without diagnostic claims. "
-            "Cover at least three different life domains across the six lines.\n\nObservations:"
+            "Write a DETAILED, warm deep dive into how this relational/needs "
+            "profile is likely to operate. Draw on relational constructs such as "
+            "attachment orientation, interpersonal circumplex (warmth vs. "
+            "agency), basic psychological needs (autonomy, competence, "
+            "relatedness), and emotion co-regulation. For each point, name the "
+            "construct, ground it in a specific score, explain the mechanism, "
+            "and show how it surfaces in intimacy, conflict, work relationships, "
+            "and self-soothing. No diagnostic claims."
+            f"\n\n{depth_contract}\n\nDeep dive:"
         )
     if model_key == "psycholex":
         return (
-            "You are PsychoLexLLaMA. A person completed the "
-            f"{test_label} instrument and was assigned '{arch_name}' ({arch_tag}).\n\n"
+            "You are PsychoLexLLaMA, an academic psychology model. A person "
+            f"completed the {test_label} instrument and was assigned "
+            f"'{arch_name}' ({arch_tag}).\n\n"
             f"Scored profile:\n{trait_lines}\n\n{notes_block}"
-            "Drawing on academic psychological literature, write 6 one-sentence "
-            "notes: two naming the theoretical constructs most relevant to this "
-            "profile, two describing well-supported behavioural implications, "
-            "and two connecting the most distinctive scores to concrete life "
-            "situations. No diagnoses, no repetition.\n\nNotes:"
+            "Write a DETAILED, literature-grounded deep dive into this cluster. "
+            "Explicitly name the theoretical constructs most relevant to the "
+            "profile (e.g. the Five-Factor / HEXACO facets, DSM-5 Section III "
+            "maladaptive-trait domains, the dark-triad constructs, "
+            "self-vs-other schemas), cite the driving scores, and lay out the "
+            "well-supported behavioural implications and their boundary "
+            "conditions. Keep it analytic and precise; no diagnoses, no "
+            "repetition."
+            f"\n\n{depth_contract}\n\nDeep dive:"
         )
-    # psyllm default
+    # psyllm default , broad personality science
     return (
-        "You are PsyLLM. Apply established personality-science framing "
-        f"(trait theory, DSM-5 dimensional models where relevant) to a person's "
-        f"{test_label} results, assigned '{arch_name}' ({arch_tag}).\n\n"
+        "You are PsyLLM, a personality-science model. Apply established framing "
+        "(Big Five / HEXACO trait theory, facet-level analysis, and DSM-5 "
+        "dimensional models where relevant) to a person's "
+        f"{test_label} results, assigned the cluster '{arch_name}' "
+        f"({arch_tag}).\n\n"
         f"Scored profile:\n{trait_lines}\n\n{notes_block}"
-        "Write 6 one-sentence, personalised observations that connect their "
-        "most distinctive scores to concrete day-to-day tendencies across work, "
-        "relationships, and self-regulation. No diagnoses, no repetition of the "
-        "archetype tagline, each line must stand alone.\n\nObservations:"
+        "Write a DETAILED deep dive that explains what this personality cluster "
+        "actually means. For each point, name the trait/facet or framework, "
+        "quote the distinctive score or percentile that drives it, explain the "
+        "psychological mechanism (motivation, affect, cognition, "
+        "self-regulation, interpersonal style), and connect it to concrete "
+        "day-to-day tendencies. No diagnoses, no repetition of the tagline."
+        f"\n\n{depth_contract}\n\nDeep dive:"
     )
 
 
-def _extract_lines(response: str, limit: int = 6) -> List[str]:
-    out = []
+def _extract_lines(response: str, limit: int = 5) -> List[str]:
+    """Split a specialty-model response into distinct deep-dive points.
+
+    Deep-dive points are now DETAILED multi-sentence paragraphs, so the
+    paragraph , not the line , is the natural unit. Prefer blank-line
+    separated blocks; fall back to per-line splitting only when the model
+    returns one point per line. Leading list markers ("1.", "-", "BECAUSE:")
+    are stripped and soft-wrapped lines within a point are re-joined. The
+    upper length bound is generous (1600 chars) so a rich 100-word paragraph
+    is kept rather than silently discarded , the old 320-char cap was exactly
+    what reduced the deep dive to one or two short lines."""
+    text = (response or "").strip()
+    if not text:
+        return []
+
+    # Paragraph blocks first (blank-line separated); fall back to lines.
+    blocks = [b for b in re.split(r"\n\s*\n", text) if b.strip()]
+    if len(blocks) < 2:
+        blocks = [b for b in text.split("\n") if b.strip()]
+
+    out: List[str] = []
     seen = set()
-    for line in (response or "").split("\n"):
-        line = line.strip().lstrip("-•· 0123456789.)")
-        line = line.strip()
-        if not line or len(line) <= 20 or len(line) >= 320:
+    for block in blocks:
+        # Re-join soft-wrapped lines inside a single point into one paragraph.
+        para = " ".join(p.strip() for p in block.split("\n") if p.strip())
+        # Strip a leading list marker / label ("1.", "1)", "-", "•", "BECAUSE:").
+        para = re.sub(r"^\s*(?:\d+[.)]|[-•·*]+|BECAUSE:|NOTE:|POINT\s*\d*:?)\s*",
+                      "", para, flags=re.IGNORECASE).strip()
+        if len(para) < 40 or len(para) > 1600:
             continue
-        # Deduplicate near-identical sentences.
-        key = line.lower()[:80]
+        # Deduplicate near-identical points.
+        key = para.lower()[:80]
         if key in seen:
             continue
         seen.add(key)
-        out.append(line)
+        out.append(para)
         if len(out) >= limit:
             break
     return out
@@ -674,7 +753,14 @@ def enrich_result(test_id: str, trait_scores: Dict[str, float],
                            archetype or {}, notes_block)
 
     t0 = time.time()
-    response = _call_worker_sync(model_key, prompt)
+    # Deep-dive points are multi-sentence paragraphs, so the worker needs a
+    # much larger generation budget than the old one-liner mode (420 tokens),
+    # but 1024 tokens on 2 vCPU llama.cpp can push past the client timeout
+    # window before the model emits its stop token. 700 comfortably fits
+    # five 70-120 word paragraphs and completes inside SPECIALTY_INFER_TIMEOUT
+    # on the free CPU tier.
+    response = _call_worker_sync(model_key, prompt, max_new_tokens=700,
+                                 temperature=0.55)
     latency = round(time.time() - t0, 2)
 
     record = {

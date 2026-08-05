@@ -1355,7 +1355,7 @@ export default function Results() {
             {compat === null && (
               <div style={{ marginTop: 16, padding: '14px 18px', background: 'rgba(200,170,140,0.06)', border: '1px solid rgba(210,180,150,0.18)', borderLeft: '2px solid rgba(220,190,160,0.45)' }}>
                 <p style={{ fontFamily: S.fontSC, fontSize: 11, letterSpacing: '0.04em', color: 'rgba(230,205,180,0.85)', lineHeight: 1.75 }}>
-                  Compatibility scores could not be loaded. The backend needs a restart to serve the compatibility endpoint. Once it is running, this section shows your top 5 compatibilities with scores out of 100.
+                  Compatibility scores could not be loaded. The backend needs a restart to serve the compatibility endpoint. Once it is running, this section shows your top 5 most compatible and bottom 5 least compatible clusters, each scored out of 100.
                 </p>
               </div>
             )}
@@ -1378,8 +1378,8 @@ export default function Results() {
                   Top 5 Compatibilities
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {compat.top5.map((c, i) => (
-                    <div key={`${c.test_id}-${c.name}`} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 18px', background: i === 0 ? 'rgba(215,228,242,0.06)' : 'rgba(215,228,242,0.03)', border: `1px solid rgba(215,228,242,0.08)`, borderLeft: `2px solid ${accent}${i === 0 ? '88' : '44'}` }}>
+                  {(compat.top5 || []).map((c, i) => (
+                    <div key={`top-${c.test_id}-${c.name}`} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 18px', background: i === 0 ? 'rgba(215,228,242,0.06)' : 'rgba(215,228,242,0.03)', border: `1px solid rgba(215,228,242,0.08)`, borderLeft: `2px solid ${accent}${i === 0 ? '88' : '44'}` }}>
                       <span style={{ fontFamily: S.fontDisplay, fontSize: 20, fontWeight: 300, color: accent, opacity: i === 0 ? 0.9 : 0.5, minWidth: 24, lineHeight: 1 }}>{i + 1}</span>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontFamily: S.fontDisplay, fontStyle: 'italic', fontSize: 16, fontWeight: 300, color: S.textPrim, lineHeight: 1.3 }}>{c.name}</div>
@@ -1398,6 +1398,39 @@ export default function Results() {
                     </div>
                   ))}
                 </div>
+
+                {/* Bottom 5 compatibilities overall , least compatible clusters */}
+                {(compat.bottom5 || []).length > 0 && (
+                  <div style={{ marginTop: 24 }}>
+                    <div style={{ fontFamily: S.fontSC, fontSize: 8, letterSpacing: '0.20em', color: S.irisDim, textTransform: 'uppercase', marginBottom: 12 }}>
+                      Bottom 5 · Least Compatible
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {(compat.bottom5 || []).map((c, i) => (
+                        <div key={`bot-${c.test_id}-${c.name}`} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 18px', background: 'rgba(200,170,150,0.03)', border: `1px solid rgba(215,228,242,0.06)`, borderLeft: `2px solid rgba(214,150,150,${i === 0 ? '0.55' : '0.28'})` }}>
+                          <span style={{ fontFamily: S.fontDisplay, fontSize: 20, fontWeight: 300, color: 'rgba(214,160,150,0.85)', opacity: i === 0 ? 0.9 : 0.5, minWidth: 24, lineHeight: 1 }}>{i + 1}</span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontFamily: S.fontDisplay, fontStyle: 'italic', fontSize: 16, fontWeight: 300, color: S.textSec, lineHeight: 1.3 }}>{c.name}</div>
+                            <div style={{ fontFamily: S.fontSC, fontSize: 7, letterSpacing: '0.16em', color: S.textMuted, textTransform: 'uppercase', marginTop: 3 }}>
+                              {c.kind === 'within' ? 'This test' : c.test_name}
+                            </div>
+                          </div>
+                          <div style={{ width: 90, flexShrink: 0 }}>
+                            <div style={{ height: 3, background: 'rgba(215,228,242,0.08)' }}>
+                              <div style={{ height: '100%', width: `${c.score}%`, background: 'rgba(214,150,150,0.55)' }} />
+                            </div>
+                          </div>
+                          <span style={{ fontFamily: S.fontMono, fontSize: 12, color: S.textSec, minWidth: 58, textAlign: 'right', flexShrink: 0 }}>
+                            {c.score} <span style={{ fontSize: 9, color: S.textMuted }}>/ 100</span>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <p style={{ fontFamily: S.fontSC, fontSize: 11, letterSpacing: '0.04em', color: S.textMuted, lineHeight: 1.7, marginTop: 10 }}>
+                      Low scores mark opposing profile shapes. These pairings are complementary rather than "bad" , in research they create the strongest growth dynamics by challenging each other's blind spots.
+                    </p>
+                  </div>
+                )}
 
                 {/* Within this test */}
                 {compat.same_test.length > 0 && (

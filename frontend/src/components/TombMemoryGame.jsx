@@ -15,29 +15,33 @@ const LEVELS = [
 ]
 const RED = '#FF3131'
 
-// 8×8 bitmaps. X = accent, D = dark accent, W = white, . = empty
+// 8×8 bitmaps. X = accent, D = dark accent (eye sockets, facets),
+// W = white highlight, . = empty. Every glyph is symmetric where the
+// real-world referent is symmetric (mask, skull, gem, star, coin, key) so
+// they read cleanly at 5-6 px per cell. Redesigned to occupy the full 8×8
+// grid and read at a glance from across the cabinet.
 const GLYPHS = {
-  mask: [
+  mask: [                       // Tomb-of-the-Mask style face
     '.XXXXXX.',
     'XXXXXXXX',
+    'XDDXXDDX',                 // eye sockets
     'XDDXXDDX',
-    'XDDXXDDX',
     'XXXXXXXX',
-    'X.XXXX.X',
+    'XX.XX.XX',                 // mouth slit + cheek gaps
     '.XXXXXX.',
-    '..XXXX..',
+    '..X..X..',
   ],
-  coin: [
-    '..XXXX..',
-    '.XWXXXX.',
-    'XWXXDXXX',
-    'XXXXDXXX',
-    'XXXDXXXX',
-    'XXXDXXXX',
+  coin: [                       // stamped ring with a highlight bevel
     '.XXXXXX.',
-    '..XXXX..',
+    'XXWWWWXX',
+    'XWXDDXWX',
+    'XWXDDXWX',
+    'XWXDDXWX',
+    'XWXDDXWX',
+    'XXWWWWXX',
+    '.XXXXXX.',
   ],
-  spike: [
+  spike: [                      // upward triangle with base teeth
     '...XX...',
     '...XX...',
     '..XXXX..',
@@ -45,57 +49,57 @@ const GLYPHS = {
     '.XXXXXX.',
     '.XXXXXX.',
     'XXXXXXXX',
-    'XXXXXXXX',
+    'XX.XX.XX',
   ],
-  key: [
-    '..XXXX..',
-    '.XX..XX.',
-    '.XX..XX.',
-    '..XXXX..',
-    '...XX...',
-    '...XX.X.',
-    '...XXXX.',
-    '...XX.X.',
+  key: [                        // circular head, shaft, two teeth
+    '.XXXX...',
+    'XX..XX..',
+    'X.DD.X..',
+    'XX..XX..',
+    '.XXXXXXX',
+    '.....X.X',
+    '.......X',
+    '.....X.X',
   ],
-  star: [
+  star: [                       // classic 5-point star
     '...XX...',
     '...XX...',
-    '.XXXXXX.',
     'XXXXXXXX',
     '.XXXXXX.',
     '..XXXX..',
-    '.XX..XX.',
+    '.XXXXXX.',
+    'XX....XX',
     'X......X',
   ],
-  gem: [
+  gem: [                        // faceted diamond with twin highlight pixels
     '..XXXX..',
-    '.XWXXXX.',
-    'XWXXXXXX',
+    '.XWXXWX.',
+    'XXXXXXXX',
     'XXXXXXXX',
     '.XXXXXX.',
     '..XXXX..',
     '...XX...',
     '........',
   ],
-  skull: [
+  skull: [                      // eye sockets + nasal + tooth row
     '.XXXXXX.',
     'XXXXXXXX',
+    'XDDXXDDX',                 // eye sockets
     'XDDXXDDX',
-    'XDDXXDDX',
+    'XXX..XXX',                 // nasal cavity
     'XXXXXXXX',
-    '.XXDDXX.',
     '.XXXXXX.',
-    '.X.XX.X.',
+    '.X.XX.X.',                 // teeth
   ],
-  bolt: [
-    '...XXXX.',
+  bolt: [                       // zig-zag lightning bolt
+    '....XXX.',
+    '...XXX..',
+    '..XXX...',
+    '.XXXXXX.',
     '..XXXX..',
-    '.XXXX...',
-    'XXXXXXX.',
-    '...XXXX.',
-    '..XXXX..',
-    '.XXXX...',
-    '.XX.....',
+    '...XXX..',
+    '..XXX...',
+    '.XXX....',
   ],
 }
 const GLYPH_KEYS = Object.keys(GLYPHS)
@@ -180,9 +184,17 @@ export default function TombMemoryGame() {
   const [particles, setParticles] = useState([])
   const [muted, setMuted] = useState(false)
   const [levelFlash, setLevelFlash] = useState(false)
+  // Attract-mode boot splash sits over the cabinet for a beat before the
+  // real board interaction begins , standard 90s arcade cadence.
+  const [booted, setBooted] = useState(false)
   const boardRef = useRef()
   const { beep, mutedRef } = useBeeper()
   mutedRef.current = muted
+
+  useEffect(() => {
+    const t = setTimeout(() => setBooted(true), 1600)
+    return () => clearTimeout(t)
+  }, [])
 
   const L = LEVELS[level % LEVELS.length]
 
@@ -292,22 +304,41 @@ export default function TombMemoryGame() {
           {deck.map((card, i) => {
             const red = flashRed.includes(i)
             const faceUp = card.up || card.matched
+            // Stagger the face-down bob so the board looks alive rather
+            // than a wall of static "?" tiles , 4 phases across the grid.
+            const bobDelay = `${(i % 4) * 0.15}s`
             return (
               <button key={card.id} onClick={() => flip(i)}
                 style={{
                   aspectRatio: '1', padding: 0, cursor: (card.matched || lock) ? 'default' : 'pointer',
                   background: card.matched ? '#000' : faceUp ? '#0a0a0a' : '#000',
-                  border: `2px solid ${red ? RED : card.matched ? L.dim : faceUp ? L.accent : L.dim}`,
-                  boxShadow: red ? `0 0 12px ${RED}` : faceUp && !card.matched ? `0 0 10px ${L.accent}88` : 'none',
+                  border: `2px solid ${red ? RED : card.matched ? L.accent : faceUp ? L.accent : L.dim}`,
+                  boxShadow: red ? `0 0 12px ${RED}` : card.matched ? `inset 0 0 8px ${L.accent}55` : faceUp ? `0 0 10px ${L.accent}88` : 'none',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  opacity: card.matched ? 0.45 : 1,
+                  opacity: card.matched ? 0.75 : 1,
                   transition: 'none', // snap. no tween. 1996 feel.
                   outline: 'none',
+                  position: 'relative',
+                  animation: (!faceUp && booted) ? 'totm-bob 1.4s steps(2) infinite' : 'none',
+                  animationDelay: bobDelay,
                 }}>
                 {faceUp ? (
-                  <PixelGlyph glyph={card.glyph} accent={red ? RED : L.accent} dim={L.dim} size={38} />
+                  <>
+                    <PixelGlyph glyph={card.glyph} accent={red ? RED : L.accent} dim={L.dim} size={38} />
+                    {card.matched && (
+                      <span style={{
+                        position: 'absolute', bottom: 2, right: 3, fontFamily: PX,
+                        fontSize: 7, color: L.accent, textShadow: `0 0 5px ${L.accent}`,
+                        letterSpacing: 0, lineHeight: 1,
+                      }}>✓</span>
+                    )}
+                  </>
                 ) : (
-                  <span style={{ fontFamily: PX, fontSize: 13, color: L.dim }}>?</span>
+                  <span style={{
+                    fontFamily: PX, fontSize: 13, color: L.dim,
+                    animation: booted ? 'totm-blink 1.1s steps(1) infinite' : 'none',
+                    animationDelay: bobDelay,
+                  }}>?</span>
                 )}
               </button>
             )
@@ -335,6 +366,38 @@ export default function TombMemoryGame() {
             </span>
           </div>
         )}
+
+        {/* attract-mode boot splash , overlays the cabinet for ~1.6 s */}
+        {!booted && (
+          <div style={{
+            position: 'absolute', inset: 0, zIndex: 8, display: 'flex',
+            flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            gap: 12, background: '#000',
+          }}>
+            <span style={{
+              fontFamily: PX, fontSize: 12, color: L.accent,
+              textShadow: `0 0 8px ${L.accent}`, letterSpacing: 1,
+            }}>
+              READY
+            </span>
+            <span style={{
+              fontFamily: PX, fontSize: 8, color: '#fff',
+              animation: 'totm-blink 0.35s steps(1) infinite',
+            }}>
+              INSERT COIN
+            </span>
+          </div>
+        )}
+
+        {/* Retro CRT sweep , one bright scanline drifting top-to-bottom
+            reads instantly as a working cabinet, cheap and pixel-y. */}
+        <div style={{
+          position: 'absolute', left: 0, right: 0, height: 2, zIndex: 7,
+          background: `linear-gradient(to bottom, transparent, ${L.accent}66, transparent)`,
+          pointerEvents: 'none',
+          animation: 'totm-sweep 3.6s linear infinite',
+        }} />
+
 
         {/* CRT scanlines + vignette */}
         <div style={{
@@ -376,6 +439,16 @@ export default function TombMemoryGame() {
         @keyframes totm-wave {
           0%, 49% { transform: translateX(0); }
           50%, 100% { transform: translateX(8px); }
+        }
+        @keyframes totm-bob {
+          0%, 49% { transform: translateY(0); }
+          50%, 100% { transform: translateY(-2px); }
+        }
+        @keyframes totm-sweep {
+          0% { top: -4px; opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { top: 100%; opacity: 0; }
         }
       `}</style>
     </div>

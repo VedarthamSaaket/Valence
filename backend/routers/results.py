@@ -644,6 +644,12 @@ def get_compatibility(result_id: str, current_user=Depends(get_current_user)):
 
     combined = sorted(same_test + cross_test, key=lambda x: -x["score"])
 
+    # Bottom 5 = the LEAST compatible clusters, presented worst-first. combined
+    # is sorted best-first, so the tail holds the lowest scorers; reverse it so
+    # index 0 is the single least-compatible archetype.
+    bottom5 = list(reversed(combined[-5:])) if len(combined) >= 5 else \
+        list(reversed(combined))
+
     return {
         "available":  True,
         "user": {
@@ -657,6 +663,7 @@ def get_compatibility(result_id: str, current_user=Depends(get_current_user)):
         "same_test":  same_test,
         "cross_test": cross_test[:8],
         "top5":       combined[:5],
+        "bottom5":    bottom5,
         "all_names":  [v.get("name") for v in archetypes.values()],
         "method":     COMPAT_METHOD,
     }

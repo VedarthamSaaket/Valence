@@ -33,9 +33,11 @@ const ACCENTS = {
   pvq: '#C8D8B0', bpnss: '#A8D8C8', dass: '#C0C0D0', who5: '#B8E0C8',
 }
 
-// Median observed enrichment ≈ 190 s; the tide creeps toward 92% on the
-// estimate and only fills completely when the backend actually reports done.
-const EXPECTED_S = 200
+// Median observed enrichment on the CPU-basic Space is ~250-350 s for the
+// detailed deep-dive prompts (700-token generations at 3-6 tok/s). The tide
+// creeps toward 92 % on the estimate and only fills completely when the
+// backend actually reports done.
+const EXPECTED_S = 320
 
 function parseInsights(result) {
   try {
@@ -66,13 +68,16 @@ export default function DeepDive() {
       .catch(() => navigate('/dashboard'))
   }, [resultId])
 
-  // poll while pending
+  // poll while pending , CPU-basic host can take 5-7 minutes end-to-end
+  // (worker cold start + 700-token generation). Wait up to 12 minutes
+  // before flipping to GAME OVER, so the timeout ceiling on the client
+  // never fires before the backend's own generation budget expires.
   useEffect(() => {
     if (!result || result.enrichment_status !== 'pending') return
     let tries = 0
     const iv = setInterval(() => {
       tries += 1
-      if (tries > 60) { clearInterval(iv); setFailed(true); return }
+      if (tries > 144) { clearInterval(iv); setFailed(true); return }
       api.get(`/results/${resultId}`)
         .then(res => {
           if (res.data.enrichment_status !== 'pending') {

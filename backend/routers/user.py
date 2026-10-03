@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from database.db import get_db
 from routers.auth import get_current_user
 from security import assert_owns_profile
+from routers.results import VALID_TESTS
 import json
 
 router = APIRouter()
@@ -41,8 +42,12 @@ def get_profile(current_user=Depends(get_current_user)):
     if profile:
         completed_tests = json.loads(profile["completed_tests"] or "[]")
 
+    completed_tests = [t for t in completed_tests if t in VALID_TESTS]
+
     results_formatted = []
     for r in recent_results:
+        if r["test_type"] not in VALID_TESTS:
+            continue
         results_formatted.append({
             "id":            r["id"],
             "test_type":     r["test_type"],

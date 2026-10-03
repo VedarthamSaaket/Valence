@@ -7,7 +7,7 @@ import bgImage from '../assets/Image60.jpeg'
 const S = {
   fontDisplay: "'Cormorant Garamond', Georgia, serif",
   fontSC: "'Cinzel', serif",
-  fontBody: "'Playfair Display', Georgia, serif",
+  fontBody: "'Libre Baskerville', Baskerville, Georgia, serif",
   fontMono: "'JetBrains Mono', monospace",
   textPrim: '#F4F7FA',
   textSec: 'rgba(244,247,250,0.60)',
@@ -20,22 +20,16 @@ const S = {
 
 const TEST_META = {
   hexaco:     { name: 'Six-Trait Personality',     short: 'Six Traits',          roman: 'I',    accent: '#C8D8E8', metal: 'linear-gradient(135deg,#8090a2 0%,#c8d8e8 18%,#eef6fc 36%,#d8e8f4 54%,#f4f8fc 72%,#b8ccda 100%)', glow: 'rgba(200,220,244,0.22)' },
-  sixteenpf:  { name: 'Sixteen Personality Traits',          short: '16 Traits',      roman: 'II',   accent: '#C0B8D0', metal: 'linear-gradient(135deg,#9088a8 0%,#c0b8d0 18%,#dcd8ec 36%,#ccc8e0 54%,#eceaf4 72%,#b8b0cc 100%)', glow: 'rgba(192,184,208,0.20)' },
-  darktriad:  { name: 'Dark Traits',       short: 'Dark Traits',      roman: 'III',  accent: '#B0BCC8', metal: 'linear-gradient(135deg,#6a7a88 0%,#b0bcc8 18%,#d8e0e8 36%,#c4ccd6 54%,#eaecf0 72%,#a0aab4 100%)', glow: 'rgba(176,188,200,0.20)' },
-  fti:        { name: 'Temperament Type',     short: 'Temperament',     roman: 'IV',   accent: '#CFC0DA', metal: 'linear-gradient(135deg,#7a6090 0%,#cfc0da 18%,#e8dcf0 36%,#d8c8e8 54%,#f0e8f8 72%,#b0a0c8 100%)', glow: 'rgba(220,200,232,0.20)' },
-  npi:        { name: 'How You See Yourself',      short: 'Self-View',       roman: 'V',    accent: '#DCB8C8', metal: 'linear-gradient(135deg,#a06080 0%,#dcb8c8 18%,#f0d8e0 36%,#e0c8d4 54%,#f8e8ec 72%,#c098a8 100%)', glow: 'rgba(232,200,216,0.20)' },
-  ambi:       { name: 'Broad Personality Scan', short: 'Broad Scan',      roman: 'VI',   accent: '#A8B0C8', metal: 'linear-gradient(135deg,#707890 0%,#a8b0c8 18%,#d8dcec 36%,#c4ccd8 54%,#e8eef4 72%,#9098b0 100%)', glow: 'rgba(200,208,228,0.20)' },
-  pid5:       { name: 'Five Trait Styles', short: 'Five Styles',    roman: 'VII',  accent: '#B8C0D8', metal: 'linear-gradient(135deg,#7888a0 0%,#b8c0d8 18%,#dce4f0 36%,#c8d0e4 54%,#ecf0f8 72%,#9ca8c0 100%)', glow: 'rgba(206,216,232,0.20)' },
-  hsq:        { name: 'Humor Style',           short: 'Humor',           roman: 'VIII', accent: '#DCC8A0', metal: 'linear-gradient(135deg,#b08840 0%,#dcc8a0 18%,#f4e8c8 36%,#e8d8b0 54%,#f8efce 72%,#c0a880 100%)', glow: 'rgba(232,216,176,0.20)' },
-  kims:       { name: 'Mindfulness Skills',     short: 'Mindfulness',     roman: 'IX',   accent: '#B8D8B8', metal: 'linear-gradient(135deg,#609060 0%,#b8d8b8 18%,#dcecdc 36%,#c8e0c8 54%,#ecf6ec 72%,#90b890 100%)', glow: 'rgba(200,224,200,0.20)' },
-  gcbs:       { name: 'Conspiracy Beliefs',   short: 'Conspiracy',       roman: 'X',    accent: '#D8B898', metal: 'linear-gradient(135deg,#a07840 0%,#d8b898 18%,#ecd8b8 36%,#e0c8a8 54%,#f4e8cc 72%,#b89878 100%)', glow: 'rgba(228,208,176,0.20)' },
-  aesthetic:  { name: 'Aesthetic Taste',      short: 'Aesthetic',       roman: 'XI',   accent: '#C8C4D4', metal: 'linear-gradient(135deg,#9490a0 0%,#c8c4d4 18%,#e8e4f4 36%,#d4d0e4 54%,#f4f0fc 72%,#bab8cc 100%)', glow: 'rgba(200,196,212,0.20)' },
-  riasec:     { name: 'Career Type',          short: 'Career',          roman: 'XII',  accent: '#C0CCD6', metal: 'linear-gradient(135deg,#8898a4 0%,#c0ccd6 18%,#dce8f0 36%,#ccdae6 54%,#e8f2f8 72%,#b4c4cc 100%)', glow: 'rgba(192,204,214,0.20)' },
-  attachment: { name: 'Attachment Style',     short: 'Attachment',      roman: 'XIII', accent: '#BCC0D4', metal: 'linear-gradient(135deg,#9090a8 0%,#bcc0d4 18%,#dcdee8 36%,#cccee0 54%,#e8eaf4 72%,#b4b8cc 100%)', glow: 'rgba(188,192,212,0.20)' },
-  pvq:        { name: 'Core Values',          short: 'Values',          roman: 'XIV',  accent: '#C8D8B0', metal: 'linear-gradient(135deg,#809060 0%,#c8d8b0 18%,#e8f0d8 36%,#d8e0c0 54%,#f0f4e0 72%,#a8b890 100%)', glow: 'rgba(216,224,192,0.20)' },
-  bpnss:      { name: 'Inner Needs',        short: 'Inner Needs',           roman: 'XV',   accent: '#A8D8C8', metal: 'linear-gradient(135deg,#609088 0%,#a8d8c8 18%,#d0ecdc 36%,#bce0d0 54%,#e4f4e8 72%,#88b8a8 100%)', glow: 'rgba(196,224,208,0.20)' },
-  dass:       { name: 'Mood and Stress',   short: 'Stress and Mood', roman: 'XVI',  accent: '#C0C0D0', metal: 'linear-gradient(135deg,#9090a2 0%,#c0c0d0 18%,#e0e0ec 36%,#cccce0 54%,#f0f0f8 72%,#b8b8cc 100%)', glow: 'rgba(192,192,208,0.20)' },
-  who5:       { name: 'Wellbeing Check',      short: 'Wellbeing',       roman: 'XVII', accent: '#B8E0C8', metal: 'linear-gradient(135deg,#609880 0%,#b8e0c8 18%,#d8eed8 36%,#c4e4cc 54%,#e8f6e8 72%,#88c0a0 100%)', glow: 'rgba(208,232,216,0.20)' },
+  darktriad:  { name: 'Dark Traits',       short: 'Dark Traits',      roman: 'II',  accent: '#B0BCC8', metal: 'linear-gradient(135deg,#6a7a88 0%,#b0bcc8 18%,#d8e0e8 36%,#c4ccd6 54%,#eaecf0 72%,#a0aab4 100%)', glow: 'rgba(176,188,200,0.20)' },
+  fti:        { name: 'Temperament Type',     short: 'Temperament',     roman: 'III',   accent: '#CFC0DA', metal: 'linear-gradient(135deg,#7a6090 0%,#cfc0da 18%,#e8dcf0 36%,#d8c8e8 54%,#f0e8f8 72%,#b0a0c8 100%)', glow: 'rgba(220,200,232,0.20)' },
+  npi:        { name: 'How You See Yourself',      short: 'Self-View',       roman: 'IV',    accent: '#DCB8C8', metal: 'linear-gradient(135deg,#a06080 0%,#dcb8c8 18%,#f0d8e0 36%,#e0c8d4 54%,#f8e8ec 72%,#c098a8 100%)', glow: 'rgba(232,200,216,0.20)' },
+  ambi:       { name: 'Broad Personality Scan', short: 'Broad Scan',      roman: 'V',   accent: '#A8B0C8', metal: 'linear-gradient(135deg,#707890 0%,#a8b0c8 18%,#d8dcec 36%,#c4ccd8 54%,#e8eef4 72%,#9098b0 100%)', glow: 'rgba(200,208,228,0.20)' },
+  hsq:        { name: 'Humor Style',           short: 'Humor',           roman: 'VI', accent: '#DCC8A0', metal: 'linear-gradient(135deg,#b08840 0%,#dcc8a0 18%,#f4e8c8 36%,#e8d8b0 54%,#f8efce 72%,#c0a880 100%)', glow: 'rgba(232,216,176,0.20)' },
+  kims:       { name: 'Mindfulness Skills',     short: 'Mindfulness',     roman: 'VII',   accent: '#B8D8B8', metal: 'linear-gradient(135deg,#609060 0%,#b8d8b8 18%,#dcecdc 36%,#c8e0c8 54%,#ecf6ec 72%,#90b890 100%)', glow: 'rgba(200,224,200,0.20)' },
+  gcbs:       { name: 'Conspiracy Beliefs',   short: 'Conspiracy',       roman: 'VIII',    accent: '#D8B898', metal: 'linear-gradient(135deg,#a07840 0%,#d8b898 18%,#ecd8b8 36%,#e0c8a8 54%,#f4e8cc 72%,#b89878 100%)', glow: 'rgba(228,208,176,0.20)' },
+  riasec:     { name: 'Career Type',          short: 'Career',          roman: 'IX',  accent: '#C0CCD6', metal: 'linear-gradient(135deg,#8898a4 0%,#c0ccd6 18%,#dce8f0 36%,#ccdae6 54%,#e8f2f8 72%,#b4c4cc 100%)', glow: 'rgba(192,204,214,0.20)' },
+  attachment: { name: 'Attachment Style',     short: 'Attachment',      roman: 'X', accent: '#BCC0D4', metal: 'linear-gradient(135deg,#9090a8 0%,#bcc0d4 18%,#dcdee8 36%,#cccee0 54%,#e8eaf4 72%,#b4b8cc 100%)', glow: 'rgba(188,192,212,0.20)' },
+  dass:       { name: 'Mood and Stress',   short: 'Stress and Mood', roman: 'XI',  accent: '#C0C0D0', metal: 'linear-gradient(135deg,#9090a2 0%,#c0c0d0 18%,#e0e0ec 36%,#cccce0 54%,#f0f0f8 72%,#b8b8cc 100%)', glow: 'rgba(192,192,208,0.20)' },
 }
 const DEFAULT_META = TEST_META.hexaco
 
@@ -83,7 +77,7 @@ const TRAIT_BEHAVIOR = {
   Antagonism:          { high: 'is unbothered about managing what others think of them', low: 'works to keep relationships smooth' },
   Disinhibition:       { high: 'acts on impulse more than they plan', low: 'thinks things through before acting' },
   Psychoticism:        { high: 'thinks in unconventional ways others sometimes find hard to follow', low: 'thinks in fairly conventional, predictable ways' },
-  // Wellbeing / DASS / WHO-5
+  // DASS
   Depression:          { high: 'is carrying real emotional heaviness right now', low: 'feels emotionally settled and motivated' },
   Anxiety:             { high: 'is running with a lot of worry lately', low: 'takes life in stride without much anxious noise' },
   Stress:              { high: 'is dealing with more pressure than is comfortable', low: 'is under a manageable amount of pressure' },
@@ -134,11 +128,6 @@ const TRAIT_BEHAVIOR = {
   Autonomy:            { high: 'is getting to make their own choices day to day', low: 'feels boxed in by external demands' },
   Competence:          { high: 'feels effective and capable in what they do', low: 'is not currently using their skills fully' },
   Relatedness:         { high: 'feels genuinely connected to the people around them', low: 'is running low on real connection' },
-  // Aesthetic
-  Intense:             { high: 'is drawn to raw, powerful, edgy work', low: 'prefers softer, more polished aesthetics' },
-  Mainstream:          { high: 'genuinely enjoys widely popular tastes', low: 'gravitates away from mainstream taste' },
-  Traditional:         { high: 'is moved by classical, rooted forms of beauty', low: 'is less drawn to traditional aesthetic forms' },
-  Visual:              { high: 'has a trained eye for design, colour, and composition', low: 'is less visually oriented in their tastes' },
   // Conspiracy beliefs
   'Government Malfeasance': { high: 'is skeptical of what governments say vs. do', low: 'gives official channels the benefit of the doubt' },
   'Malevolent Global':      { high: 'sees coordinated agendas behind big global events', low: 'is skeptical of grand-scheme explanations' },
@@ -146,10 +135,7 @@ const TRAIT_BEHAVIOR = {
   'Personal Wellbeing Threats': { high: 'is alert to hidden threats that institutions downplay', low: 'trusts institutions to disclose real threats' },
   'Control of Information': { high: 'believes public information is managed to serve powerful interests', low: 'takes public information mostly at face value' },
   // AMBI
-  'Affect Regulation':  { high: 'manages emotional state calmly under pressure', low: 'gets shaken by pressure more visibly' },
-  'Social Drive':       { high: 'is pulled toward people and gets energy from them', low: 'is drained by heavy social exposure' },
-  'Energy Drive':       { high: 'operates at high output and initiates things', low: 'moves at a lower-key, less driven pace' },
-  'Identity Coherence': { high: 'has a stable sense of who they are under pressure', low: 'is still working out who they are in different rooms' },
+  Neuroticism:         { high: 'feels worry and stress more readily than most', low: 'stays calm and even under pressure' },
 }
 
 // Natural-language behavioural sketch of a compatibility cluster, derived
@@ -203,8 +189,13 @@ function generatePlainEnglishSummary(testType, traitScores, percentiles, archety
   const low = sorted.filter(([, v]) => v <= 30).map(([k]) => k)
   const lines = []
   if (archetypeName) lines.push(`Your archetype is ${archetypeName}. ${archetypeDesc || ''}`.trim())
-  if (high.length) lines.push(`You score unusually high in ${high.slice(0, 3).join(', ')}. These traits are genuinely prominent parts of how you show up.`)
-  if (low.length) lines.push(`You score low in ${low.slice(0, 2).join(' and ')}. Low scores are not bad, they simply describe how you are wired.`)
+  if (testType === 'dass') {
+    if (high.length) lines.push(`Your ${high.slice(0, 3).join(' and ')} scores are well above the reference sample for the past week.`)
+    if (low.length) lines.push(`Your ${low.slice(0, 2).join(' and ')} scores are low, meaning few of those symptoms in the past week.`)
+  } else {
+    if (high.length) lines.push(`You score unusually high in ${high.slice(0, 3).join(', ')}. These traits are genuinely prominent parts of how you show up.`)
+    if (low.length) lines.push(`You score low in ${low.slice(0, 2).join(' and ')}. A low score is not a bad score; it shows where you sit relative to the reference sample.`)
+  }
   if (testType === 'hexaco') {
     const h = percentiles['Honesty-Humility'] || 50, e = percentiles['Extraversion'] || 50
     const o = percentiles['Openness'] || 50, c = percentiles['Conscientiousness'] || 50
@@ -234,34 +225,9 @@ function generatePlainEnglishSummary(testType, traitScores, percentiles, archety
     if (sec > 60) lines.push('You are mostly secure in how you relate to others. You can be close without losing yourself.')
     if (anx > 65) lines.push('You tend to worry about relationships more than most, and may want more closeness than you feel comfortable asking for.')
     if (avo > 65) lines.push('You tend to keep emotional distance in close relationships. Vulnerability can feel unnecessary to you.')
-  } else if (testType === 'aesthetic') {
-    const top2 = sorted.slice(0, 2).map(([k]) => k)
-    lines.push(`Your aesthetic is most strongly shaped by ${top2.join(' and ')}. These are the registers that move you without thinking about it.`)
   } else if (testType === 'riasec') {
     const top2 = sorted.slice(0, 2).map(([k]) => k)
     lines.push(`Your Holland code begins with ${top2.map(t => t[0]).join('')}. Work matching ${top2.join(' and ')} tends to bring out your best.`)
-  } else if (testType === 'who5') {
-    const w = percentiles['Wellbeing'] || 50
-    if (w < 30) lines.push('Your wellbeing over the last two weeks reads as low. If this persists, it is worth taking seriously.')
-    else if (w > 70) lines.push('Your wellbeing over the last two weeks reads as broadly healthy.')
-    else lines.push('Your wellbeing over the last two weeks is in a moderate range.')
-  } else if (testType === 'pvq') {
-    const top3 = sorted.slice(0, 3).map(([k]) => k)
-    if (top3.length) lines.push(`Your three strongest values are ${top3.join(', ')}. These are what you sort decisions by, even without thinking about it.`)
-    const bottom = sorted.slice(-1)[0]
-    if (bottom && bottom[1] < 30) lines.push(`Your lowest-ranked value is ${bottom[0]}. People who lead with this value may feel out of step with you.`)
-  } else if (testType === 'bpnss') {
-    for (const need of ['Autonomy', 'Competence', 'Relatedness']) {
-      const p = percentiles[need] || 50
-      if (p > 65) lines.push(`Your ${need.toLowerCase()} need is being well met right now. This is one of the foundations holding you up.`)
-      else if (p < 35) lines.push(`Your ${need.toLowerCase()} need is currently under-fed. When this runs low for a long time, it drains motivation and mood.`)
-    }
-    if (!lines.length) lines.push('All three of your basic psychological needs are being moderately met.')
-  } else if (testType === 'pid5') {
-    const top = sorted[0]
-    if (top && top[1] > 65) lines.push(`Your most pronounced trait pattern is ${top[0]}. This describes a style, not a clinical condition.`)
-    if (sorted.every(([, v]) => v < 50)) lines.push('Your trait scores are uniformly low. This is a stable, low-intensity profile.')
-    else if (!lines.length) lines.push('Your trait pattern is mixed across the five domains. None of these are diagnoses, only personality style descriptions.')
   }
   if (insights?.insights?.length) {
     for (const ins of insights.insights.slice(0, 2)) lines.push(ins)
@@ -301,12 +267,6 @@ const TRAIT_FUN_FACTS = {
     Enterprising: { high: "You see opportunities where others see problems. Born to lead or convince.", low: "" },
     Conventional: { high: "Order, structure, systems. You're the one who actually reads the instructions.", low: "" },
   },
-  aesthetic: {
-    Intense: { high: "You're drawn to art that hits hard, the stuff that makes you feel something real.", low: "" },
-    Mainstream: { high: "You appreciate what's popular because popular things resonate for a reason.", low: "" },
-    Traditional: { high: "Classic beauty speaks to you. There's a reason some things never go out of style.", low: "" },
-    Visual: { high: "You notice design, color, and composition everywhere. Your eye is trained.", low: "" },
-  },
   fti: {
     Explorer: { high: "You're drawn to novelty the way others are drawn to routine. Boredom is the real enemy.", low: "" },
     Builder: { high: "You're the one who shows up, follows through, and actually finishes what others abandon.", low: "" },
@@ -335,13 +295,11 @@ const TRAIT_FUN_FACTS = {
     Exploitativeness: { high: "You're willing to use an advantage if it's there. Strategic, not sentimental.", low: "" },
   },
   ambi: {
-    'Affect Regulation': { high: "You manage your emotional state well. People look to you when things get intense.", low: "" },
-    'Social Drive': { high: "You're pulled toward people. Social energy doesn't drain you, it fills you.", low: "" },
-    Conscientiousness: { high: "You follow through. Plans aren't aspirational for you, they're commitments.", low: "" },
+    Neuroticism: { high: "You feel things sharply. Worry and tension reach you faster than they reach most people.", low: "" },
+    Extraversion: { high: "You're pulled toward people. Social energy doesn't drain you, it fills you.", low: "" },
     Openness: { high: "You're intellectually restless. New angles, new ideas, new ways of seeing things.", low: "" },
     Agreeableness: { high: "You make space for others and it comes naturally rather than feeling like effort.", low: "" },
-    'Energy Drive': { high: "You operate at a high output. You initiate, push, and rarely wait to be asked.", low: "" },
-    'Identity Coherence': { high: "You have a stable sense of who you are that doesn't collapse under pressure or change.", low: "" },
+    Conscientiousness: { high: "You follow through. Plans aren't aspirational for you, they're commitments.", low: "" },
   },
   gcbs: {
     'Government Malfeasance': { high: "You're skeptical of what governments say they're doing versus what they're actually doing.", low: "" },
@@ -349,41 +307,6 @@ const TRAIT_FUN_FACTS = {
     'Extraterrestrial Coverup': { high: "You think there's more going on with unexplained phenomena than official channels will admit.", low: "" },
     'Personal Wellbeing Threats': { high: "You're alert to hidden threats in everyday life that institutions downplay or deny.", low: "" },
     'Control of Information': { high: "You believe the flow of public information is managed by people with their own interests in mind.", low: "" },
-  },
-  pvq: {
-    'Self-Direction': { high: "You need to think for yourself and do things your own way. External scripts don't sit well with you.", low: "" },
-    Universalism: { high: "You care about fairness and wellbeing at a broad scale, not just for the people in your circle.", low: "" },
-    Achievement: { high: "Success isn't just nice for you, it's a real driver. You measure yourself against meaningful outcomes.", low: "" },
-    Security: { high: "Stability, predictability, safety. You'd rather build something solid than gamble on exciting.", low: "" },
-    Stimulation: { high: "You need novelty and intensity to feel alive. Routine without variation drains you.", low: "" },
-    Conformity: { high: "You respect the structures and norms that hold things together. Not everyone does.", low: "" },
-    Tradition: { high: "You find meaning in practices and values that have been tested by time.", low: "" },
-    Hedonism: { high: "You're unapologetic about enjoying life. Pleasure is a legitimate reason to do something.", low: "" },
-    Power: { high: "Status and influence matter to you. You want to be in a position where your decisions carry weight.", low: "" },
-    Benevolence: { high: "The people close to you matter a lot to you. You're invested in their wellbeing in a real way.", low: "" },
-  },
-  bpnss: {
-    Autonomy: { high: "You need to make your own choices and that matters to your sense of self more than most people realize.", low: "" },
-    Competence: { high: "You need to feel effective. Environments where you can't use your skills properly wear you down.", low: "" },
-    Relatedness: { high: "Connection fuels you. When your relationships are good, everything else feels more manageable.", low: "" },
-  },
-  pid5: {
-    'Negative Affectivity': { high: "You experience emotions intensely and stay with difficult feelings longer than most.", low: "" },
-    Detachment: { high: "You're comfortable keeping your own company. Emotional distance feels natural, not isolating.", low: "" },
-    Antagonism: { high: "You're not particularly interested in managing other people's feelings about you.", low: "" },
-    Disinhibition: { high: "You act on impulse more than you plan. That spontaneity is also where your energy comes from.", low: "" },
-    Psychoticism: { high: "Your thinking can get unconventional. Others sometimes find it hard to follow where you go.", low: "" },
-  },
-  who5: {
-    Wellbeing: { high: "The last two weeks have been full. Energy, mood, and interest in daily life are all reading healthy.", low: "Things have been heavy lately. That's a signal worth taking seriously, not pushing through." },
-  },
-  sixteenpf: {
-    Warmth: { high: "People feel comfortable around you immediately. You radiate approachability.", low: "" },
-    Reasoning: { high: "Your brain works fast on abstract problems. These are puzzles to you, not headaches.", low: "" },
-    Stability: { high: "You're emotionally grounded. Drama doesn't destabilize you.", low: "" },
-    Dominance: { high: "You lead naturally. Authority isn't something you seek, it's something people give you.", low: "" },
-    Liveliness: { high: "Your energy is contagious. You're the one who turns a boring situation into a story.", low: "" },
-    Tension: { high: "You carry internal tension. It drives you forward but it also wears you down.", low: "" },
   },
 }
 
@@ -642,22 +565,16 @@ function ArchetypeConstellation({ testType, userArchetype, accent, names: provid
   // Generate deterministic constellation of 8-14 archetypes per test
   const archetypeSeeds = {
     hexaco: ['The Principled Steward', 'The Warm Connector', 'The Thoughtful Observer', 'The Open Explorer', 'The Grounded Idealist', 'The Conscientious Anchor', 'The Empathic Strategist', 'The Bold Innovator'],
-    sixteenpf: ['The Warm Strategist', 'The Bold Pioneer', 'The Grounded Analyst', 'The Expressive Idealist', 'The Vigilant Planner', 'The Social Catalyst', 'The Private Architect', 'The Tense Achiever'],
     darktriad: ['The Shadow', 'The Mirror', 'The Phantom', 'The Sovereign', 'The Diplomat', 'The Grounded Empath'],
     fti: ['The Explorer', 'The Builder', 'The Director', 'The Negotiator', 'The Curious Hybrid', 'The Grounded Visionary'],
     npi: ['The Self-Assured Lead', 'The Modest Collaborator', 'The Balanced Self-View', 'The Ambitious Authority', 'The Quiet Confidence', 'The Charming Exhibitor'],
     ambi: ['The Energized Organizer', 'The Reflective Artisan', 'The Warm Companion', 'The Freewheeling Seeker', 'The Diligent Achiever', 'The Open Connector', 'The Steady Contributor', 'The Creative Explorer'],
-    pid5: ['The Steady Baseline', 'The Intense Responder', 'The Guarded Independent', 'The Impulsive Seeker', 'The Unconventional Mind'],
     hsq: ['The Warm Humorist', 'The Inner Resilient', 'The Edgy Jester', 'The Self-Deprecator', 'The Dry Observer', 'The Inclusive Comedian'],
     kims: ['The Embodied Noticer', 'The Articulate Observer', 'The Present Actor', 'The Accepting Witness', 'The Reflective Practitioner'],
     gcbs: ['The Trusting View', 'The Selective Skeptic', 'The Deep Skeptic', 'The Pattern Seeker', 'The Cautious Questioner'],
-    aesthetic: ['The Raw Intensity', 'The Warm Traditionalist', 'The Visual Sensualist', 'The Broad Appreciator', 'The Mainstream Harmonist', 'The Refined Observer'],
     riasec: ['The Creative Investigator', 'The Social Builder', 'The Enterprising Mind', 'The Realistic Craftsman', 'The Conventional Architect', 'The Artistic Visionary'],
     attachment: ['The Secure Connector', 'The Anxious Heart', 'The Independent Spirit', 'The Guarded Warmth', 'The Trusting Opener', 'The Flexible Relator'],
-    pvq: ['The Open to Change', 'The Self-Transcendent', 'The Self-Enhancing', 'The Conservation-Minded', 'The Benevolent Idealist', 'The Achievement Driver'],
-    bpnss: ['The Deeply Resourced', 'The Competence-First', 'The Connection-Seeker', 'The Autonomous Achiever', 'The Balanced Nourisher'],
     dass: ['The Resilient Navigator', 'The Sensitive Processor', 'The Calm Center', 'The Stress-Carrier', 'The Anxious Thinker', 'The Weary Steady'],
-    who5: ['Running Low', 'Steady', 'Thriving'],
   }
 
   // Prefer the REAL archetype names for this test (from the compatibility
@@ -1023,7 +940,7 @@ async function generateHTMLReport(rootEl, meta, short, result) {
   body {
     background: #040406;
     color: #F4F7FA;
-    font-family: 'Playfair Display', Georgia, serif;
+    font-family: 'Libre Baskerville', Baskerville, Georgia, serif;
     font-size: 16px; line-height: 1.6; min-height: 100vh;
     overflow-x: hidden; position: relative;
   }
@@ -1083,12 +1000,87 @@ ${bgData ? `<div class="report-bg"><img src="${bgData}" alt="" /><div class="vei
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
+function ResearchSection({ research, accent }) {
+  const model = research.trained_model
+  const cell = { fontFamily: S.fontMono, fontSize: 11, color: S.textSec, padding: '6px 10px', textAlign: 'right', borderBottom: '1px solid rgba(215,228,242,0.06)' }
+  const head = { fontFamily: S.fontSC, fontSize: 8, letterSpacing: '0.12em', color: S.irisDim, padding: '6px 10px', textAlign: 'right', borderBottom: '1px solid rgba(215,228,242,0.14)', fontWeight: 400 }
+  const stat = (label, value) => (
+    <div style={{ flex: '1 1 130px', padding: '14px 16px', background: 'rgba(215,228,242,0.04)', border: '1px solid rgba(215,228,242,0.08)' }}>
+      <div style={{ fontFamily: S.fontSC, fontSize: 7.5, letterSpacing: '0.16em', color: S.irisDim, textTransform: 'uppercase', marginBottom: 6 }}>{label}</div>
+      <div style={{ fontFamily: S.fontDisplay, fontSize: 22, fontWeight: 400, color: S.textPrim }}>{value}</div>
+    </div>
+  )
+  return (
+    <Section label="Model and Research" roman="xi" accent={accent}>
+      <p style={{ fontFamily: S.fontBody, fontStyle: 'italic', fontSize: 13, color: S.textSec, lineHeight: 1.8, marginBottom: 18 }}>
+        Your profile type comes from a latent-profile model fitted to the {research.code} reference sample. The number of types is taken from the person-centered literature on this instrument{model?.profile_basis ? `: ${model.profile_basis}.` : '.'}
+      </p>
+      {model && (
+        <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', marginBottom: 18 }}>
+          {stat('Reference sample', (model.n_samples || research.n).toLocaleString())}
+          {stat('Profile types', model.profiles)}
+        </div>
+      )}
+      {research.robustness?.length > 0 && (
+        <div style={{ marginBottom: 18, overflowX: 'auto' }}>
+          <div style={{ fontFamily: S.fontSC, fontSize: 8.5, letterSpacing: '0.14em', color: S.irisDim, textTransform: 'uppercase', marginBottom: 8 }}>
+            From the accompanying study · silhouette by cluster count in raw trait space
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                <th style={{ ...head, textAlign: 'left' }}>k</th>
+                <th style={head}>K-means</th>
+                <th style={head}>Ward</th>
+                <th style={head}>GMM full</th>
+                <th style={head}>GMM diagonal</th>
+              </tr>
+            </thead>
+            <tbody>
+              {research.robustness.map(r => (
+                <tr key={r.k}>
+                  <td style={{ ...cell, textAlign: 'left' }}>{r.k}</td>
+                  <td style={cell}>{r.kmeans.toFixed(3)}</td>
+                  <td style={cell}>{r.ward.toFixed(3)}</td>
+                  <td style={cell}>{r.gmm_full.toFixed(3)}</td>
+                  <td style={cell}>{r.gmm_diag.toFixed(3)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {research.comparators?.length > 0 && (
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ fontFamily: S.fontSC, fontSize: 8.5, letterSpacing: '0.14em', color: S.irisDim, textTransform: 'uppercase', marginBottom: 8 }}>
+            Against the external literature
+          </div>
+          {research.comparators.map((cmp, i) => (
+            <div key={i} style={{ fontFamily: S.fontMono, fontSize: 11, color: S.textSec, lineHeight: 1.9 }}>
+              k = {cmp.k}, {cmp.approach}, {cmp.metric.toLowerCase()}: {cmp.study.toFixed(3)} in the study against {cmp.external.toFixed(3)} in {cmp.source}{cmp.adjacent ? ' (related, non-identical item pool)' : ''}
+            </div>
+          ))}
+        </div>
+      )}
+      <div style={{ padding: '14px 18px', background: 'rgba(215,228,242,0.03)', border: '1px solid rgba(215,228,242,0.08)' }}>
+        {(research.caveats || []).map((cv, i) => (
+          <p key={i} style={{ fontFamily: S.fontSC, fontSize: 10.5, letterSpacing: '0.03em', color: S.textMuted, lineHeight: 1.75, margin: i ? '6px 0 0' : 0 }}>{cv}</p>
+        ))}
+        <p style={{ fontFamily: S.fontSC, fontSize: 10.5, letterSpacing: '0.03em', color: S.textMuted, lineHeight: 1.75, margin: '6px 0 0' }}>
+          Instrument anchor: {research.anchor}. <a href={research.doi} target="_blank" rel="noreferrer" style={{ color: accent }}>{research.doi}</a> · <Link to="/acknowledgements" style={{ color: accent }}>Acknowledgements</Link>
+        </p>
+      </div>
+    </Section>
+  )
+}
+
 export default function Results() {
   const { resultId } = useParams()
   const navigate = useNavigate()
   const [result, setResult] = useState(null)
   const [mapCoords, setMapCoords] = useState([])
   const [compat, setCompat] = useState() // undefined = loading, null = failed
+  const [research, setResearch] = useState(null)
   const [revealing, setRevealing] = useState(true)
   const [downloading, setDownloading] = useState(false)
   const resultPageRef = useRef()
@@ -1097,6 +1089,7 @@ export default function Results() {
     api.get(`/results/${resultId}`)
       .then(res => {
         setResult(res.data)
+        api.get(`/research/${res.data.test_type}`).then(r => setResearch(r.data)).catch(() => setResearch(null))
         return api.get(`/results/map/${res.data.test_type}`)
       })
       .then(res => setMapCoords(res.data.coords || []))
@@ -1164,7 +1157,7 @@ export default function Results() {
   // background after submit and is held separately from the base insights.
   const deepDiveData = insights.deep_dive
   const enrichPending = result.enrichment_status === 'pending'
-  const deepDiveReady = deepDiveData?.status === 'ok' && (deepDiveData?.insights?.length > 0)
+  const deepDiveReady = deepDiveData?.status === 'ok' && (deepDiveData?.bullets?.length > 0)
 
   const stats = computeStats(traitScores, percentiles)
   const plainLines = generatePlainEnglishSummary(testType, traitScores, percentiles, result.archetype_name, result.archetype_description, insights)
@@ -1217,7 +1210,7 @@ export default function Results() {
             <div style={{ position: 'relative' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 28 }}>
                 <span style={{ fontFamily: S.fontDisplay, fontSize: 15, fontWeight: 300, color: 'rgba(215,228,242,0.20)', letterSpacing: '0.06em' }}>{roman}</span>
-                <span style={{ fontFamily: S.fontSC, fontSize: 8, letterSpacing: '0.26em', color: S.irisDim, textTransform: 'uppercase', padding: '4px 14px', border: '1px solid rgba(215,228,242,0.14)' }}>{short} · Personality Archetype</span>
+                <span style={{ fontFamily: S.fontSC, fontSize: 8, letterSpacing: '0.26em', color: S.irisDim, textTransform: 'uppercase', padding: '4px 14px', border: '1px solid rgba(215,228,242,0.14)' }}>{short} · {testType === 'dass' ? 'Current State Profile' : 'Profile Type'}</span>
                 <span style={{ fontFamily: S.fontDisplay, fontSize: 15, fontWeight: 300, color: 'rgba(215,228,242,0.20)', letterSpacing: '0.06em' }}>{roman}</span>
               </div>
               <h1 style={{ fontFamily: S.fontDisplay, fontSize: 'clamp(40px,6vw,68px)', fontWeight: 300, letterSpacing: '-0.02em', lineHeight: 1.0, background: metal, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', backgroundSize: '200% 200%', animation: 'metal-sweep 9s ease-in-out infinite', marginBottom: 16 }}>
@@ -1227,7 +1220,7 @@ export default function Results() {
                 {result.archetype_description || insights.summary || ''}
               </p>
               <div style={{ display: 'flex', justifyContent: 'center', gap: 0, flexWrap: 'wrap' }}>
-                <StatPill value={`${result.similarity_pct?.toFixed(1) || '?'}%`} label={'of the population\nshares your archetype'} metal={metal} />
+                <StatPill value={result.type_share_pct != null ? `${Math.round(result.type_share_pct)}%` : '?'} label={'of the reference sample\nshares this profile type'} metal={metal} />
                 <div style={{ width: 1, background: 'rgba(215,228,242,0.10)', margin: '8px 0' }} />
                 <StatPill value={`${stats.medianPct}th`} label={'median percentile\nrank across traits'} metal={metal} />
                 <div style={{ width: 1, background: 'rgba(215,228,242,0.10)', margin: '8px 0' }} />
@@ -1278,20 +1271,18 @@ export default function Results() {
               <p style={{ fontFamily: S.fontSC, fontSize: 11, letterSpacing: '0.04em', color: S.textMuted, lineHeight: 1.75 }}>
                 Percentiles compare your scores against {
                   testType === 'hexaco' ? '22,786' :
-                  testType === 'sixteenpf' ? '49,159' :
-                  testType === 'darktriad' ? '18,192' :
-                  testType === 'dass' ? '39,775' :
-                  testType === 'attachment' ? '51,492' :
-                  testType === 'riasec' ? '145,828' :
-                  testType === 'aesthetic' ? '18,575' :
+                  testType === 'darktriad' ? '18,182' :
+                  testType === 'dass' ? '39,774' :
+                  testType === 'attachment' ? '51,352' :
+                  testType === 'riasec' ? '142,577' :
                   testType === 'hsq' ? '1,071' :
-                  testType === 'kims' ? '601' :
+                  testType === 'kims' ? '599' :
                   testType === 'fti' ? '4,967' :
-                  testType === 'npi' ? '11,243' :
+                  testType === 'npi' ? '11,230' :
                   testType === 'ambi' ? '2,017' :
-                  testType === 'gcbs' ? '2,495' :
+                  testType === 'gcbs' ? '2,470' :
                   'thousands of'
-                } real participants.
+                } respondents in the open reference sample. They rank you within that self-selected sample, not the general population.
               </p>
             </div>
           </Section>
@@ -1338,7 +1329,7 @@ export default function Results() {
           )}
 
           {/* Archetype Constellation + Compatibility */}
-          <Section label="Archetype Constellation" roman="vii" accent={accent}>
+          {testType !== 'dass' && <Section label="Archetype Constellation" roman="vii" accent={accent}>
             <ArchetypeConstellation
               testType={testType}
               userArchetype={compat?.user?.name || result.archetype_name}
@@ -1518,7 +1509,7 @@ export default function Results() {
                 </div>
               )}
             </div>
-          </Section>
+          </Section>}
 
           {/* Notable Strengths */}
           {insights.strengths?.length > 0 && (
@@ -1633,27 +1624,21 @@ export default function Results() {
             </Section>
           )}
 
-          {/* Deep Dive Mode , psychology-model enrichment lives on its own
-              page (/deep-dive/:id). If it's still generating, that page runs
-              an arcade minigame while the user waits. */}
+          {research && <ResearchSection research={research} accent={accent} />}
+
           <div style={{ marginTop: 3 }} data-report-exclude="true">
             <button
-              onClick={() => { if (deepDiveReady || enrichPending) navigate(`/deep-dive/${resultId}`) }}
-              disabled={!deepDiveReady && !enrichPending}
-              style={{ width: '100%', padding: '18px 32px', background: (deepDiveReady || enrichPending) ? `${accent}14` : 'rgba(215,228,242,0.03)', border: `1px solid ${(deepDiveReady || enrichPending) ? accent + '77' : 'rgba(215,228,242,0.14)'}`, color: (deepDiveReady || enrichPending) ? S.textPrim : S.textMuted, cursor: (deepDiveReady || enrichPending) ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, transition: 'all 220ms', fontFamily: S.fontSC, fontSize: 9, letterSpacing: '0.22em', opacity: (deepDiveReady || enrichPending) ? 1 : 0.65 }}
-              onMouseEnter={e => { if (deepDiveReady || enrichPending) { e.currentTarget.style.background = `${accent}22`; e.currentTarget.style.borderColor = accent } }}
-              onMouseLeave={e => { if (deepDiveReady || enrichPending) { e.currentTarget.style.background = `${accent}14`; e.currentTarget.style.borderColor = `${accent}77` } }}
+              onClick={() => navigate(`/deep-dive/${resultId}`)}
+              style={{ width: '100%', padding: '18px 32px', background: `${accent}14`, border: `1px solid ${accent}77`, color: S.textPrim, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, transition: 'all 220ms', fontFamily: S.fontSC, fontSize: 9, letterSpacing: '0.22em' }}
+              onMouseEnter={e => { e.currentTarget.style.background = `${accent}22`; e.currentTarget.style.borderColor = accent }}
+              onMouseLeave={e => { e.currentTarget.style.background = `${accent}14`; e.currentTarget.style.borderColor = `${accent}77` }}
             >
               <span style={{ fontSize: 13, opacity: 0.85 }}>✦</span>
-              {deepDiveReady ? 'ENTER DEEP DIVE MODE'
-                : enrichPending ? 'DEEP DIVE · GENERATING, PLAY WHILE YOU WAIT'
-                : 'DEEP DIVE · UNAVAILABLE'}
+              {deepDiveReady ? 'OPEN DEEP DIVE' : enrichPending ? 'DEEP DIVE · BEING WRITTEN' : 'GENERATE DEEP DIVE'}
             </button>
-            {enrichPending && !deepDiveReady && (
-              <p style={{ fontFamily: S.fontSC, fontSize: 10, letterSpacing: '0.04em', color: S.textMuted, lineHeight: 1.7, marginTop: 8, textAlign: 'center' }}>
-                Deep Dive gives a more psychology-compliant read on your profile. Enter now and play the arcade while it finishes, or come back later from your dashboard.
-              </p>
-            )}
+            <p style={{ fontFamily: S.fontSC, fontSize: 10, letterSpacing: '0.04em', color: S.textMuted, lineHeight: 1.7, marginTop: 8, textAlign: 'center' }}>
+              The deep dive is generated as psychologically compliant text, based on published research for this instrument.
+            </p>
           </div>
 
           {/* Actions, excluded from the downloaded report */}

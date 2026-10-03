@@ -29,3 +29,8 @@ backend/**/__pycache__/
 *.env.example 
 __pycache__/ 
 *.pyc 
+
+logs/
+
+backend/.venv/
+.claude/

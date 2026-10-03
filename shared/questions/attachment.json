@@ -2,7 +2,7 @@
   "id": "attachment",
   "name": "Attachment Style",
   "subtitle": "Attachment Style",
-  "instructions": "Think about how you generally behave in your closest relationships, whether romantic or a very close friendship. Rate each statement from 1 (Strongly Disagree) to 7 (Strongly Agree).",
+  "instructions": "Think about how you generally behave in your closest relationships, whether romantic or a very close friendship. Rate each statement from 1 (Strongly Disagree) to 5 (Strongly Agree).",
   "questions": [
     {
       "id": "ECR1",

@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from database.db import init_db
-from routers import auth, tests, results, user, psych
+from routers import auth, tests, results, user, psych, research
 from security import audit_secrets, wire_security
 import numpy as np
 import sklearn
@@ -25,23 +25,19 @@ async def lifespan(app: FastAPI):
     audit_secrets()
     init_db()
     try:
-        from ml.archetype_refiner import ArchetypeRefiner
-        # Load the LLM in a background thread so the API is reachable
-        # immediately. Any submit that lands while it is still loading
-        # waits on the ready event instead of skipping enrichment.
-        ArchetypeRefiner.instance().warm_up(background=True)
-    except Exception:
-        pass
-    try:
-        import asyncio
+        import threading
         from ml import psych_layer
-        # Kick the psychology augmentation layer (HF classifiers) out of
-        # cold storage at boot. Specialty GPU workers wake on demand when a
-        # questionnaire opens, not at boot, to protect the weekly quota.
-        asyncio.create_task(psych_layer.warmup_all_hf())
+        threading.Thread(target=psych_layer.ensure_server, daemon=True).start()
+        from ml import meaning_check
+        threading.Thread(target=meaning_check.load, daemon=True).start()
     except Exception:
         pass
     yield
+    try:
+        from ml import psych_layer
+        psych_layer._stop_server()
+    except Exception:
+        pass
 
 app = FastAPI(title="Valence API", version="1.0.0", lifespan=lifespan)
 
@@ -66,7 +62,7 @@ app.include_router(tests.router,   prefix="/api/tests",   tags=["tests"])
 app.include_router(results.router, prefix="/api/results", tags=["results"])
 app.include_router(user.router,    prefix="/api/user",    tags=["user"])
 app.include_router(psych.router,   prefix="/api/psych",   tags=["psych"])
-app.include_router(psych.internal_router)
+app.include_router(research.router, prefix="/api/research", tags=["research"])
 
 @app.get("/api/health")
 def health():

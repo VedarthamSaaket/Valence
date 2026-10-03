@@ -30,7 +30,7 @@ def _enrich_result_async(result_id: str, test_type: str, trait_scores: Dict,
                                  archetype or {}, dict(insights),
                                  context_notes=context_notes)
         insights = enriched or insights
-        status = "done"
+        status = "done" if (insights.get("deep_dive") or {}).get("status") == "ok" else "failed"
     except Exception as e:
         print(f"[psych] background enrichment failed for {result_id}: {e}")
     try:
@@ -47,29 +47,9 @@ def _enrich_result_async(result_id: str, test_type: str, trait_scores: Dict,
 DATASETS_DIR = os.path.join(os.path.dirname(__file__), "../datasets")
 
 VALID_TESTS = [
-    # Tier A (ML pipeline)
-    "hexaco", "sixteenpf", "darktriad", "attachment", "riasec", "aesthetic",
-    "hsq", "kims", "fti", "dass", "npi", "ambi", "gcbs",
-    # Tier B (LLM clustering)
-    "pvq", "bpnss", "who5", "pid5",
+    "hexaco", "ambi", "darktriad", "npi", "dass", "kims",
+    "hsq", "gcbs", "riasec", "attachment", "fti",
 ]
-
-DATASET_FOLDER_MAP = {
-    "hexaco":     "HEXACO",
-    "sixteenpf":  "16PF",
-    "darktriad":  "SD3",
-    "attachment": "ECR-data-1March2018",
-    "riasec":     "RIASEC_data12Dec2018",
-    "aesthetic":  "APS_data",
-    "hsq":        "HSQ",
-    "kims":       "KIMS",
-    "fti":        "FTI",
-    "dass":       "DASS_data_21.02.19",
-    "npi":        "NPI",
-    "ambi":       "AMBI_data_Nov2019",
-    "gcbs":       "GCBS",
-    # Tier B has no dataset folder
-}
 
 
 class SubmitTestRequest(BaseModel):
@@ -90,7 +70,7 @@ def submit_test(body: SubmitTestRequest, current_user=Depends(get_current_user))
 
         print("[DEBUG] Step 1: Running inference")
         context_notes = _build_context_notes(body.test_type, body.question_contexts)
-        result = run_inference(body.test_type, body.responses, context_notes=context_notes)
+        result = run_inference(body.test_type, body.responses)
 
         print("[DEBUG] Step 2: Preparing archetype")
         archetype = result.get("archetype") or {}
@@ -188,6 +168,46 @@ def submit_test(body: SubmitTestRequest, current_user=Depends(get_current_user))
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class DeepDiveRequest(BaseModel):
+    force: bool = False
+
+
+@router.post("/{result_id}/deep-dive")
+def request_deep_dive(result_id: str, body: Optional[DeepDiveRequest] = None,
+                      current_user=Depends(get_current_user)):
+    db  = get_db()
+    row = db.execute(
+        "SELECT * FROM test_results WHERE id = ? AND user_id = ?",
+        (result_id, current_user["id"])
+    ).fetchone()
+    assert_owns_result(dict(row) if row else None, current_user["id"], "result")
+    r = dict(row)
+    if r["test_type"] not in VALID_TESTS:
+        db.close()
+        raise HTTPException(status_code=404, detail="Result not found")
+    insights = json.loads(r["insights"]) if r.get("insights") else {}
+    existing = insights.get("deep_dive") or {}
+    force = bool(body and body.force)
+    if r.get("enrichment_status") == "pending":
+        db.close()
+        return {"status": "pending"}
+    if existing.get("status") == "ok" and existing.get("bullets") and not force:
+        db.close()
+        return {"status": "done"}
+    db.execute("UPDATE test_results SET enrichment_status = 'pending' WHERE id = ?", (result_id,))
+    db.commit()
+    db.close()
+    archetype = {"id": r.get("archetype_id"), "name": r.get("archetype_name"),
+                 "tagline": r.get("archetype_description")}
+    threading.Thread(
+        target=_enrich_result_async,
+        args=(result_id, r["test_type"], json.loads(r["trait_scores"]),
+              json.loads(r["percentiles"]), archetype, insights, None),
+        daemon=True,
+    ).start()
+    return {"status": "pending"}
+
+
 @router.get("/my")
 def get_my_results(current_user=Depends(get_current_user)):
     """Returns ONLY the authenticated user's own results - never another user's."""
@@ -201,6 +221,8 @@ def get_my_results(current_user=Depends(get_current_user)):
     results = []
     for row in rows:
         r = dict(row)
+        if r["test_type"] not in VALID_TESTS:
+            continue
         # Ownership enforced by the WHERE clause above; double-check for safety
         assert_owns_result(r, current_user["id"], "result")
         r["trait_scores"]        = json.loads(r["trait_scores"])
@@ -271,10 +293,18 @@ def get_result(result_id: str, current_user=Depends(get_current_user)):
     assert_owns_result(dict(row) if row else None, current_user["id"], "result")
 
     r = dict(row)
+    if r["test_type"] not in VALID_TESTS:
+        raise HTTPException(status_code=404, detail="Result not found")
     r["trait_scores"]        = json.loads(r["trait_scores"])
     r["percentiles"]         = json.loads(r["percentiles"])
     r["neighborhood_traits"] = json.loads(r["neighborhood_traits"] or "{}")
     r["insights"]            = json.loads(r["insights"]) if r.get("insights") else None
+
+    catalogue = _load_archetypes(r["test_type"]) or {}
+    for info in catalogue.values():
+        if info.get("id") == r.get("archetype_id") and info.get("weight") is not None:
+            r["type_share_pct"] = round(float(info["weight"]) * 100, 1)
+            break
 
     # Older rows may carry placeholder names from before the archetype
     # models were named ("Archetype 2" / "LLM enrichment pending").
@@ -341,15 +371,15 @@ MODELS_DIR = os.path.join(os.path.dirname(__file__), "../models")
 
 # Display names for cross-test compatibility rows.
 TEST_DISPLAY_NAMES = {
-    "hexaco": "Six-Trait Personality", "sixteenpf": "Sixteen Personality Traits",
-    "darktriad": "Dark Traits", "fti": "Temperament Type",
-    "npi": "How You See Yourself", "ambi": "Broad Personality Scan",
-    "pid5": "Five Trait Styles", "hsq": "Humor Style",
-    "kims": "Mindfulness Skills", "gcbs": "Conspiracy Beliefs",
-    "aesthetic": "Aesthetic Taste", "riasec": "Career Type",
-    "attachment": "Attachment Style", "pvq": "Core Values",
-    "bpnss": "Inner Needs", "dass": "Mood and Stress", "who5": "Wellbeing Check",
+    "hexaco": "Six-Trait Personality", "ambi": "Broad Personality Scan",
+    "darktriad": "Dark Traits", "npi": "How You See Yourself",
+    "dass": "Mood and Stress", "kims": "Mindfulness Skills",
+    "hsq": "Humor Style", "gcbs": "Conspiracy Beliefs",
+    "riasec": "Career Type", "attachment": "Attachment Style",
+    "fti": "Temperament Type",
 }
+
+STATE_MEASURES = {"dass"}
 
 _arch_cache: Dict[str, Optional[dict]] = {}
 
@@ -567,6 +597,9 @@ def get_compatibility(result_id: str, current_user=Depends(get_current_user)):
     arch_id   = r["archetype_id"] or ""
     arch_name = r["archetype_name"] or ""
 
+    if test_type in STATE_MEASURES:
+        return {"available": False, "reason": "Compatibility does not apply to a current-state measure."}
+
     archetypes = _load_archetypes(test_type)
     if not archetypes:
         return {"available": False, "reason": "No archetype model for this test."}
@@ -614,7 +647,7 @@ def get_compatibility(result_id: str, current_user=Depends(get_current_user)):
     # Cross-test: fixed-length z-profile signatures + partner effects.
     cross_test = []
     for other_id, display in TEST_DISPLAY_NAMES.items():
-        if other_id == test_type:
+        if other_id == test_type or other_id in STATE_MEASURES:
             continue
         other = _load_archetypes(other_id)
         if not other:
@@ -674,12 +707,7 @@ def get_compatibility(result_id: str, current_user=Depends(get_current_user)):
 # ---------------------------------------------------------------------------
 
 def _get_dataset_path(test_id: str) -> Optional[str]:
-    folder_name = DATASET_FOLDER_MAP.get(test_id)
-    if folder_name:
-        subfolder_path = os.path.join(DATASETS_DIR, folder_name, "data.csv")
-        if os.path.exists(os.path.dirname(subfolder_path)):
-            return subfolder_path
-    return os.path.join(DATASETS_DIR, f"{test_id}.csv")
+    return os.path.join(DATASETS_DIR, "_contributions", f"{test_id}.csv")
 
 
 def _append_to_dataset(test_id: str, responses: Dict[str, int]):

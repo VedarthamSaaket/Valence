@@ -20,22 +20,16 @@ const METAL = 'linear-gradient(135deg,#8090a2 0%,#c8d8e8 18%,#eef6fc 36%,#d8e8f4
 
 const TEST_META = {
   hexaco:     { name: 'Six-Trait Personality',    short: 'Six Traits',           accent: '#C8D8E8', roman: 'I' },
-  sixteenpf:  { name: 'Sixteen Personality Traits',         short: '16 Traits',       accent: '#C0B8D0', roman: 'II' },
-  darktriad:  { name: 'Dark Traits',      short: 'Dark Traits',       accent: '#B0BCC8', roman: 'III' },
-  fti:        { name: 'Temperament Type',    short: 'Temperament',      accent: '#CFC0DA', roman: 'IV' },
-  npi:        { name: 'How You See Yourself',     short: 'Self-View',        accent: '#DCB8C8', roman: 'V' },
-  ambi:       { name: 'Broad Personality Scan',short: 'Broad Scan',       accent: '#A8B0C8', roman: 'VI' },
-  pid5:       { name: 'Five Trait Styles',short: 'Five Styles',     accent: '#B8C0D8', roman: 'VII' },
-  hsq:        { name: 'Humor Style',          short: 'Humor',            accent: '#DCC8A0', roman: 'VIII' },
-  kims:       { name: 'Mindfulness Skills',    short: 'Mindfulness',      accent: '#B8D8B8', roman: 'IX' },
-  gcbs:       { name: 'Conspiracy Beliefs',  short: 'Conspiracy',        accent: '#D8B898', roman: 'X' },
-  aesthetic:  { name: 'Aesthetic Taste',     short: 'Aesthetic',        accent: '#C8C4D4', roman: 'XI' },
-  riasec:     { name: 'Career Type',         short: 'Career',           accent: '#C0CCD6', roman: 'XII' },
-  attachment: { name: 'Attachment Style',    short: 'Attachment',       accent: '#BCC0D4', roman: 'XIII' },
-  pvq:        { name: 'Core Values',         short: 'Values',           accent: '#C8D8B0', roman: 'XIV' },
-  bpnss:      { name: 'Inner Needs',       short: 'Inner Needs',            accent: '#A8D8C8', roman: 'XV' },
-  dass:       { name: 'Mood and Stress',  short: 'Stress and Mood',  accent: '#C0C0D0', roman: 'XVI' },
-  who5:       { name: 'Wellbeing Check',     short: 'Wellbeing',        accent: '#B8E0C8', roman: 'XVII' },
+  darktriad:  { name: 'Dark Traits',      short: 'Dark Traits',       accent: '#B0BCC8', roman: 'II' },
+  fti:        { name: 'Temperament Type',    short: 'Temperament',      accent: '#CFC0DA', roman: 'III' },
+  npi:        { name: 'How You See Yourself',     short: 'Self-View',        accent: '#DCB8C8', roman: 'IV' },
+  ambi:       { name: 'Broad Personality Scan',short: 'Broad Scan',       accent: '#A8B0C8', roman: 'V' },
+  hsq:        { name: 'Humor Style',          short: 'Humor',            accent: '#DCC8A0', roman: 'VI' },
+  kims:       { name: 'Mindfulness Skills',    short: 'Mindfulness',      accent: '#B8D8B8', roman: 'VII' },
+  gcbs:       { name: 'Conspiracy Beliefs',  short: 'Conspiracy',        accent: '#D8B898', roman: 'VIII' },
+  riasec:     { name: 'Career Type',         short: 'Career',           accent: '#C0CCD6', roman: 'IX' },
+  attachment: { name: 'Attachment Style',    short: 'Attachment',       accent: '#BCC0D4', roman: 'X' },
+  dass:       { name: 'Mood and Stress',  short: 'Stress and Mood',  accent: '#C0C0D0', roman: 'XI' },
 }
 
 const ALL_TESTS = Object.entries(TEST_META).map(([id, m]) => ({ id, ...m }))
@@ -152,7 +146,7 @@ function ResultCard({ result, meta }) {
   )
 }
 
-function ProgressRing({ completed, total = 17 }) {
+function ProgressRing({ completed, total = 11 }) {
   const r = 44, circumference = 2 * Math.PI * r
   const progress = completed / total
   return (
@@ -248,7 +242,7 @@ export default function Dashboard() {
                 {completedTests.length === 0
                   ? 'Take your first test to start building your psychological profile.'
                   : completedTests.length < 4
-                    ? `You have completed ${completedTests.length} of 17 assessments. Each one adds a new layer to your portrait.`
+                    ? `You have completed ${completedTests.length} of 11 assessments. Each one adds a new layer to your portrait.`
                     : `You have completed ${completedTests.length} assessments. Your profile is taking shape.`}
               </p>
               {profile?.master_archetype && (

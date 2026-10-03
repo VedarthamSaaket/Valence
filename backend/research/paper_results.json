@@ -1,0 +1,549 @@
+{
+ "title": "Unsupervised Clustering of Multi-Instrument Psychometric Data: An Evaluation of Training Approaches",
+ "pipeline": {
+  "primary": "UMAP to 10 dimensions (n_neighbors=30, min_dist=0.0, euclidean, seed 42), then a variational Bayesian Gaussian Mixture with a Dirichlet-process prior (weight_concentration_prior=0.01, full covariance, k-means init, n_init=3, max_iter=300, reg_covar=1e-4). Components below 0.02 posterior weight are pruned; the survivors are the effective cluster count.",
+  "robustness": "The same normalized trait matrix clustered without embedding by K-means, Ward linkage, and Gaussian mixtures with full and diagonal covariance, each at k = 2 to 5.",
+  "silhouette_bands": {
+   "strong": 0.5,
+   "reasonable": 0.25
+  },
+  "algorithm_mean_silhouette": {
+   "kmeans": 0.248,
+   "gmm_diag": 0.217,
+   "ward": 0.202,
+   "gmm_full": 0.185,
+   "spectral_excluded": 0.176
+  },
+  "percentile_method": "Empirical rank of the score in the sorted reference distribution, clamped to 1-99."
+ },
+ "caveats": [
+  "Reference samples are self-selected open online respondents (openpsychometrics.org); percentiles are ranks within that sample, not the general population.",
+  "The respondent pool is majority English-speaking with a US/UK skew.",
+  "Results are self-reflection material, not a clinical assessment or diagnosis."
+ ],
+ "instruments": {
+  "hexaco": {
+   "code": "HEXACO",
+   "domain": "Broad-trait personality",
+   "items": 240,
+   "factors": 6,
+   "n": 22786,
+   "anchor": "Ashton & Lee 2007",
+   "doi": "https://doi.org/10.1177/1088868306294907"
+  },
+  "ambi": {
+   "code": "AMBI",
+   "domain": "Broad-bandwidth personality (IPIP)",
+   "items": 181,
+   "factors": 7,
+   "n": 2017,
+   "anchor": "Yarkoni 2010",
+   "doi": "https://doi.org/10.1016/j.jrp.2010.01.002"
+  },
+  "darktriad": {
+   "code": "SD3",
+   "domain": "Dark personality",
+   "items": 27,
+   "factors": 3,
+   "n": 18182,
+   "anchor": "Jones & Paulhus 2014",
+   "doi": "https://doi.org/10.1177/1073191113514105"
+  },
+  "npi": {
+   "code": "NPI",
+   "domain": "Narcissistic self-view",
+   "items": 40,
+   "factors": 7,
+   "n": 11230,
+   "anchor": "Raskin & Terry 1988",
+   "doi": "https://doi.org/10.1037/0022-3514.54.5.890"
+  },
+  "dass": {
+   "code": "DASS",
+   "domain": "Affect (depression, anxiety, stress)",
+   "items": 42,
+   "factors": 3,
+   "n": 39774,
+   "anchor": "Lovibond & Lovibond 1995",
+   "doi": "https://doi.org/10.1016/0005-7967(94)00075-U"
+  },
+  "kims": {
+   "code": "KIMS",
+   "domain": "Mindfulness skills",
+   "items": 39,
+   "factors": 4,
+   "n": 599,
+   "anchor": "Baer, Smith & Allen 2004",
+   "doi": "https://doi.org/10.1177/1073191104268029"
+  },
+  "hsq": {
+   "code": "HSQ",
+   "domain": "Humor styles",
+   "items": 32,
+   "factors": 4,
+   "n": 1071,
+   "anchor": "Martin et al. 2003",
+   "doi": "https://doi.org/10.1016/S0092-6566(02)00534-2"
+  },
+  "gcbs": {
+   "code": "GCBS",
+   "domain": "Conspiracy beliefs",
+   "items": 15,
+   "factors": 5,
+   "n": 2470,
+   "anchor": "Brotherton, French & Pickering 2013",
+   "doi": "https://doi.org/10.3389/fpsyg.2013.00279"
+  },
+  "riasec": {
+   "code": "RIASEC",
+   "domain": "Career-interest structure",
+   "items": 48,
+   "factors": 6,
+   "n": 142577,
+   "anchor": "Holland 1959",
+   "doi": "https://doi.org/10.1037/h0040767"
+  },
+  "attachment": {
+   "code": "ECR",
+   "domain": "Adult attachment",
+   "items": 36,
+   "factors": 3,
+   "n": 51352,
+   "anchor": "Fraley, Waller & Brennan 2000",
+   "doi": "https://doi.org/10.1037/0022-3514.78.2.350"
+  },
+  "fti": {
+   "code": "FTI",
+   "domain": "Temperament",
+   "items": 56,
+   "factors": 4,
+   "n": 4967,
+   "anchor": "Brown, Acevedo & Fisher 2013",
+   "doi": "https://doi.org/10.1371/journal.pone.0078734"
+  }
+ },
+ "robustness": {
+  "ambi": [
+   {
+    "k": 2,
+    "kmeans": 0.239,
+    "ward": 0.192,
+    "gmm_full": 0.187,
+    "gmm_diag": 0.241
+   },
+   {
+    "k": 3,
+    "kmeans": 0.153,
+    "ward": 0.096,
+    "gmm_full": 0.117,
+    "gmm_diag": 0.161
+   },
+   {
+    "k": 4,
+    "kmeans": 0.138,
+    "ward": 0.098,
+    "gmm_full": 0.094,
+    "gmm_diag": 0.128
+   },
+   {
+    "k": 5,
+    "kmeans": 0.124,
+    "ward": 0.076,
+    "gmm_full": 0.078,
+    "gmm_diag": 0.112
+   }
+  ],
+  "dass": [
+   {
+    "k": 2,
+    "kmeans": 0.469,
+    "ward": 0.456,
+    "gmm_full": 0.376,
+    "gmm_diag": 0.467
+   },
+   {
+    "k": 3,
+    "kmeans": 0.377,
+    "ward": 0.358,
+    "gmm_full": 0.318,
+    "gmm_diag": 0.361
+   },
+   {
+    "k": 4,
+    "kmeans": 0.32,
+    "ward": 0.287,
+    "gmm_full": 0.284,
+    "gmm_diag": 0.295
+   },
+   {
+    "k": 5,
+    "kmeans": 0.326,
+    "ward": 0.269,
+    "gmm_full": 0.277,
+    "gmm_diag": 0.296
+   }
+  ],
+  "attachment": [
+   {
+    "k": 2,
+    "kmeans": 0.396,
+    "ward": 0.37,
+    "gmm_full": 0.381,
+    "gmm_diag": 0.395
+   },
+   {
+    "k": 3,
+    "kmeans": 0.324,
+    "ward": 0.314,
+    "gmm_full": 0.324,
+    "gmm_diag": 0.321
+   },
+   {
+    "k": 4,
+    "kmeans": 0.339,
+    "ward": 0.309,
+    "gmm_full": 0.326,
+    "gmm_diag": 0.289
+   },
+   {
+    "k": 5,
+    "kmeans": 0.319,
+    "ward": 0.275,
+    "gmm_full": 0.325,
+    "gmm_diag": 0.288
+   }
+  ],
+  "fti": [
+   {
+    "k": 2,
+    "kmeans": 0.21,
+    "ward": 0.157,
+    "gmm_full": 0.189,
+    "gmm_diag": 0.205
+   },
+   {
+    "k": 3,
+    "kmeans": 0.203,
+    "ward": 0.119,
+    "gmm_full": 0.177,
+    "gmm_diag": 0.196
+   },
+   {
+    "k": 4,
+    "kmeans": 0.199,
+    "ward": 0.126,
+    "gmm_full": 0.179,
+    "gmm_diag": 0.186
+   },
+   {
+    "k": 5,
+    "kmeans": 0.195,
+    "ward": 0.125,
+    "gmm_full": 0.181,
+    "gmm_diag": 0.195
+   }
+  ],
+  "gcbs": [
+   {
+    "k": 2,
+    "kmeans": 0.39,
+    "ward": 0.369,
+    "gmm_full": 0.232,
+    "gmm_diag": 0.278
+   },
+   {
+    "k": 3,
+    "kmeans": 0.305,
+    "ward": 0.25,
+    "gmm_full": 0.129,
+    "gmm_diag": 0.209
+   },
+   {
+    "k": 4,
+    "kmeans": 0.257,
+    "ward": 0.207,
+    "gmm_full": 0.037,
+    "gmm_diag": 0.13
+   },
+   {
+    "k": 5,
+    "kmeans": 0.27,
+    "ward": 0.209,
+    "gmm_full": 0.002,
+    "gmm_diag": 0.057
+   }
+  ],
+  "hexaco": [
+   {
+    "k": 2,
+    "kmeans": 0.247,
+    "ward": 0.253,
+    "gmm_full": 0.207,
+    "gmm_diag": 0.253
+   },
+   {
+    "k": 3,
+    "kmeans": 0.176,
+    "ward": 0.139,
+    "gmm_full": 0.147,
+    "gmm_diag": 0.186
+   },
+   {
+    "k": 4,
+    "kmeans": 0.152,
+    "ward": 0.122,
+    "gmm_full": 0.1,
+    "gmm_diag": 0.137
+   },
+   {
+    "k": 5,
+    "kmeans": 0.139,
+    "ward": 0.091,
+    "gmm_full": 0.099,
+    "gmm_diag": 0.125
+   }
+  ],
+  "hsq": [
+   {
+    "k": 2,
+    "kmeans": 0.253,
+    "ward": 0.242,
+    "gmm_full": 0.258,
+    "gmm_diag": 0.274
+   },
+   {
+    "k": 3,
+    "kmeans": 0.197,
+    "ward": 0.19,
+    "gmm_full": 0.177,
+    "gmm_diag": 0.198
+   },
+   {
+    "k": 4,
+    "kmeans": 0.177,
+    "ward": 0.131,
+    "gmm_full": 0.148,
+    "gmm_diag": 0.146
+   },
+   {
+    "k": 5,
+    "kmeans": 0.175,
+    "ward": 0.113,
+    "gmm_full": 0.129,
+    "gmm_diag": 0.139
+   }
+  ],
+  "kims": [
+   {
+    "k": 2,
+    "kmeans": 0.271,
+    "ward": 0.201,
+    "gmm_full": 0.21,
+    "gmm_diag": 0.268
+   },
+   {
+    "k": 3,
+    "kmeans": 0.225,
+    "ward": 0.153,
+    "gmm_full": 0.195,
+    "gmm_diag": 0.198
+   },
+   {
+    "k": 4,
+    "kmeans": 0.208,
+    "ward": 0.142,
+    "gmm_full": 0.173,
+    "gmm_diag": 0.202
+   },
+   {
+    "k": 5,
+    "kmeans": 0.199,
+    "ward": 0.14,
+    "gmm_full": 0.144,
+    "gmm_diag": 0.164
+   }
+  ],
+  "npi": [
+   {
+    "k": 2,
+    "kmeans": 0.346,
+    "ward": 0.278,
+    "gmm_full": 0.152,
+    "gmm_diag": 0.301
+   },
+   {
+    "k": 3,
+    "kmeans": 0.225,
+    "ward": 0.224,
+    "gmm_full": 0.131,
+    "gmm_diag": 0.155
+   },
+   {
+    "k": 4,
+    "kmeans": 0.224,
+    "ward": 0.124,
+    "gmm_full": 0.108,
+    "gmm_diag": 0.128
+   },
+   {
+    "k": 5,
+    "kmeans": 0.171,
+    "ward": 0.121,
+    "gmm_full": 0.031,
+    "gmm_diag": 0.104
+   }
+  ],
+  "riasec": [
+   {
+    "k": 2,
+    "kmeans": 0.211,
+    "ward": 0.181,
+    "gmm_full": 0.154,
+    "gmm_diag": 0.184
+   },
+   {
+    "k": 3,
+    "kmeans": 0.175,
+    "ward": 0.103,
+    "gmm_full": 0.107,
+    "gmm_diag": 0.144
+   },
+   {
+    "k": 4,
+    "kmeans": 0.171,
+    "ward": 0.105,
+    "gmm_full": 0.058,
+    "gmm_diag": 0.134
+   },
+   {
+    "k": 5,
+    "kmeans": 0.176,
+    "ward": 0.113,
+    "gmm_full": 0.045,
+    "gmm_diag": 0.141
+   }
+  ],
+  "darktriad": [
+   {
+    "k": 2,
+    "kmeans": 0.388,
+    "ward": 0.358,
+    "gmm_full": 0.376,
+    "gmm_diag": 0.386
+   },
+   {
+    "k": 3,
+    "kmeans": 0.306,
+    "ward": 0.26,
+    "gmm_full": 0.289,
+    "gmm_diag": 0.298
+   },
+   {
+    "k": 4,
+    "kmeans": 0.285,
+    "ward": 0.21,
+    "gmm_full": 0.239,
+    "gmm_diag": 0.24
+   },
+   {
+    "k": 5,
+    "kmeans": 0.265,
+    "ward": 0.213,
+    "gmm_full": 0.249,
+    "gmm_diag": 0.219
+   }
+  ]
+ },
+ "comparators": {
+  "riasec": [
+   {
+    "k": 2,
+    "approach": "K-means",
+    "metric": "Silhouette",
+    "study": 0.211,
+    "ci": null,
+    "external": 0.232,
+    "source": "Möhring & Wild (2026)",
+    "adjacent": false
+   },
+   {
+    "k": 3,
+    "approach": "K-means",
+    "metric": "Silhouette",
+    "study": 0.175,
+    "ci": [
+     0.172,
+     0.179
+    ],
+    "external": 0.17,
+    "source": "Möhring & Wild (2026)",
+    "adjacent": false
+   },
+   {
+    "k": 4,
+    "approach": "K-means",
+    "metric": "Silhouette",
+    "study": 0.171,
+    "ci": [
+     0.168,
+     0.175
+    ],
+    "external": 0.159,
+    "source": "Möhring & Wild (2026)",
+    "adjacent": false
+   },
+   {
+    "k": 5,
+    "approach": "K-means",
+    "metric": "Silhouette",
+    "study": 0.176,
+    "ci": [
+     0.173,
+     0.179
+    ],
+    "external": 0.16,
+    "source": "Möhring & Wild (2026)",
+    "adjacent": false
+   }
+  ],
+  "hexaco": [
+   {
+    "k": 3,
+    "approach": "GMM (diagonal)",
+    "metric": "Silhouette",
+    "study": 0.186,
+    "ci": [
+     0.181,
+     0.191
+    ],
+    "external": 0.178,
+    "source": "Kerber et al. (2021)",
+    "adjacent": true
+   }
+  ],
+  "darktriad": [
+   {
+    "k": 5,
+    "approach": "GMM (diagonal)",
+    "metric": "Entropy",
+    "study": 0.622,
+    "ci": null,
+    "external": 0.764,
+    "source": "Maneiro et al. (2020)",
+    "adjacent": true
+   }
+  ],
+  "gcbs": [
+   {
+    "k": 5,
+    "approach": "GMM (full)",
+    "metric": "Entropy",
+    "study": 0.923,
+    "ci": null,
+    "external": 0.91,
+    "source": "Frenken & Imhoff (2021)",
+    "adjacent": false
+   }
+  ]
+ }
+}

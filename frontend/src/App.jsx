@@ -11,6 +11,7 @@ import Results from './pages/Results'
 import DeepDive from './pages/DeepDive'
 import Dashboard from './pages/Dashboard'
 import AuthCallback from './pages/AuthCallback'
+import Acknowledgements from './pages/Acknowledgements'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -56,6 +57,9 @@ function AppRoutes() {
         />
         <Route path="/dashboard"
           element={<ProtectedRoute><Dashboard key={location.key} /></ProtectedRoute>}
+        />
+        <Route path="/acknowledgements"
+          element={<Acknowledgements key={location.key} />}
         />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>

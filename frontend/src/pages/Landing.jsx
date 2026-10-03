@@ -18,16 +18,8 @@ const CATEGORIES = [
         traits: ['Honesty-Humility', 'Emotionality', 'Extraversion', 'Agreeableness', 'Conscientiousness', 'Openness'],
       },
       {
-        id: 'sixteenpf',
-        num: '02',
-        tag: 'Deep Structure, 163 Questions',
-        name: ['Sixteen', 'Traits'],
-        desc: "Cattell's sixteen factors go deeper than any other personality framework. The highest dimensional resolution of how your mind is structured.",
-        traits: ['Warmth', 'Reasoning', 'Stability', 'Dominance', 'Liveliness', 'Tension'],
-      },
-      {
         id: 'darktriad',
-        num: '03',
+        num: '02',
         tag: 'Shadow Self, 27 Questions',
         name: ['Dark', 'Traits'],
         desc: 'Three darker traits most people prefer not to measure. Honest self-knowledge requires looking at all of yourself.',
@@ -35,7 +27,7 @@ const CATEGORIES = [
       },
       {
         id: 'fti',
-        num: '04',
+        num: '03',
         tag: 'Temperament, 56 Questions',
         name: ['Temperament', 'Type'],
         desc: 'Four neurotransmitter-linked temperaments first proposed by Helen Fisher. Each one shapes how you think, decide, and connect.',
@@ -43,7 +35,7 @@ const CATEGORIES = [
       },
       {
         id: 'npi',
-        num: '05',
+        num: '04',
         tag: 'Self-View, 40 Questions',
         name: ['How You See', 'Yourself'],
         desc: 'Seven facets of how you see yourself in relation to others, from authority and self-sufficiency to vanity and entitlement.',
@@ -51,19 +43,11 @@ const CATEGORIES = [
       },
       {
         id: 'ambi',
-        num: '06',
+        num: '05',
         tag: 'Broad Scan, 181 Questions',
         name: ['Broad', 'Personality'],
         desc: 'The widest personality scan in this collection, covering nearly two hundred personality scales in a single sitting.',
-        traits: ['Affect Regulation', 'Social Drive', 'Conscientiousness', 'Openness', 'Agreeableness', 'Energy Drive', 'Identity Coherence'],
-      },
-      {
-        id: 'pid5',
-        num: '07',
-        tag: 'Trait Styles, 25 Questions',
-        name: ['Five Trait', 'Styles'],
-        desc: 'Five trait styles that show up across personality patterns. This describes personality styles, not clinical disorders. Not a diagnosis.',
-        traits: ['Negative Affectivity', 'Detachment', 'Antagonism', 'Disinhibition', 'Psychoticism'],
+        traits: ['Neuroticism', 'Extraversion', 'Openness', 'Agreeableness', 'Conscientiousness'],
       },
     ],
   },
@@ -74,7 +58,7 @@ const CATEGORIES = [
     tests: [
       {
         id: 'hsq',
-        num: '08',
+        num: '06',
         tag: 'Humor Style, 32 Questions',
         name: ['Humor', 'Style'],
         desc: 'Four styles of humor, two that help relationships flourish and two that quietly erode them. Which ones do you use most?',
@@ -82,7 +66,7 @@ const CATEGORIES = [
       },
       {
         id: 'kims',
-        num: '09',
+        num: '07',
         tag: 'Mindfulness, 39 Questions',
         name: ['Mindfulness', 'Skills'],
         desc: 'Four skills that make up day-to-day mindfulness, from noticing what is happening in your body to letting experience be what it is.',
@@ -90,19 +74,11 @@ const CATEGORIES = [
       },
       {
         id: 'gcbs',
-        num: '10',
+        num: '08',
         tag: 'Worldview, 15 Questions',
         name: ['Conspiracy', 'Beliefs'],
         desc: 'Five flavors of how skeptical you are about official accounts and powerful actors behind big events.',
         traits: ['Government Malfeasance', 'Malevolent Global', 'Extraterrestrial Coverup', 'Personal Wellbeing Threats', 'Control of Information'],
-      },
-      {
-        id: 'aesthetic',
-        num: '11',
-        tag: 'Perception, 30 Questions',
-        name: ['Aesthetic', 'Taste'],
-        desc: 'How you respond to intense, mainstream, traditional, and visual aesthetics. Your honest aesthetic fingerprint.',
-        traits: ['Intense', 'Mainstream', 'Traditional', 'Visual'],
       },
     ],
   },
@@ -113,7 +89,7 @@ const CATEGORIES = [
     tests: [
       {
         id: 'riasec',
-        num: '12',
+        num: '09',
         tag: 'Career, 48 Questions',
         name: ['Career', 'Type'],
         desc: 'Six career personality types that explain what environments bring out your best work.',
@@ -121,27 +97,11 @@ const CATEGORIES = [
       },
       {
         id: 'attachment',
-        num: '13',
+        num: '10',
         tag: 'Relationships, 36 Questions',
         name: ['Attachment', 'Style'],
         desc: 'Your earliest bonds shaped how you attach to others today. See where you sit on the secure to anxious to avoidant map.',
         traits: ['Secure', 'Anxious', 'Avoidant'],
-      },
-      {
-        id: 'pvq',
-        num: '14',
-        tag: 'Values, 21 Questions',
-        name: ['Core', 'Values'],
-        desc: 'Ten guiding values that shape what you treat as worth pursuing, from self-direction to security, achievement to benevolence.',
-        traits: ['Self-Direction', 'Universalism', 'Achievement', 'Security', 'Hedonism', 'Benevolence'],
-      },
-      {
-        id: 'bpnss',
-        num: '15',
-        tag: 'Inner Needs, 21 Questions',
-        name: ['Inner', 'Needs'],
-        desc: 'Three fundamental needs that humans run on, autonomy, competence, and relatedness. How well is each one being fed in your life right now?',
-        traits: ['Autonomy', 'Competence', 'Relatedness'],
       },
     ],
   },
@@ -152,19 +112,11 @@ const CATEGORIES = [
     tests: [
       {
         id: 'dass',
-        num: '16',
+        num: '11',
         tag: 'Mood and Stress, 42 Questions',
         name: ['Mood', 'and Stress'],
         desc: 'A snapshot of where you are right now across three currents of emotional experience. This is a self-reflection tool, not a diagnosis.',
         traits: ['Depression', 'Anxiety', 'Stress'],
-      },
-      {
-        id: 'who5',
-        num: '17',
-        tag: 'Quick Check, 5 Questions',
-        name: ['Wellbeing', 'Check'],
-        desc: 'A quick check on how the last two weeks have felt. Five questions, one wellbeing number.',
-        traits: ['Wellbeing'],
       },
     ],
   },
@@ -176,7 +128,7 @@ const FEATURES = [
   { idx: 'III', icon: '◎', title: 'Population Percentiles', body: 'Every trait scored against the real dataset distribution. Know precisely how rare your personality configuration is.' },
   { idx: 'IV', icon: '◇', title: 'Trait Radar', body: 'Visual breakdown of all trait dimensions simultaneously. The shape of your personality, rendered precisely.' },
   { idx: 'V', icon: '◉', title: 'Behavioral Insights', body: 'Pattern analysis of your highest and lowest traits translated into concrete language about how you move through the world.' },
-  { idx: 'VI', icon: '⬟', title: 'Unified Profile', body: 'Complete all seventeen assessments and receive a master archetype drawn from your full dimensional personality vector.' },
+  { idx: 'VI', icon: '⬟', title: 'Unified Profile', body: 'Complete all eleven assessments and receive a master archetype drawn from your full dimensional personality vector.' },
 ]
 
 const S = {

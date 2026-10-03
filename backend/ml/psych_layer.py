@@ -1,798 +1,534 @@
-# backend/ml/psych_layer.py
-"""
-Psychology model augmentation layer for Valence.
-
-Two layers, mirroring the proven Lumina architecture:
-
-Layer A , small HuggingFace Inference API classifiers (free serverless tier).
-    Used to classify the user's volunteered context notes (emotion / mental
-    state spectrum) so the heavier models receive an affect signal alongside
-    the raw trait profile.
-
-Layer B , specialty psychology LLMs (too heavy for the serverless tier),
-    hosted on a dedicated Hugging Face Space (Docker, llama.cpp, GGUF quants,
-    static *.hf.space URL). The Space sleeps when unused and wakes on any
-    HTTP request , no public backend, no callbacks, no Kaggle quota:
-
-        Instrument family        | Model                    | Spec
-        -------------------------|--------------------------|-----------------------------------------
-        mood/clinical (dass,who5)| MentaLLaMA-chat-7B       | interpretable mental-health justification
-        trait-clinical (pid5,...)| PsychoLexLLaMA-8B        | academic psych terminology enrichment
-        relational (attachment,..)| PsychoCounsel-Llama3    | therapist decision-alignment
-        broad personality (rest) | PsyLLM-8B                | DSM-5/ICD-11 + CBT/ACT frameworks
-
-Warm-while-testing contract
----------------------------
-The frontend pings /api/psych/warmup/{test_id} the moment a questionnaire
-opens and keeps pinging while the test is in progress. That keeps Layer A
-models out of cold storage, wakes the Space if it was sleeping, and tells it
-to hold this test's specialty model resident in RAM, so enrichment after
-submit runs against a hot worker.
-
-Enrich + monitor + fine-tuning corpus
--------------------------------------
-Every enrichment call is logged as a JSONL record (input profile, prompt,
-model output, latency) under ml/finetune_data/{test_id}.jsonl. That corpus is
-the monitored fine-tuning dataset for the specialty models.
-
-Fail-soft semantics everywhere: any failure returns None / leaves the result
-untouched. A user submit never hard-fails because a model was unreachable.
-"""
-
 from __future__ import annotations
 
-import asyncio
-import hashlib
+import atexit
 import json
 import os
 import re
+import shutil
+import subprocess
 import threading
 import time
-from collections import OrderedDict
+from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, List, Optional
 
 import httpx
 
-# ─── Config (env-driven, mirrors the Lumina layer) ───────────────────────────
+from ml import meaning_check
+from ml.psych_bibliography import applicable_points, general_points, references
+from ml.psych_lexicon import INSTRUMENTS, LITERATURE, PATTERNS, SUPPORT_NOTE, TRAITS
 
-HF_API_KEY = os.getenv("HF_API_KEY", "")
-ENABLE_PSYCH_AUGMENT = os.getenv("ENABLE_PSYCH_AUGMENT", "true").lower() in ("1", "true", "yes")
-ENABLE_SPECIALTY_PSYCH = os.getenv("ENABLE_SPECIALTY_PSYCH", "true").lower() in ("1", "true", "yes")
+MODEL_KEY = "mentallama"
+MODEL_LABEL = "MentaLLaMA-chat-7B, interpretable mental-health analysis model (hosted locally)"
 
-# Layer A classifiers , per-signal pins, env-overridable.
-PSYCH_MODEL_NOTES     = os.getenv("PSYCH_MODEL_NOTES",     "mental/mental-bert-base-uncased")
-PSYCH_MODEL_EMOTION   = os.getenv("PSYCH_MODEL_EMOTION",   "SamLowe/roberta-base-go_emotions")
-PSYCH_MODEL_SENTIMENT = os.getenv("PSYCH_MODEL_SENTIMENT", "cardiffnlp/twitter-roberta-base-sentiment-latest")
-
-HF_MODELS = [PSYCH_MODEL_NOTES, PSYCH_MODEL_EMOTION, PSYCH_MODEL_SENTIMENT]
-
-# Layer B manual fallback URLs (paste a Colab/ngrok URL to pin a worker).
-COLAB_URL_PSYLLM        = os.getenv("COLAB_URL_PSYLLM", "")
-COLAB_URL_PSYCHOCOUNSEL = os.getenv("COLAB_URL_PSYCHOCOUNSEL", "")
-COLAB_URL_PSYCHOLEX     = os.getenv("COLAB_URL_PSYCHOLEX", "")
-COLAB_URL_MENTALLAMA    = os.getenv("COLAB_URL_MENTALLAMA", "")
-
-SPECIALTY_REGISTRY_SECRET = os.getenv("SPECIALTY_REGISTRY_SECRET", "")
-
-# The dedicated Hugging Face Space hosting the specialty models. Static URL,
-# reachable from anywhere, wakes from sleep on any HTTP request , the local
-# backend never needs to be publicly reachable. Deploy with deploy_space.py.
-SPECIALTY_SPACE_URL = os.getenv(
-    "SPECIALTY_SPACE_URL", "https://vaedarth-valence-psych-host.hf.space"
+ENABLE_DEEP_DIVE = os.getenv("ENABLE_DEEP_DIVE", "true").lower() in ("1", "true", "yes")
+MENTALLAMA_URL = os.getenv("MENTALLAMA_URL", "http://127.0.0.1:8081").rstrip("/")
+MENTALLAMA_MODEL_PATH = os.getenv(
+    "MENTALLAMA_MODEL_PATH",
+    os.path.join(os.path.dirname(__file__), "..", "models", "llm", "MentaLLaMA-chat-7B.Q4_K_M.gguf"),
 )
-# CPU-basic Space (2 vCPU, llama.cpp on a 7-8B Q4 GGUF) sustains roughly
-# 3-6 tokens per second. Deep-dive prompts ask for five 70-120 word
-# paragraphs (~700 output tokens) which lands at 150-250s of pure
-# generation; add worker lock queueing behind other requests and 240s
-# was too tight, the client timed out with the worker still cooking.
-# The whole enrichment runs on a background thread after submit, so a
-# generous ceiling costs nothing but keeps us from bailing on nearly-done
-# generations.
-SPECIALTY_INFER_TIMEOUT = float(os.getenv("SPECIALTY_INFER_TIMEOUT", "600"))
+MENTALLAMA_AUTOSTART = os.getenv("MENTALLAMA_AUTOSTART", "true").lower() in ("1", "true", "yes")
+INFER_TIMEOUT = float(os.getenv("MENTALLAMA_TIMEOUT", "120"))
+MAX_BULLETS = 5
+PARALLEL_SLOTS = int(os.getenv("MENTALLAMA_SLOTS", "4"))
+LOG_DIR = os.path.join(os.path.dirname(__file__), "finetune_data")
 
-FINETUNE_DIR = os.path.join(os.path.dirname(__file__), "finetune_data")
+SYSTEM_PROMPT = (
+    "You are MentaLLaMA, a mental-health and personality analysis model. You write precise, "
+    "non-diagnostic psychological interpretations of self-report questionnaire profiles using "
+    "correct psychological terminology. You never state or imply a clinical diagnosis."
+)
 
-HF_BASE = "https://api-inference.huggingface.co/models"
-# Fallback endpoint. HF migrated many hosted classifiers to router.hf.co in
-# 2024, on Windows resolvers where api-inference.huggingface.co DNS drops
-# (getaddrinfo failed), the .hf.space wildcard usually still resolves, and
-# router.huggingface.co is on the same edge network.
-HF_ROUTER_BASE = "https://router.huggingface.co/hf-inference/models"
-
-MODEL_KEYS = ("psyllm", "psychocounsel", "psycholex", "mentallama")
-PRIORITY = ("lightning", "space", "kaggle", "colab")
-
-# Human-facing labels for the "Deep Dive" panel , which specialty psychology
-# model produced the enrichment, and what it specialises in.
-MODEL_LABELS = {
-    "psyllm":        "PsyLLM , personality-science model (trait theory + DSM-5 dimensional framing)",
-    "psychocounsel": "PsychoCounsel , psychotherapist-aligned relational model",
-    "psycholex":     "PsychoLex , academic psychology model",
-    "mentallama":    "MentaLLaMA , interpretable mental-health model",
-}
-
-# Which specialty model owns which instrument.
-TEST_SPECIALTY_MAP: Dict[str, str] = {
-    # mood / clinical state
-    "dass": "mentallama", "who5": "mentallama",
-    # clinical-adjacent trait instruments
-    "pid5": "psycholex", "darktriad": "psycholex", "npi": "psycholex", "gcbs": "psycholex",
-    # relational / needs / values
-    "attachment": "psychocounsel", "hsq": "psychocounsel",
-    "bpnss": "psychocounsel", "pvq": "psychocounsel",
-    # broad personality
-    "hexaco": "psyllm", "sixteenpf": "psyllm", "ambi": "psyllm", "fti": "psyllm",
-    "kims": "psyllm", "aesthetic": "psyllm", "riasec": "psyllm",
-}
+_server_lock = threading.Lock()
+_server_proc: Optional[subprocess.Popen] = None
 
 
-def _augment_enabled() -> bool:
-    return ENABLE_PSYCH_AUGMENT and bool(HF_API_KEY)
+def enabled() -> bool:
+    return ENABLE_DEEP_DIVE
 
 
-def _specialty_enabled() -> bool:
-    return ENABLE_SPECIALTY_PSYCH
-
-
-def specialty_model_for(test_id: str) -> str:
-    return TEST_SPECIALTY_MAP.get(test_id, "psyllm")
-
-
-# ─── Layer A: HuggingFace Inference API (async, cached, fail-soft) ───────────
-
-_CACHE: "OrderedDict[str, list]" = OrderedDict()
-_CACHE_MAX = 1024
-_cache_lock = threading.Lock()
-
-
-def _cache_key(model: str, text: str) -> str:
-    return hashlib.sha256(f"{model}::{text}".encode("utf-8")).hexdigest()
-
-
-def _cache_get(key: str):
-    with _cache_lock:
-        if key in _CACHE:
-            _CACHE.move_to_end(key)
-            return _CACHE[key]
-    return None
-
-
-def _cache_put(key: str, value) -> None:
-    with _cache_lock:
-        _CACHE[key] = value
-        _CACHE.move_to_end(key)
-        while len(_CACHE) > _CACHE_MAX:
-            _CACHE.popitem(last=False)
-
-
-# Session-level circuit breaker for Layer A. When both the primary
-# api-inference.huggingface.co host and the router.hf.co fallback fail with
-# DNS or connect errors this many times in a row, further calls short-circuit
-# to None immediately instead of hammering an unreachable host. State resets
-# whenever any classifier call succeeds.
-_HF_LAYERA_FAIL_STREAK = {"count": 0}
-_HF_LAYERA_CIRCUIT_OPEN_AT = 5
-
-
-def _layer_a_disabled() -> bool:
-    return _HF_LAYERA_FAIL_STREAK["count"] >= _HF_LAYERA_CIRCUIT_OPEN_AT
-
-
-def _record_layer_a(success: bool) -> None:
-    if success:
-        _HF_LAYERA_FAIL_STREAK["count"] = 0
-    else:
-        _HF_LAYERA_FAIL_STREAK["count"] += 1
-
-
-async def hf_classify(model: str, text: str, timeout: float = 3.0,
-                      wait_for_model: bool = False) -> Optional[list]:
-    """Full [{label, score}, ...] distribution. None on any failure.
-
-    Tries the legacy api-inference.huggingface.co endpoint first, then
-    router.huggingface.co/hf-inference as a fallback for DNS setups where
-    only the router subdomain resolves. The classifier is optional
-    enrichment (affect spectrum of user-volunteered notes), any failure is
-    fail-soft and never blocks base results or the deep dive."""
-    if not _augment_enabled():
-        return None
-    if _layer_a_disabled():
-        return None
-    text = (text or "").strip()
-    if not text:
-        return None
-    payload_text = text[:1500]
-
-    key = _cache_key(model, payload_text)
-    cached = _cache_get(key)
-    if cached is not None:
-        return cached
-
-    headers = {"Authorization": f"Bearer {HF_API_KEY}"}
-    body = {"inputs": payload_text, "options": {"use_cache": True, "wait_for_model": wait_for_model}}
-    effective_timeout = 25.0 if wait_for_model else timeout
-
-    async def _try_base(base: str) -> Optional[list]:
-        try:
-            async with httpx.AsyncClient(timeout=effective_timeout) as client:
-                resp = await client.post(f"{base}/{model}", json=body, headers=headers)
-            if resp.status_code == 503 and not wait_for_model:
-                body["options"]["wait_for_model"] = True
-                async with httpx.AsyncClient(timeout=25.0) as client:
-                    resp = await client.post(f"{base}/{model}", json=body, headers=headers)
-            if resp.status_code == 429:
-                print(f"[HF {model}] rate limited (429). Skipping augmentation.")
-                return None
-            resp.raise_for_status()
-            data = resp.json()
-        except Exception as e:
-            raise e
-
-        if isinstance(data, dict) and "error" in data:
-            print(f"[HF {model}] {data.get('error')}")
-            return None
-        if isinstance(data, list) and data:
-            result = data[0] if isinstance(data[0], list) else data
-            if all(isinstance(i, dict) and "label" in i and "score" in i for i in result):
-                _cache_put(key, result)
-                return result
-        return None
-
-    first_err = None
+def health_ok(timeout: float = 2.0) -> bool:
     try:
-        out = await _try_base(HF_BASE)
-        if out is not None:
-            _record_layer_a(True)
-            return out
-    except Exception as e:
-        first_err = e
-
-    # DNS drops on the legacy endpoint are common on some Windows resolvers.
-    # Retry the same call against the newer router.hf.co edge before giving up.
-    try:
-        out = await _try_base(HF_ROUTER_BASE)
-        if out is not None:
-            _record_layer_a(True)
-            return out
-    except Exception as e:
-        second_err = e
-        print(f"[HF {model} unreachable] primary={type(first_err).__name__ if first_err else 'ok'} "
-              f"router={type(second_err).__name__}. Skipping optional affect enrichment.")
-        _record_layer_a(False)
-        return None
-
-    if first_err is not None:
-        # Primary raised, fallback returned None cleanly.
-        _record_layer_a(False)
-    return None
-
-
-async def hf_warmup(model: str) -> bool:
-    result = await hf_classify(model, "warming up the classifier model now please",
-                               wait_for_model=True)
-    return result is not None
-
-
-async def _network_reachable() -> bool:
-    """Probe api-inference.huggingface.co with GET and a small retry budget.
-    HEAD on the bare /models path returns spuriously (or DNS drops), so we
-    hit the API root and accept any HTTP response as evidence the host is
-    reachable, only network/DNS errors count as unreachable."""
-    for attempt in range(2):
-        try:
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                r = await client.get("https://api-inference.huggingface.co/",
-                                      headers={"User-Agent": "valence-warmup"})
-            return r.status_code < 600
-        except Exception:
-            if attempt == 0:
-                await asyncio.sleep(1.5)
-                continue
-            return False
-    return False
-
-
-async def warmup_all_hf() -> None:
-    """Concurrent warmup for every Layer A model. Fire-and-forget at boot and
-    on every test-open ping. Layer A is optional enrichment (affect spectrum
-    of user-volunteered notes), base results and the deep dive do NOT depend
-    on it, any failure is fail-soft. Once the session-level circuit breaker
-    trips after repeated failures, further warmups are skipped silently until
-    the process restarts."""
-    if not _augment_enabled():
-        print("[psych] Layer A augmentation disabled or HF_API_KEY missing, skipping HF warmup.")
-        return
-    if _layer_a_disabled():
-        # Circuit already open, quiet skip. No log spam.
-        return
-    results = await asyncio.gather(*[hf_warmup(m) for m in HF_MODELS], return_exceptions=True)
-    ok_count = sum(1 for ok in results if ok is True)
-    if ok_count == len(HF_MODELS):
-        print(f"[psych] Layer A classifiers ready ({ok_count}/{len(HF_MODELS)}).")
-    elif ok_count == 0:
-        if _layer_a_disabled():
-            print("[psych] Layer A classifiers unreachable. Circuit opened, further Layer A warmup pings suppressed. "
-                  "Base results and Deep Dive are unaffected.")
-        else:
-            print(f"[psych] Layer A classifiers all failed this round (streak {_HF_LAYERA_FAIL_STREAK['count']}"
-                  f"/{_HF_LAYERA_CIRCUIT_OPEN_AT}). Base results and Deep Dive are unaffected.")
-    else:
-        print(f"[psych] Layer A partial: {ok_count}/{len(HF_MODELS)} ready.")
-
-
-def format_spectrum(scores: Optional[list], min_score: float = 0.05) -> str:
-    if not scores:
-        return ""
-    ordered = sorted(scores, key=lambda d: d.get("score", 0), reverse=True)
-    return ", ".join(
-        f"{d['label']}: {float(d['score']):.2f}" for d in ordered
-        if float(d.get("score", 0)) >= min_score
-    )
-
-
-# ─── Layer B: worker registry (self-reporting URLs) ──────────────────────────
-
-_reg_lock = threading.Lock()
-_reg_table: Dict[str, Dict[str, dict]] = {k: {} for k in MODEL_KEYS}
-
-
-def registry_register(provider: str, model_key: str, url: str) -> None:
-    if provider not in PRIORITY:
-        raise ValueError(f"unknown provider {provider!r}")
-    if model_key not in MODEL_KEYS:
-        raise ValueError(f"unknown model_key {model_key!r}")
-    url = url.strip().rstrip("/")
-    if not url.startswith("http"):
-        raise ValueError("url must be http(s)")
-    with _reg_lock:
-        _reg_table[model_key][provider] = {"url": url, "ts": time.time()}
-
-
-def registry_unregister(provider: str, model_key: str) -> None:
-    with _reg_lock:
-        _reg_table.get(model_key, {}).pop(provider, None)
-
-
-def _env_fallback(model_key: str) -> str:
-    """Manual Colab pin wins if set; otherwise the dedicated HF Space serves
-    every model key from its single static URL."""
-    manual = {
-        "psyllm": COLAB_URL_PSYLLM,
-        "psychocounsel": COLAB_URL_PSYCHOCOUNSEL,
-        "psycholex": COLAB_URL_PSYCHOLEX,
-        "mentallama": COLAB_URL_MENTALLAMA,
-    }.get(model_key, "")
-    return manual or SPECIALTY_SPACE_URL
-
-
-def _secret_headers() -> dict:
-    if SPECIALTY_REGISTRY_SECRET:
-        return {"X-Specialty-Secret": SPECIALTY_REGISTRY_SECRET}
-    return {}
-
-
-def registry_resolve(model_key: str) -> Optional[str]:
-    with _reg_lock:
-        providers = _reg_table.get(model_key, {})
-        for p in PRIORITY:
-            entry = providers.get(p)
-            if entry and entry["url"]:
-                return entry["url"]
-    return _env_fallback(model_key) or None
-
-
-def registry_snapshot() -> dict:
-    with _reg_lock:
-        return {k: {p: dict(v) for p, v in prov.items()} for k, prov in _reg_table.items()}
-
-
-# ─── Layer B: Space wake-on-demand ────────────────────────────────────────────
-# A sleeping HF Space restarts on ANY incoming HTTP request; while it boots,
-# requests get non-200 responses. Wake = probe /health with patience. No
-# quota tracking needed , the free CPU tier is not metered.
-
-_wake_lock = threading.Lock()
-_wake_state = {"in_flight_until": 0.0, "last_attempt": 0.0}
-_WAKE_GRACE_SEC = 3 * 60  # container restart + first model download
-
-
-def _wake_in_progress() -> bool:
-    return time.time() < _wake_state["in_flight_until"]
-
-
-def _health_ok_sync(base_url: str, timeout: float = 6.0) -> bool:
-    try:
-        r = httpx.get(f"{base_url.rstrip('/')}/health",
-                      headers=_secret_headers(), timeout=timeout)
+        r = httpx.get(f"{MENTALLAMA_URL}/health", timeout=timeout)
         return r.status_code == 200
     except Exception:
         return False
 
 
-async def ensure_warm(model_key: str) -> dict:
-    """Best-effort wake of the Space worker. Never raises. The health probe
-    itself is what triggers a sleeping Space to restart."""
-    base_url = registry_resolve(model_key)
-    if not base_url:
-        return {"action": "refused", "reason": "no worker URL configured"}
-    try:
-        async with httpx.AsyncClient(timeout=6.0) as client:
-            r = await client.get(f"{base_url.rstrip('/')}/health",
-                                 headers=_secret_headers())
-        if r.status_code == 200:
-            return {"action": "noop", "reason": "alive"}
-    except Exception:
-        pass
-    if _wake_in_progress():
-        return {"action": "noop", "reason": "wake-in-flight"}
-    with _wake_lock:
-        if _wake_in_progress():
-            return {"action": "noop", "reason": "wake-in-flight"}
-        _wake_state["in_flight_until"] = time.time() + _WAKE_GRACE_SEC
-        _wake_state["last_attempt"] = time.time()
-    # One patient probe: the request has already queued the restart; this
-    # just reports whether it came up within the grace window.
-    try:
-        async with httpx.AsyncClient(timeout=_WAKE_GRACE_SEC) as client:
-            r = await client.get(f"{base_url.rstrip('/')}/health",
-                                 headers=_secret_headers())
-        ok = r.status_code == 200
-    except Exception:
-        ok = False
-    with _wake_lock:
-        _wake_state["in_flight_until"] = 0.0 if ok else time.time() + 30
-    return {"action": "wake", "ok": ok}
-
-
-def lifecycle_snapshot() -> dict:
-    return {
-        "space_url": SPECIALTY_SPACE_URL,
-        "wake": {
-            "in_flight": _wake_in_progress(),
-            "last_attempt_ts": _wake_state["last_attempt"],
-        },
-    }
-
-
-# ─── Layer B: worker calls ────────────────────────────────────────────────────
-
-async def warm_worker(model_key: str, timeout: float = 8.0) -> Optional[dict]:
-    """Tell the worker to load model_key into RAM now (non-blocking on its
-    side). If the Space is asleep, this very request triggers its restart;
-    the questionnaire's periodic re-ping finishes the job."""
-    if not _specialty_enabled():
-        return None
-    base_url = registry_resolve(model_key)
-    if not base_url:
-        return {"action": "refused", "reason": "no worker URL configured"}
-    try:
-        async with httpx.AsyncClient(timeout=timeout) as client:
-            resp = await client.post(f"{base_url.rstrip('/')}/warm",
-                                     json={"model_key": model_key},
-                                     params={"model": model_key},
-                                     headers=_secret_headers())
-        resp.raise_for_status()
-        return resp.json()
-    except Exception as e:
-        print(f"[psych warm {model_key} @ {base_url}] {type(e).__name__}: {e}")
-        # The failed request still queued a restart of a sleeping Space.
-        asyncio.create_task(ensure_warm(model_key))
-        return {"action": "waking"}
-
-
-async def health_check(model_key: str, timeout: float = 5.0) -> bool:
-    if not _specialty_enabled():
-        return False
-    base_url = registry_resolve(model_key)
-    if not base_url:
-        return False
-    try:
-        async with httpx.AsyncClient(timeout=timeout) as client:
-            resp = await client.get(f"{base_url.rstrip('/')}/health",
-                                    headers=_secret_headers())
-        return resp.status_code == 200
-    except Exception:
-        return False
-
-
-async def specialty_health_snapshot() -> dict:
-    if not _specialty_enabled():
-        return {"enabled": False}
-    results = await asyncio.gather(*[health_check(k) for k in MODEL_KEYS])
-    return {
-        "enabled": True,
-        "alive": {k: ok for k, ok in zip(MODEL_KEYS, results)},
-        "registry": registry_snapshot(),
-        "lifecycle": lifecycle_snapshot(),
-    }
-
-
-def _call_worker_sync(model_key: str, prompt: str, max_new_tokens: int = 420,
-                      temperature: float = 0.5,
-                      timeout: Optional[float] = None) -> Optional[str]:
-    """Synchronous inference call , runs in the post-submit enrichment
-    thread, so it can afford to wait out a Space wake-up. Fail-soft: None
-    on any failure."""
-    if not _specialty_enabled():
-        return None
-    base_url = registry_resolve(model_key)
-    if not base_url:
-        return None
-    timeout = timeout or SPECIALTY_INFER_TIMEOUT
-
-    def _infer() -> Optional[dict]:
-        resp = httpx.post(
-            f"{base_url.rstrip('/')}/infer",
-            json={"prompt": prompt, "max_new_tokens": max_new_tokens,
-                  "temperature": temperature, "model_key": model_key},
-            params={"model": model_key},
-            headers=_secret_headers(),
-            timeout=timeout,
-        )
-        resp.raise_for_status()
-        return resp.json()
-
-    try:
-        data = _infer()
-    except httpx.ReadTimeout:
-        # Special case: the socket-read timed out but /health may well be
-        # green , the worker is up and still generating behind its serial
-        # _infer_lock. Retrying immediately would just re-queue the SAME
-        # prompt behind the request that's cooking now and burn another
-        # full timeout. Prefer to bail cleanly and let the caller mark the
-        # enrichment failed; the user gets the Base Results fallback and
-        # can re-run enrichment from the dashboard once the worker is idle.
-        print(f"[psych {model_key} @ {base_url}] ReadTimeout after {timeout}s , "
-              f"worker still generating, not retrying")
-        return None
-    except Exception as first_err:
-        # Genuine cold-start / DNS / connect error , the failed request
-        # already queued the Space's restart. Wait for /health to come
-        # back (bounded), then retry once.
-        print(f"[psych {model_key} @ {base_url}] {type(first_err).__name__}: "
-              f"{first_err} , waiting for worker to wake")
-        deadline = time.time() + 180
-        while time.time() < deadline:
-            if _health_ok_sync(base_url):
-                break
-            time.sleep(10)
-        else:
-            return None
-        try:
-            data = _infer()
-        except Exception as e:
-            print(f"[psych {model_key} retry] {type(e).__name__}: {e}")
-            return None
-    if isinstance(data, dict):
-        for key in ("text", "response", "output", "generated_text"):
-            v = data.get(key)
-            if isinstance(v, str) and v.strip():
-                return v.strip()
+def _find_server_binary() -> Optional[str]:
+    explicit = os.getenv("LLAMA_SERVER_BIN")
+    if explicit and os.path.exists(explicit):
+        return explicit
+    found = shutil.which("llama-server")
+    if found:
+        return found
+    for candidate in ("/opt/homebrew/bin/llama-server", "/usr/local/bin/llama-server"):
+        if os.path.exists(candidate):
+            return candidate
     return None
 
 
-def _classify_notes_sync(context_notes: Optional[List[Dict]]) -> str:
-    """Layer A spectrum of the user's volunteered notes, rendered as a compact
-    prompt block. Empty string when unavailable. Silently skipped when the
-    Layer A circuit breaker has opened for this session."""
-    if not context_notes or not _augment_enabled() or _layer_a_disabled():
-        return ""
-    text = " ".join((n.get("note") or "").strip() for n in context_notes if n.get("note"))
-    if not text.strip():
-        return ""
+def _stop_server() -> None:
+    global _server_proc
+    if _server_proc and _server_proc.poll() is None:
+        _server_proc.terminate()
+    _server_proc = None
+
+
+def ensure_server(wait: float = 90.0) -> bool:
+    global _server_proc
+    if not enabled():
+        return False
+    if health_ok():
+        return True
+    if not MENTALLAMA_AUTOSTART:
+        return False
+    with _server_lock:
+        if health_ok():
+            return True
+        if _server_proc is None or _server_proc.poll() is not None:
+            binary = _find_server_binary()
+            model = os.path.abspath(MENTALLAMA_MODEL_PATH)
+            if not binary or not os.path.exists(model):
+                print(f"[psych] cannot start MentaLLaMA (binary={binary}, model exists={os.path.exists(model)})")
+                return False
+            port = MENTALLAMA_URL.rsplit(":", 1)[-1]
+            _server_proc = subprocess.Popen(
+                [binary, "-m", model, "--host", "127.0.0.1", "--port", port, "-ngl", "99",
+                 "-c", str(2048 * PARALLEL_SLOTS), "-np", str(PARALLEL_SLOTS)],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            )
+            atexit.register(_stop_server)
+            print(f"[psych] starting MentaLLaMA server on port {port}")
+        deadline = time.time() + wait
+        while time.time() < deadline:
+            if health_ok():
+                print("[psych] MentaLLaMA ready")
+                return True
+            if _server_proc.poll() is not None:
+                return False
+            time.sleep(1.0)
+    return False
+
+
+def status() -> dict:
+    return {"enabled": enabled(), "alive": health_ok()}
+
+
+def _complete(user_prompt: str, max_tokens: int = 220, temperature: float = 0.45) -> Optional[str]:
+    prompt = f"[INST] <<SYS>>\n{SYSTEM_PROMPT}\n<</SYS>>\n\n{user_prompt} [/INST] "
     try:
-        emotion = asyncio.run(hf_classify(PSYCH_MODEL_EMOTION, text, timeout=6.0))
-    except Exception:
-        emotion = None
-    spectrum = format_spectrum(emotion)
-    if not spectrum:
-        return ""
-    return f"Affect spectrum of their volunteered notes (classifier): {spectrum}\n"
-
-
-# ─── Enrichment + monitoring / fine-tuning corpus ─────────────────────────────
-
-def _log_finetune(test_id: str, record: dict) -> None:
-    """Append one monitored enrichment record to the fine-tuning corpus."""
-    try:
-        os.makedirs(FINETUNE_DIR, exist_ok=True)
-        path = os.path.join(FINETUNE_DIR, f"{test_id}.jsonl")
-        with open(path, "a", encoding="utf-8") as f:
-            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+        r = httpx.post(
+            f"{MENTALLAMA_URL}/completion",
+            json={"prompt": prompt, "n_predict": max_tokens, "temperature": temperature,
+                  "top_p": 0.9, "repeat_penalty": 1.12, "stop": ["[INST]", "\n\n"]},
+            timeout=INFER_TIMEOUT,
+        )
+        r.raise_for_status()
+        return (r.json().get("content") or "").strip()
     except Exception as e:
-        print(f"[psych finetune-log] {e}")
+        print(f"[psych] MentaLLaMA call failed: {type(e).__name__}: {e}")
+        return None
 
 
-def _build_prompt(test_id: str, model_key: str, trait_scores: Dict[str, float],
-                  percentiles: Dict[str, int], archetype: dict,
-                  notes_block: str) -> str:
-    trait_lines = "\n".join(
-        f"  {name}: {score:.2f} ({percentiles.get(name, 50)}th percentile)"
-        for name, score in trait_scores.items()
-    )
-    arch_name = (archetype or {}).get("name", "")
-    arch_tag = (archetype or {}).get("tagline", "")
-    test_label = test_id.replace("_", " ")
-
-    # Shared contract: every specialty model must return a genuinely DETAILED
-    # deep dive , the whole point of routing to a psychologically trained model
-    # is depth the base results cannot give. Each point is a short paragraph,
-    # grounded in the person's actual scores and named psychological constructs.
-    depth_contract = (
-        "FORMAT (mandatory): Produce EXACTLY 5 numbered points. Each point must "
-        "be a self-contained paragraph of 3 to 4 full sentences (roughly 70-120 "
-        "words) , NOT a single sentence. A one-line answer is a failure. "
-        "In every point you must: (a) name the specific psychological "
-        "construct, trait facet, or theoretical framework it draws on; (b) cite "
-        "the person's actual score or percentile from the profile above as the "
-        "evidence; (c) explain the underlying mechanism using precise "
-        "psychological terminology; and (d) translate it into a concrete, "
-        "observable day-to-day tendency. Cover a DIFFERENT facet of the cluster "
-        "in each point, span work, close relationships, and self-regulation "
-        "across the five, do not repeat the archetype tagline, and give no "
-        "clinical diagnosis."
-    )
-
-    if model_key == "mentallama":
-        return (
-            "You are MentaLLaMA, an interpretable mental-health model. A person "
-            f"completed the {test_label} self-report instrument and was assigned "
-            f"the profile '{arch_name}' ({arch_tag}).\n\n"
-            f"Scored profile:\n{trait_lines}\n\n{notes_block}"
-            "Write a DETAILED deep dive into this affective/clinical-dimensional "
-            "profile. For each point, tie an observation about their current "
-            "affective pattern to a recognised mental-health construct (e.g. "
-            "negative affectivity, affect regulation, rumination, distress "
-            "tolerance, the tripartite model of anxiety and depression), justify "
-            "it with the specific score, and describe how it plausibly colours "
-            "daily functioning. Neutral, non-alarmist, explicitly non-diagnostic."
-            f"\n\n{depth_contract}\n\nDeep dive:"
-        )
-    if model_key == "psychocounsel":
-        return (
-            "You are PsychoCounsel, aligned with professional psychotherapist "
-            f"norms. A person completed the {test_label} assessment and was "
-            f"assigned the profile '{arch_name}' ({arch_tag}).\n\n"
-            f"Scored profile:\n{trait_lines}\n\n{notes_block}"
-            "Write a DETAILED, warm deep dive into how this relational/needs "
-            "profile is likely to operate. Draw on relational constructs such as "
-            "attachment orientation, interpersonal circumplex (warmth vs. "
-            "agency), basic psychological needs (autonomy, competence, "
-            "relatedness), and emotion co-regulation. For each point, name the "
-            "construct, ground it in a specific score, explain the mechanism, "
-            "and show how it surfaces in intimacy, conflict, work relationships, "
-            "and self-soothing. No diagnostic claims."
-            f"\n\n{depth_contract}\n\nDeep dive:"
-        )
-    if model_key == "psycholex":
-        return (
-            "You are PsychoLexLLaMA, an academic psychology model. A person "
-            f"completed the {test_label} instrument and was assigned "
-            f"'{arch_name}' ({arch_tag}).\n\n"
-            f"Scored profile:\n{trait_lines}\n\n{notes_block}"
-            "Write a DETAILED, literature-grounded deep dive into this cluster. "
-            "Explicitly name the theoretical constructs most relevant to the "
-            "profile (e.g. the Five-Factor / HEXACO facets, DSM-5 Section III "
-            "maladaptive-trait domains, the dark-triad constructs, "
-            "self-vs-other schemas), cite the driving scores, and lay out the "
-            "well-supported behavioural implications and their boundary "
-            "conditions. Keep it analytic and precise; no diagnoses, no "
-            "repetition."
-            f"\n\n{depth_contract}\n\nDeep dive:"
-        )
-    # psyllm default , broad personality science
-    return (
-        "You are PsyLLM, a personality-science model. Apply established framing "
-        "(Big Five / HEXACO trait theory, facet-level analysis, and DSM-5 "
-        "dimensional models where relevant) to a person's "
-        f"{test_label} results, assigned the cluster '{arch_name}' "
-        f"({arch_tag}).\n\n"
-        f"Scored profile:\n{trait_lines}\n\n{notes_block}"
-        "Write a DETAILED deep dive that explains what this personality cluster "
-        "actually means. For each point, name the trait/facet or framework, "
-        "quote the distinctive score or percentile that drives it, explain the "
-        "psychological mechanism (motivation, affect, cognition, "
-        "self-regulation, interpersonal style), and connect it to concrete "
-        "day-to-day tendencies. No diagnoses, no repetition of the tagline."
-        f"\n\n{depth_contract}\n\nDeep dive:"
-    )
+DIRECTION = {
+    "high": "Score direction: HIGH on {trait}. The person shows a lot of {trait}.",
+    "low": "Score direction: LOW on {trait}. The person shows little {trait}; do not describe them as having it.",
+    "mid": "Score direction: MID-RANGE on {trait}. Neither clearly high nor clearly low; describe it as moderate.",
+}
 
 
-def _extract_lines(response: str, limit: int = 5) -> List[str]:
-    """Split a specialty-model response into distinct deep-dive points.
+LEVELS = ["Low", "Moderate", "High"]
+GRADE_CAP = {"strong": "High", "moderate": "Moderate", "limited": "Low"}
+_DECIMAL = re.compile(r"(?<![\w.])([01]\.\d{1,2})(?![\d])")
+_PERCENTILE = re.compile(r"(\d{1,3})(?:st|nd|rd|th)?\s*(?:percentile|%)", re.IGNORECASE)
 
-    Deep-dive points are now DETAILED multi-sentence paragraphs, so the
-    paragraph , not the line , is the natural unit. Prefer blank-line
-    separated blocks; fall back to per-line splitting only when the model
-    returns one point per line. Leading list markers ("1.", "-", "BECAUSE:")
-    are stripped and soft-wrapped lines within a point are re-joined. The
-    upper length bound is generous (1600 chars) so a rich 100-word paragraph
-    is kept rather than silently discarded , the old 320-char cap was exactly
-    what reduced the deep dive to one or two short lines."""
-    text = (response or "").strip()
-    if not text:
-        return []
 
-    # Paragraph blocks first (blank-line separated); fall back to lines.
-    blocks = [b for b in re.split(r"\n\s*\n", text) if b.strip()]
-    if len(blocks) < 2:
-        blocks = [b for b in text.split("\n") if b.strip()]
+def _literature(test_id: str, item: dict) -> dict:
+    base = LITERATURE.get(test_id, {"grade": "limited", "sources": "", "note": ""})
+    if item.get("kind") == "integration":
+        grade = "moderate" if base["grade"] == "strong" else base["grade"]
+        return {"grade": grade, "sources": base["sources"],
+                "note": "A synthesis across constructs; no single paper establishes it."}
+    if item.get("kind") == "pattern":
+        return {"grade": base.get("pattern_grade", base["grade"]), "sources": item["framework"],
+                "note": base["note"]}
+    override = (base.get("traits") or {}).get(item["traits"][0], {})
+    return {"grade": override.get("grade", base["grade"]), "sources": base["sources"],
+            "note": override.get("note", base["note"])}
 
-    out: List[str] = []
-    seen = set()
-    for block in blocks:
-        # Re-join soft-wrapped lines inside a single point into one paragraph.
-        para = " ".join(p.strip() for p in block.split("\n") if p.strip())
-        # Strip a leading list marker / label ("1.", "1)", "-", "•", "BECAUSE:").
-        para = re.sub(r"^\s*(?:\d+[.)]|[-•·*]+|BECAUSE:|NOTE:|POINT\s*\d*:?)\s*",
-                      "", para, flags=re.IGNORECASE).strip()
-        if len(para) < 40 or len(para) > 1600:
-            continue
-        # Deduplicate near-identical points.
-        key = para.lower()[:80]
-        if key in seen:
-            continue
-        seen.add(key)
-        out.append(para)
-        if len(out) >= limit:
-            break
+
+def _figures_ok(text: str, scores: Dict[str, float], pcts: Dict[str, int]) -> bool:
+    allowed_scores = set()
+    for v in scores.values():
+        allowed_scores.update({f"{v:.2f}", f"{v:.1f}", f"{v:.2f}".rstrip("0")})
+    allowed_pcts = {int(v) for v in pcts.values()}
+    for found in _DECIMAL.findall(text):
+        if found not in allowed_scores:
+            return False
+    for found in _PERCENTILE.findall(text):
+        if int(found) not in allowed_pcts:
+            return False
+    return True
+
+
+def _stated_direction(text: str, trait: str) -> str:
+    answer = _complete(
+        f"Paragraph: {text}\n\n"
+        f"Question: According to this paragraph only, is the person's level of {trait} described as "
+        "HIGH, LOW or MID-RANGE? If the paragraph does not say, answer UNSTATED. "
+        "Answer with exactly one word.",
+        max_tokens=6, temperature=0.0,
+    ) or ""
+    word = answer.upper()
+    if "UNSTATED" in word:
+        return "unstated"
+    if "MID" in word or "MODERATE" in word:
+        return "mid"
+    if "LOW" in word:
+        return "low"
+    if "HIGH" in word or "ELEVATED" in word:
+        return "high"
+    return "unstated"
+
+
+def _verify(text: str, traits: List[str], scores: Dict[str, float], pcts: Dict[str, int]) -> dict:
+    figures = _figures_ok(text, scores, pcts)
+    directions = {}
+    for trait in traits:
+        stated = _stated_direction(text, trait)
+        actual = _band(pcts.get(trait, 50))
+        if stated == "unstated":
+            directions[trait] = "unstated"
+        elif stated == actual:
+            directions[trait] = "match"
+        elif "mid" in (stated, actual):
+            directions[trait] = "shifted"
+        else:
+            directions[trait] = "contradicted"
+    values = list(directions.values())
+    if not figures or "contradicted" in values:
+        status = "failed"
+    elif values and all(v == "match" for v in values):
+        status = "verified"
+    elif "match" in values or "shifted" in values:
+        status = "partly verified"
+    else:
+        status = "unverified"
+    return {"status": status, "figures_match": figures, "directions": directions}
+
+
+BASE_CONFIDENCE = 50
+_CITATION = re.compile(r"([A-Z][A-Za-z\-]+)(?:\s+et al\.?|\s+(?:&|and)\s+[A-Z][A-Za-z\-]+)*,?\s*\(?((?:19|20)\d{2})\)?")
+
+
+def _citations_ok(text: str, test_id: str, item: dict) -> bool:
+    from ml.psych_bibliography import BIBLIOGRAPHY
+    papers = BIBLIOGRAPHY.get(test_id, [])
+    extra = item.get("framework", "") + " " + INSTRUMENTS.get(test_id, {}).get("citation", "")
+    for surname, year in _CITATION.findall(text):
+        known = any(surname in p["names"] and str(p["year"]) == year for p in papers)
+        if not known and not (surname in extra and year in extra):
+            return False
+    return True
+
+
+def _cited_points(text: str, points: List[dict]) -> List[str]:
+    return sorted({p["label"] for p in points if any(name in text for name in p["names"])})
+
+
+def _plain(construct: str) -> str:
+    core = construct.split(":", 1)[1].strip() if ":" in construct else construct
+    return f"This person shows {core[0].lower() + core[1:]}."
+
+
+def _premises(item: dict, items: List[dict], pcts: Dict[str, int]) -> List[str]:
+    words = {"high": "high", "low": "low", "mid": "in the middle range"}
+    out = [f"This person's {t} score is {words[_band(pcts.get(t, 50))]}." for t in item["traits"]]
+    if item["kind"] == "integration":
+        out += [_plain(i["construct"]) for i in items]
+    else:
+        out.append(_plain(item["construct"]))
+    out += [p["text"] for p in item.get("points", [])]
     return out
 
 
-def enrich_result(test_id: str, trait_scores: Dict[str, float],
-                  percentiles: Dict[str, int], archetype: dict,
-                  insights: Dict, context_notes: Optional[List[Dict]] = None) -> Dict:
-    """Specialty-model enrichment of a scored test result. Appends up to 2
-    observations to insights['insights'], logs the monitored record, and
-    returns the (possibly updated) insights dict. Fail-soft."""
-    if not _specialty_enabled():
+def _confidence(item: dict, text: str, verification: dict, meaning: Optional[dict]) -> dict:
+    points = item.get("points", [])
+    directions = list(verification["directions"].values())
+    matched = sum(1 for d in directions if d == "match")
+    labels = sorted({p["label"] for p in points})
+    cited = _cited_points(text, points)
+    research = 20 if len(points) >= 2 else 12 if points else 0
+    grounding = 5 if cited else 0
+    check = int(round(5 * matched / len(directions))) if directions else 0
+    sense = 5 + int(round(10 * meaning["supported"] / meaning["sentences"])) if meaning else 0
+    score = BASE_CONFIDENCE + research + grounding + check + sense
+    reasons = [
+        (f"Research match: your scores meet the conditions of {len(points)} published finding(s): {'; '.join(labels)}."
+         if points else "Research match: no finding in the bibliography applies directly to this score pattern."),
+        (f"Grounding: the paragraph cites {'; '.join(cited)}." if cited
+         else "Grounding: the paragraph does not cite a specific finding."),
+        f"Score check: {matched} of {len(directions)} score directions confirmed; every quoted figure matches your results.",
+        (f"Meaning check: none of the {meaning['sentences']} sentences contradicts the construct or the findings; "
+         f"{meaning['supported']} are directly supported by them." if meaning
+         else "Meaning check: not available for this paragraph."),
+    ]
+    return {"level": "High" if score >= 80 else "Moderate", "score": score,
+            "research_points": labels, "verification": verification, "meaning": meaning, "reasons": reasons}
+
+
+def _band(pct: int) -> str:
+    if pct >= 65:
+        return "high"
+    if pct <= 35:
+        return "low"
+    return "mid"
+
+
+def _evidence(traits: List[str], scores: Dict[str, float], pcts: Dict[str, int]) -> str:
+    return "; ".join(
+        f"{t} {scores.get(t, 0):.2f} ({_ordinal(pcts.get(t, 50))} percentile)" for t in traits if t in scores
+    )
+
+
+def _ordinal(n: int) -> str:
+    n = int(n)
+    suffix = "th" if 10 <= n % 100 <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
+    return f"{n}{suffix}"
+
+
+def select_constructs(test_id: str, scores: Dict[str, float], pcts: Dict[str, int]) -> List[dict]:
+    chosen: List[dict] = []
+    covered = set()
+    bands = {t: _band(p) for t, p in pcts.items()}
+    for cond, construct, framework, traits in PATTERNS.get(test_id, []):
+        try:
+            hit = cond(pcts)
+        except Exception:
+            hit = False
+        if hit and len(chosen) < 2:
+            levels = ", ".join(
+                f"{ {'high': 'HIGH', 'low': 'LOW', 'mid': 'MID-RANGE'}[_band(pcts.get(t, 50))] } on {t}"
+                for t in traits[:4]
+            )
+            chosen.append({"construct": construct, "framework": framework,
+                           "traits": traits[:4], "kind": "pattern",
+                           "points": applicable_points(test_id, traits[:4], bands)[:3],
+                           "direction": f"Score directions: {levels}. State each exactly as given."})
+            if len(traits) <= 2:
+                covered.update(traits)
+    lexicon = TRAITS.get(test_id, {})
+    ranked = sorted(scores.keys(), key=lambda t: -abs(pcts.get(t, 50) - 50))
+    for trait in [t for t in ranked if t not in covered] + [t for t in ranked if t in covered]:
+        if len(chosen) >= MAX_BULLETS:
+            break
+        entry = lexicon.get(trait)
+        if not entry or any(c["kind"] == "trait" and c["traits"] == [trait] for c in chosen):
+            continue
+        band = _band(pcts.get(trait, 50))
+        chosen.append({"construct": entry[band], "framework": entry["framework"],
+                       "traits": [trait], "kind": "trait",
+                       "points": applicable_points(test_id, [trait], bands)[:3],
+                       "direction": DIRECTION[band].format(trait=trait)})
+    return chosen
+
+
+def _profile_block(scores: Dict[str, float], pcts: Dict[str, int]) -> str:
+    return "\n".join(
+        f"  {name}: {score:.2f} ({_ordinal(pcts.get(name, 50))} percentile)" for name, score in scores.items()
+    )
+
+
+def _notes_block(context_notes: Optional[List[Dict]]) -> str:
+    if not context_notes:
+        return ""
+    lines = []
+    for n in context_notes[:6]:
+        note = (n.get("note") or "").strip()
+        if note:
+            q = (n.get("question") or "").strip()
+            lines.append(f'  On "{q}": {note[:240]}' if q else f"  {note[:240]}")
+    if not lines:
+        return ""
+    return "Context the person volunteered:\n" + "\n".join(lines) + "\n\n"
+
+
+def _header(test_id: str, scores: Dict[str, float], pcts: Dict[str, int], archetype: dict,
+            context_notes: Optional[List[Dict]]) -> str:
+    inst = INSTRUMENTS.get(test_id, {"label": test_id, "citation": ""})
+    arch = (archetype or {}).get("name") or "unlabelled"
+    return (
+        f"A person completed the {inst['label']} ({inst['citation']}). "
+        f"Their profile type is '{arch}'.\n\n"
+        "Scored profile (0-1 scale, percentile within the self-selected reference sample):\n"
+        f"{_profile_block(scores, pcts)}\n\n{_notes_block(context_notes)}"
+    )
+
+
+def _bullet_prompt(header: str, item: dict, scores: Dict[str, float], pcts: Dict[str, int]) -> str:
+    return (
+        header
+        + "Write one analytic paragraph about the construct below. Requirements: 3 to 4 sentences; "
+          "cite the score or percentile as evidence; explain the underlying psychological mechanism "
+          "with precise terminology; finish with one concrete, observable day-to-day manifestation. "
+          "The construct line states the finding: explain it, never contradict it, and do not "
+          "attribute difficulties that the scores do not show. Do not diagnose. Do not use headings "
+          "or lists.\n\n"
+        f"Construct: {item['construct']}\n"
+        f"Theoretical framework: {item['framework']}\n"
+        f"Evidence: {_evidence(item['traits'], scores, pcts)}"
+        + (f"\n{item['direction']}" if item.get("direction") else "")
+        + _findings_block(item.get("points", []))
+    )
+
+
+def _findings_block(points: List[dict]) -> str:
+    if not points:
+        return ""
+    lines = "\n".join(
+        f"  - [{p['label']}] Study: {p.get('summary', '')} Finding that applies here: {p['text']}" for p in points
+    )
+    return ("\nPublished findings that apply to this person. Base the paragraph on them, cite the authors "
+            f"and year in the text, and cite no other source:\n{lines}")
+
+
+def _integration_prompt(header: str, items: List[dict], points: Optional[List[dict]] = None) -> str:
+    listing = "\n".join(f"  - {i['construct']}" for i in items)
+    return (
+        header
+        + "The following constructs characterise this profile:\n"
+        f"{listing}\n\n"
+        "Write one integrative paragraph of 3 to 4 sentences: explain how these constructs interact "
+        "as a single functional pattern, name one adaptive strength, and name one self-regulation or "
+        "interpersonal area where the pattern could create friction. Use precise psychological "
+        "terminology. Do not diagnose. Do not use headings or lists."
+        + _findings_block(points or [])
+    )
+
+
+_DIAGNOSTIC = re.compile(
+    r"\b(you (have|suffer from)|is suffering from|diagnos(is|ed) (of|with)|meets? (the )?criteria for)\b",
+    re.IGNORECASE,
+)
+
+
+def _clean(text: Optional[str]) -> str:
+    if not text:
+        return ""
+    t = " ".join(text.split())
+    t = re.sub(r"^(Sure[,!.]?|Certainly[,!.]?|Here is[^:]*:)\s*", "", t, flags=re.IGNORECASE)
+    t = re.split(r"\b(?:References?|Bibliography|Sources?)\s*:", t, maxsplit=1)[0].strip()
+    cut = max(t.rfind("."), t.rfind("!"), t.rfind("?"))
+    if cut > 40:
+        t = t[:cut + 1]
+    if len(t) < 60 or _DIAGNOSTIC.search(t):
+        return ""
+    return t
+
+
+def _log(test_id: str, record: dict) -> None:
+    try:
+        os.makedirs(LOG_DIR, exist_ok=True)
+        with open(os.path.join(LOG_DIR, f"{test_id}.jsonl"), "a", encoding="utf-8") as f:
+            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+    except Exception as e:
+        print(f"[psych log] {e}")
+
+
+def enrich_result(test_id: str, trait_scores: Dict[str, float], percentiles: Dict[str, int],
+                  archetype: dict, insights: Dict, context_notes: Optional[List[Dict]] = None) -> Dict:
+    if not enabled():
+        insights["deep_dive"] = {"bullets": [], "insights": [], "status": "unavailable"}
         return insights
-    model_key = specialty_model_for(test_id)
-    notes_block = _classify_notes_sync(context_notes)
-    prompt = _build_prompt(test_id, model_key, trait_scores, percentiles,
-                           archetype or {}, notes_block)
 
     t0 = time.time()
-    # Deep-dive points are multi-sentence paragraphs, so the worker needs a
-    # much larger generation budget than the old one-liner mode (420 tokens),
-    # but 1024 tokens on 2 vCPU llama.cpp can push past the client timeout
-    # window before the model emits its stop token. 700 comfortably fits
-    # five 70-120 word paragraphs and completes inside SPECIALTY_INFER_TIMEOUT
-    # on the free CPU tier.
-    response = _call_worker_sync(model_key, prompt, max_new_tokens=700,
-                                 temperature=0.55)
+    bullets: List[dict] = []
+    withheld = 0
+    if ensure_server():
+        header = _header(test_id, trait_scores, percentiles, archetype or {}, context_notes)
+        items = select_constructs(test_id, trait_scores, percentiles)
+
+        bands = {t: _band(p) for t, p in percentiles.items()}
+        multi = [p for p in applicable_points(test_id, list(trait_scores.keys()), bands)
+                 if sum(1 for it in items if p in it.get("points", [])) != 1]
+        integration_item = {"construct": "Integrative formulation",
+                            "framework": "Functional interaction of the constructs above",
+                            "traits": list(trait_scores.keys()), "kind": "integration",
+                            "points": (general_points(test_id) + multi)[:3]}
+
+        def write(item: dict):
+            if item["kind"] == "integration":
+                prompt, budget = _integration_prompt(header, items, item["points"]), 260
+            else:
+                prompt, budget = _bullet_prompt(header, item, trait_scores, percentiles), 220
+            premises = _premises(item, items, percentiles)
+            for temperature in (0.45, 0.3):
+                text = _clean(_complete(prompt, max_tokens=budget, temperature=temperature))
+                if not text:
+                    continue
+                if not _citations_ok(text, test_id, item):
+                    continue
+                verification = _verify(text, item["traits"], trait_scores, percentiles)
+                rejected = ("failed", "unverified") if item["kind"] == "trait" else ("failed",)
+                if verification["status"] in rejected:
+                    continue
+                meaning = meaning_check.check(text, premises)
+                if meaning and meaning["contradicted"]:
+                    continue
+                return text, verification, meaning
+            return "", None, None
+
+        jobs = items + ([integration_item] if len(items) >= 2 else [])
+        with ThreadPoolExecutor(max_workers=PARALLEL_SLOTS) as pool:
+            written = list(pool.map(write, jobs))
+
+        for item, (text, verification, meaning) in zip(jobs, written):
+            if not text:
+                withheld += 1
+                continue
+            bullets.append({
+                "construct": item["construct"],
+                "framework": item["framework"],
+                "evidence": _evidence(item["traits"], trait_scores, percentiles),
+                "text": text,
+                "confidence": _confidence(item, text, verification, meaning),
+            })
+        if len([b for b in bullets if b["construct"] != "Integrative formulation"]) < 2:
+            bullets = [b for b in bullets if b["construct"] != "Integrative formulation"]
+
     latency = round(time.time() - t0, 2)
-
-    record = {
-        "ts": time.time(),
-        "test_id": test_id,
-        "model_key": model_key,
-        "trait_scores": trait_scores,
-        "percentiles": percentiles,
-        "archetype": {k: (archetype or {}).get(k) for k in ("id", "name", "tagline")},
-        "notes_spectrum": notes_block.strip() or None,
-        "prompt": prompt,
-        "output": response,
-        "latency_s": latency,
-        "status": "ok" if response else "unavailable",
-    }
-    _log_finetune(test_id, record)
-
-    # The specialty-model output is NOT merged into the base insights. It is
-    # held in a separate `deep_dive` block so the results page can show base
-    # results instantly and reveal this richer psychology-model analysis only
-    # when the user opts into "Deep Dive Mode".
-    lines = _extract_lines(response) if response else []
+    inst = INSTRUMENTS.get(test_id, {})
+    counts = {lvl: sum(1 for b in bullets if b["confidence"]["level"] == lvl) for lvl in ("High", "Moderate")}
     insights["deep_dive"] = {
-        "model_key":      model_key,
-        "model_label":    MODEL_LABELS.get(model_key, model_key),
-        "insights":       lines,
-        # Layer-A affect classification of the user's volunteered notes , bonus
-        # context shown only in the deep dive. None when no notes were given.
-        "affect_context": (notes_block.strip() or None),
-        "latency_s":      latency,
-        "status":         "ok" if lines else "unavailable",
+        "instrument": inst.get("label"),
+        "citation": inst.get("citation"),
+        "bullets": bullets,
+        "insights": [f"{b['construct']}. {b['text']}" for b in bullets],
+        "support_note": SUPPORT_NOTE.get(test_id),
+        "profile_fit": (archetype or {}).get("membership_probability"),
+        "confidence_summary": {"counts": counts, "withheld": withheld} if bullets else None,
+        "references": references(test_id),
+        "source_note": (
+            "This deep dive is generated as psychologically compliant text, based on published research "
+            "for this instrument."
+        ),
+        "confidence_method": (
+            "Every paragraph starts from the same base confidence. Confidence rises when your scores meet "
+            "the conditions of findings in the published research listed below, when the paragraph is "
+            "grounded in those findings, when it states your score directions and figures correctly, and "
+            "when its sentences are supported by the construct and the findings. Paragraphs that contradict "
+            "your scores, contradict the research, or cite work outside the bibliography are withheld."
+        ),
+        "latency_s": latency,
+        "status": "ok" if bullets else "unavailable",
     }
-    if lines:
-        print(f"[psych] {model_key} deep-dive for {test_id} (+{len(lines)} lines, {latency}s)")
+    _log(test_id, {
+        "ts": time.time(), "test_id": test_id, "model_key": MODEL_KEY,
+        "trait_scores": trait_scores, "percentiles": percentiles,
+        "archetype": {k: (archetype or {}).get(k) for k in ("id", "name", "tagline")},
+        "bullets": bullets, "latency_s": latency,
+        "status": "ok" if bullets else "unavailable",
+    })
+    if bullets:
+        print(f"[psych] MentaLLaMA deep dive for {test_id}: {len(bullets)} bullets in {latency}s")
     return insights

@@ -54,22 +54,16 @@ const SCALE = [
 
 export const TEST_CONFIG = {
   hexaco:     { label: 'SIX-TRAIT PERSONALITY',        subtitle: 'The six broad traits that shape who you are',                                 roman: 'I',    progress: 'linear-gradient(90deg,#8090a2,#c8d8e8,#eef6fc,#d8e8f4,#f4f8fc)', accent: '#C8D8E8', glow: 'rgba(215,232,248,0.35)' },
-  sixteenpf:  { label: 'SIXTEEN PERSONALITY TRAITS',   subtitle: 'Sixteen layers deep into your personality structure',                         roman: 'II',   progress: 'linear-gradient(90deg,#9080b8,#c0b0d8,#dcd0f0,#ccc0e8,#ece8f8)', accent: '#C0B0D8', glow: 'rgba(210,200,240,0.32)' },
-  darktriad:  { label: 'DARK TRAITS',                  subtitle: 'Your shadow side, the traits most people will not measure',                   roman: 'III',  progress: 'linear-gradient(90deg,#6a7a88,#b0bcc8,#d8e0e8,#c4ccd6,#eaecf0)', accent: '#B0BCC8', glow: 'rgba(200,212,224,0.30)' },
-  fti:        { label: 'TEMPERAMENT TYPE',             subtitle: 'Four temperament rhythms that run your style',                                roman: 'IV',   progress: 'linear-gradient(90deg,#7a6090,#cfc0da,#e8dcf0,#d8c8e8,#f0e8f8)', accent: '#CFC0DA', glow: 'rgba(220,200,232,0.30)' },
-  npi:        { label: 'HOW YOU SEE YOURSELF',         subtitle: 'How you see yourself in relation to others',                                  roman: 'V',    progress: 'linear-gradient(90deg,#a06080,#dcb8c8,#f0d8e0,#e0c8d4,#f8e8ec)', accent: '#DCB8C8', glow: 'rgba(232,200,216,0.30)' },
-  ambi:       { label: 'BROAD PERSONALITY SCAN',       subtitle: 'The widest personality scan in this collection',                              roman: 'VI',   progress: 'linear-gradient(90deg,#707890,#a8b0c8,#d8dcec,#c4ccd8,#e8eef4)', accent: '#A8B0C8', glow: 'rgba(200,208,228,0.30)' },
-  pid5:       { label: 'FIVE TRAIT STYLES',            subtitle: 'Five trait styles, presented as styles not diagnoses',                        roman: 'VII',  progress: 'linear-gradient(90deg,#7888a0,#b8c0d8,#dce4f0,#c8d0e4,#ecf0f8)', accent: '#B8C0D8', glow: 'rgba(206,216,232,0.30)' },
-  hsq:        { label: 'HUMOR STYLE',                  subtitle: 'Four flavors of humor, two warm and two corrosive',                           roman: 'VIII', progress: 'linear-gradient(90deg,#b08840,#dcc8a0,#f4e8c8,#e8d8b0,#f8efce)', accent: '#DCC8A0', glow: 'rgba(232,216,176,0.30)' },
-  kims:       { label: 'MINDFULNESS SKILLS',           subtitle: 'Four skills that make up day-to-day mindfulness',                              roman: 'IX',   progress: 'linear-gradient(90deg,#609060,#b8d8b8,#dcecdc,#c8e0c8,#ecf6ec)', accent: '#B8D8B8', glow: 'rgba(200,224,200,0.30)' },
-  gcbs:       { label: 'CONSPIRACY BELIEFS',           subtitle: 'How skeptical you are about official accounts',                                roman: 'X',    progress: 'linear-gradient(90deg,#a07840,#d8b898,#ecd8b8,#e0c8a8,#f4e8cc)', accent: '#D8B898', glow: 'rgba(228,208,176,0.30)' },
-  aesthetic:  { label: 'AESTHETIC TASTE',              subtitle: 'What actually moves you, your aesthetic fingerprint',                          roman: 'XI',   progress: 'linear-gradient(90deg,#9490a0,#c8c4d4,#e8e4f4,#d4d0e4,#f4f0fc)', accent: '#C8C4D4', glow: 'rgba(212,208,228,0.30)' },
-  riasec:     { label: 'CAREER TYPE',                  subtitle: 'The kind of work that actually fits how you are wired',                       roman: 'XII',  progress: 'linear-gradient(90deg,#8898a4,#c0ccd6,#dce8f0,#ccdae6,#e8f2f8)', accent: '#C0CCD6', glow: 'rgba(204,220,232,0.30)' },
-  attachment: { label: 'ATTACHMENT STYLE',             subtitle: 'Your relationship wiring, the patterns you do not even see',                  roman: 'XIII', progress: 'linear-gradient(90deg,#9090a8,#bcc0d4,#dcdee8,#cccee0,#e8eaf4)', accent: '#BCC0D4', glow: 'rgba(206,208,228,0.30)' },
-  pvq:        { label: 'CORE VALUES',                  subtitle: 'Ten guiding values that sort your decisions',                                  roman: 'XIV',  progress: 'linear-gradient(90deg,#809060,#c8d8b0,#e8f0d8,#d8e0c0,#f0f4e0)', accent: '#C8D8B0', glow: 'rgba(216,224,192,0.30)' },
-  bpnss:      { label: 'INNER NEEDS',                  subtitle: 'Autonomy, competence, relatedness, the three needs you run on',                roman: 'XV',   progress: 'linear-gradient(90deg,#609088,#a8d8c8,#d0ecdc,#bce0d0,#e4f4e8)', accent: '#A8D8C8', glow: 'rgba(196,224,208,0.30)' },
-  dass:       { label: 'MOOD AND STRESS',              subtitle: 'Where your head is at right now, stress, anxiety, mood',                       roman: 'XVI',  progress: 'linear-gradient(90deg,#9090a2,#c0c0d0,#e0e0ec,#cccce0,#f0f0f8)', accent: '#C0C0D0', glow: 'rgba(206,206,226,0.30)' },
-  who5:       { label: 'WELLBEING CHECK',              subtitle: 'A quick check on how the last two weeks have felt',                            roman: 'XVII', progress: 'linear-gradient(90deg,#609880,#b8e0c8,#d8eed8,#c4e4cc,#e8f6e8)', accent: '#B8E0C8', glow: 'rgba(208,232,216,0.30)' },
+  darktriad:  { label: 'DARK TRAITS',                  subtitle: 'Your shadow side, the traits most people will not measure',                   roman: 'II',  progress: 'linear-gradient(90deg,#6a7a88,#b0bcc8,#d8e0e8,#c4ccd6,#eaecf0)', accent: '#B0BCC8', glow: 'rgba(200,212,224,0.30)' },
+  fti:        { label: 'TEMPERAMENT TYPE',             subtitle: 'Four temperament rhythms that run your style',                                roman: 'III',   progress: 'linear-gradient(90deg,#7a6090,#cfc0da,#e8dcf0,#d8c8e8,#f0e8f8)', accent: '#CFC0DA', glow: 'rgba(220,200,232,0.30)' },
+  npi:        { label: 'HOW YOU SEE YOURSELF',         subtitle: 'How you see yourself in relation to others',                                  roman: 'IV',    progress: 'linear-gradient(90deg,#a06080,#dcb8c8,#f0d8e0,#e0c8d4,#f8e8ec)', accent: '#DCB8C8', glow: 'rgba(232,200,216,0.30)' },
+  ambi:       { label: 'BROAD PERSONALITY SCAN',       subtitle: 'The widest personality scan in this collection',                              roman: 'V',   progress: 'linear-gradient(90deg,#707890,#a8b0c8,#d8dcec,#c4ccd8,#e8eef4)', accent: '#A8B0C8', glow: 'rgba(200,208,228,0.30)' },
+  hsq:        { label: 'HUMOR STYLE',                  subtitle: 'Four flavors of humor, two warm and two corrosive',                           roman: 'VI', progress: 'linear-gradient(90deg,#b08840,#dcc8a0,#f4e8c8,#e8d8b0,#f8efce)', accent: '#DCC8A0', glow: 'rgba(232,216,176,0.30)' },
+  kims:       { label: 'MINDFULNESS SKILLS',           subtitle: 'Four skills that make up day-to-day mindfulness',                              roman: 'VII',   progress: 'linear-gradient(90deg,#609060,#b8d8b8,#dcecdc,#c8e0c8,#ecf6ec)', accent: '#B8D8B8', glow: 'rgba(200,224,200,0.30)' },
+  gcbs:       { label: 'CONSPIRACY BELIEFS',           subtitle: 'How skeptical you are about official accounts',                                roman: 'VIII',    progress: 'linear-gradient(90deg,#a07840,#d8b898,#ecd8b8,#e0c8a8,#f4e8cc)', accent: '#D8B898', glow: 'rgba(228,208,176,0.30)' },
+  riasec:     { label: 'CAREER TYPE',                  subtitle: 'The kind of work that actually fits how you are wired',                       roman: 'IX',  progress: 'linear-gradient(90deg,#8898a4,#c0ccd6,#dce8f0,#ccdae6,#e8f2f8)', accent: '#C0CCD6', glow: 'rgba(204,220,232,0.30)' },
+  attachment: { label: 'ATTACHMENT STYLE',             subtitle: 'Your relationship wiring, the patterns you do not even see',                  roman: 'X', progress: 'linear-gradient(90deg,#9090a8,#bcc0d4,#dcdee8,#cccee0,#e8eaf4)', accent: '#BCC0D4', glow: 'rgba(206,208,228,0.30)' },
+  dass:       { label: 'MOOD AND STRESS',              subtitle: 'Where your head is at right now, stress, anxiety, mood',                       roman: 'XI',  progress: 'linear-gradient(90deg,#9090a2,#c0c0d0,#e0e0ec,#cccce0,#f0f0f8)', accent: '#C0C0D0', glow: 'rgba(206,206,226,0.30)' },
 }
 
 export const SCALE_OVERRIDES = {
@@ -97,42 +91,11 @@ export const SCALE_OVERRIDES = {
     { value: 6, label: 'Agree', short: '6' },
     { value: 7, label: 'Strongly Agree', short: '7' },
   ],
-  bpnss: [
-    { value: 1, label: 'Not at all true', short: '1' },
-    { value: 2, label: '', short: '2' },
-    { value: 3, label: 'Somewhat true', short: '3' },
-    { value: 4, label: '', short: '4' },
-    { value: 5, label: 'Mostly true', short: '5' },
-    { value: 6, label: '', short: '6' },
-    { value: 7, label: 'Very true', short: '7' },
-  ],
   fti: [
     { value: 1, label: 'Strongly Disagree', short: 'SD' },
     { value: 2, label: 'Disagree', short: 'D' },
     { value: 3, label: 'Agree', short: 'A' },
     { value: 4, label: 'Strongly Agree', short: 'SA' },
-  ],
-  pvq: [
-    { value: 1, label: 'Very much like me', short: '1' },
-    { value: 2, label: 'Like me', short: '2' },
-    { value: 3, label: 'Somewhat like me', short: '3' },
-    { value: 4, label: 'A little like me', short: '4' },
-    { value: 5, label: 'Not like me', short: '5' },
-    { value: 6, label: 'Not like me at all', short: '6' },
-  ],
-  who5: [
-    { value: 0, label: 'At no time', short: '0' },
-    { value: 1, label: 'Some of the time', short: '1' },
-    { value: 2, label: 'Less than half', short: '2' },
-    { value: 3, label: 'More than half', short: '3' },
-    { value: 4, label: 'Most of the time', short: '4' },
-    { value: 5, label: 'All of the time', short: '5' },
-  ],
-  pid5: [
-    { value: 0, label: 'Very or often false', short: '0' },
-    { value: 1, label: 'Sometimes false', short: '1' },
-    { value: 2, label: 'Sometimes true', short: '2' },
-    { value: 3, label: 'Very or often true', short: '3' },
   ],
   gcbs: [
     { value: 1, label: 'Definitely not true', short: '1' },
@@ -165,7 +128,7 @@ const CHROME = {
 const S = {
   fontDisplay: "'Cormorant Garamond', Georgia, serif",
   fontSC: "'Cinzel', serif",
-  fontBody: "'Playfair Display', Georgia, serif",
+  fontBody: "'Libre Baskerville', Baskerville, Georgia, serif",
   fontMono: "'JetBrains Mono', monospace",
   textPrim: '#F4F7FA',
   textSec: 'rgba(244,247,250,0.56)',
@@ -294,20 +257,8 @@ export default function Questionnaire() {
       .catch(() => navigate('/tests'))
   }, [testId])
 
-  // Keep EVERY analysis model warm for the whole time the test is open: the
-  // first ping nudges the general-purpose archetype refiner AND the
-  // psychology layer (HF classifiers + the specialty worker for this
-  // instrument), and the interval re-pings so nothing idles out mid-test. By
-  // submit time everything is resident , "Analyze results" pays no
-  // cold-start latency. Fire-and-forget; failures are invisible.
   useEffect(() => {
-    const ping = () => api.get(`/psych/warmup/${testId}`).catch(() => {})
-    ping()
-    // Aggressive warmup: HF Space needs about 3 min to boot from cold, so
-    // pinging every 30 s while the questionnaire is open keeps the wake
-    // request queued and the worker resident by the time the user submits.
-    const iv = setInterval(ping, 30 * 1000)
-    return () => clearInterval(iv)
+    api.get(`/psych/warmup/${testId}`).catch(() => {})
   }, [testId])
 
   const handleLangSelect = useCallback(async (lang) => {

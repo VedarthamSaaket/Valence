@@ -69,6 +69,10 @@ def init_db():
             "ALTER TABLE test_results ADD COLUMN enrichment_status TEXT DEFAULT 'none'"
         )
 
+    cursor.execute(
+        "UPDATE test_results SET enrichment_status = 'none' WHERE enrichment_status = 'pending'"
+    )
+
     conn.commit()
     conn.close()
     print("Database initialized.")

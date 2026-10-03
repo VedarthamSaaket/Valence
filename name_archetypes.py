@@ -1,270 +1,236 @@
-"""
-Derive semantically meaningful archetype names from BGM cluster centroids.
-
-For each cluster, we identify the top-2 dominant traits (highest centroid values)
-and the bottom-1 trait (lowest), then assemble a name template per test.
-
-This is a deterministic seed for archetype copy. The LLM enricher
-(archetype_refiner.py) then rewrites these into personalized output at inference
-time. This script just makes sure the cluster -> archetype JSON has informative
-labels instead of "Archetype 1, 2, 3...".
-"""
 import json
 import os
-import sys
 from typing import Dict, List
 
+import numpy as np
+from scipy.optimize import linear_sum_assignment
+
 MODELS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "backend", "models")
-TESTS = ["hexaco", "hsq", "kims", "fti", "npi", "ambi", "gcbs", "sixteenpf", "riasec",
-         "aesthetic", "attachment", "darktriad", "dass"]
 
+COLORS = ["#6B8CAE", "#AE6B8A", "#6BAE8A", "#AE9A6B", "#8A6BAE", "#6BAE9A"]
 
-# Trait name -> short descriptive when the trait is the dominant one
-# Curated per test for psychological coherence
-TRAIT_LABELS = {
-    "hexaco": {
-        "Honesty-Humility":  ("Principled", "Pragmatic"),
-        "Emotionality":      ("Feeling-Deep", "Even-Keeled"),
-        "Extraversion":      ("Outwardly Lit", "Inward-Drawn"),
-        "Agreeableness":     ("Warm-Hearted", "Hard-Nosed"),
-        "Conscientiousness": ("Disciplined",  "Free-Flowing"),
-        "Openness":          ("Curious",      "Conventional"),
-    },
-    "hsq": {
-        "Affiliative":    ("Warm Humorist",      "Reserved"),
-        "Self-Enhancing": ("Inner Resilient",    "Earnest"),
-        "Aggressive":     ("Edgy Jester",        "Soft-Toned"),
-        "Self-Defeating": ("Self-Deprecating",   "Self-Composed"),
-    },
-    "kims": {
-        "Observing":                  ("Embodied Noticer",    "Outwardly Tuned"),
-        "Describing":                 ("Articulate Witness",  "Inarticulate"),
-        "Acting with Awareness":      ("Present Actor",       "Autopilot"),
-        "Accepting without Judgment": ("Accepting Witness",   "Judging Mind"),
+PROTOTYPES: Dict[str, List[dict]] = {
+    "hexaco": [
+        {"name": "Socially Considerate", "target": [0.9, 0.1, -0.4, 0.6, 0.2, -0.2],
+         "tagline": "Fair-minded, patient and modest, with a quieter social presence",
+         "description": "High Honesty-Humility and Agreeableness with slightly lower Extraversion."},
+        {"name": "Adaptable Middle", "target": [-0.4, 0.2, 0.4, -0.2, -0.2, 0.1],
+         "tagline": "Near the centre on every factor, leaning outgoing and pragmatic",
+         "description": "No extreme factor; mildly higher Extraversion and mildly lower Honesty-Humility."},
+        {"name": "Withdrawn", "target": [0.0, 0.6, -0.9, -0.7, -0.5, -0.7],
+         "tagline": "Reserved and emotionally sensitive, cautious with people and new ideas",
+         "description": "Low Extraversion, Agreeableness and Openness with higher Emotionality."},
+        {"name": "Self-Focused", "target": [-1.4, -0.7, 0.2, -1.1, 0.2, 0.3],
+         "tagline": "Competitive and unsentimental, driven by personal advantage",
+         "description": "Very low Honesty-Humility and Agreeableness with low Emotionality."},
+        {"name": "Role Model", "target": [0.3, -0.6, 1.2, 1.1, 0.4, 0.7],
+         "tagline": "Outgoing, tolerant, curious and emotionally steady",
+         "description": "High Extraversion, Agreeableness and Openness with low Emotionality."},
+    ],
+    "ambi": [
+        {"name": "Role Model", "target": [-0.9, 0.7, 0.6, 0.7, 0.8],
+         "tagline": "Emotionally steady, outgoing, open, considerate and dependable",
+         "description": "Low Neuroticism with high scores on the other four domains."},
+        {"name": "Self-Centred", "target": [0.1, 0.7, -0.4, -0.8, -0.7],
+         "tagline": "Outgoing and assertive, with less concern for others and for order",
+         "description": "High Extraversion with below-average Openness, Agreeableness and Conscientiousness."},
+        {"name": "Reserved", "target": [-0.4, -0.7, -0.6, 0.2, 0.2],
+         "tagline": "Calm and private, steady and considerate, with settled interests",
+         "description": "Low Neuroticism, Extraversion and Openness with average Agreeableness and Conscientiousness."},
+        {"name": "Tense and Withdrawn", "target": [1.1, -0.8, -0.3, -0.6, -1.0],
+         "tagline": "Emotionally reactive and reserved, with less trust and less structure",
+         "description": "High Neuroticism with low Extraversion, Agreeableness and Conscientiousness. This profile does not correspond to one of the four published types."},
+        {"name": "Average", "target": [0.5, 0.2, -0.2, 0.0, -0.1],
+         "tagline": "Close to the middle on most domains, a little more emotionally reactive",
+         "description": "Near-average domain scores with somewhat higher Neuroticism."},
+    ],
+    "darktriad": [
+        {"name": "Benevolent", "target": [-1.5, -1.0, -1.4],
+         "tagline": "Very low on all three dark traits",
+         "description": "Low Machiavellianism, narcissism and psychopathy."},
+        {"name": "Low Dark Triad", "target": [-0.3, -0.4, -0.5],
+         "tagline": "Below the sample average on all three dark traits",
+         "description": "Mildly low Machiavellianism, narcissism and psychopathy."},
+        {"name": "Moderate Dark Triad", "target": [0.5, 0.3, 0.5],
+         "tagline": "Above the sample average on all three dark traits",
+         "description": "Mildly elevated Machiavellianism, narcissism and psychopathy."},
+        {"name": "High Dark Triad", "target": [1.2, 1.4, 1.4],
+         "tagline": "Elevated on all three dark traits",
+         "description": "High Machiavellianism, narcissism and psychopathy."},
+    ],
+    "npi": [
+        {"name": "Low Narcissism", "target": [-0.8, -0.7, -0.8, -0.9, -0.8, -0.4, -0.8],
+         "tagline": "Modest self-view across every facet",
+         "description": "Low on all seven NPI facets."},
+        {"name": "Moderate, Image-Invested", "target": [-0.1, -0.1, 0.1, 0.2, -0.1, 0.8, -0.1],
+         "tagline": "Average self-regard with a clear investment in appearance",
+         "description": "Mid-range facets with elevated Vanity."},
+        {"name": "Moderate, Image-Indifferent", "target": [0.0, -0.1, -0.2, -0.2, -0.1, -0.9, -0.1],
+         "tagline": "Average self-regard with little investment in appearance",
+         "description": "Mid-range facets with low Vanity."},
+        {"name": "High Narcissism", "target": [1.3, 1.2, 1.3, 1.4, 1.4, 0.8, 1.4],
+         "tagline": "Elevated agentic and antagonistic self-view",
+         "description": "High on all seven NPI facets, including Entitlement and Exploitativeness."},
+    ],
+    "dass": [
+        {"name": "Low Distress", "target": [-1.3, -1.2, -1.4],
+         "tagline": "Few symptoms of low mood, anxiety or tension this week",
+         "description": "Low Depression, Anxiety and Stress scores."},
+        {"name": "Mild Distress", "target": [-0.4, -0.5, -0.5],
+         "tagline": "Some symptoms, below the reference sample average",
+         "description": "Mildly low Depression, Anxiety and Stress scores."},
+        {"name": "Elevated Distress", "target": [0.5, 0.5, 0.6],
+         "tagline": "Symptoms above the reference sample average",
+         "description": "Mildly elevated Depression, Anxiety and Stress scores."},
+        {"name": "High Distress", "target": [1.4, 1.6, 1.5],
+         "tagline": "Marked symptoms across mood, anxiety and tension",
+         "description": "High Depression, Anxiety and Stress scores."},
+    ],
+    "kims": [
+        {"name": "Low Mindfulness", "target": [-1.3, -1.1, -1.0, -0.7],
+         "tagline": "Lower on all four mindfulness skills",
+         "description": "Low Observing, Describing, Acting with Awareness and Accepting without Judgment."},
+        {"name": "High Mindfulness", "target": [1.0, 1.1, 0.8, 0.5],
+         "tagline": "Higher on all four mindfulness skills",
+         "description": "High Observing, Describing, Acting with Awareness and Accepting without Judgment."},
+        {"name": "Judgmentally Observing", "target": [0.4, -0.2, -0.5, -1.0],
+         "tagline": "Notices inner experience closely but evaluates it harshly",
+         "description": "Higher Observing with low Accepting without Judgment."},
+        {"name": "Non-Judgmentally Aware", "target": [-0.3, -0.1, 0.3, 0.6],
+         "tagline": "Present and accepting without closely monitoring sensations",
+         "description": "Higher Acting with Awareness and Accepting without Judgment with lower Observing."},
+    ],
+    "hsq": [
+        {"name": "Humor Denier", "target": [-1.1, -1.1, -0.4, -0.9],
+         "tagline": "Uses little humor of any kind",
+         "description": "Low on all four humor styles."},
+        {"name": "Humor Endorser", "target": [0.9, 0.7, 0.9, 0.5],
+         "tagline": "Uses every style of humor freely",
+         "description": "High on all four humor styles."},
+        {"name": "Self-Defeating Humorist", "target": [-0.4, -0.2, 0.0, 0.7],
+         "tagline": "Leans on self-deprecation more than shared or coping humor",
+         "description": "Elevated Self-Defeating humor with lower Affiliative humor."},
+        {"name": "Positive Humor Endorser", "target": [0.4, 0.4, -0.7, -0.5],
+         "tagline": "Uses warm and coping humor, avoids put-downs",
+         "description": "Higher Affiliative and Self-Enhancing humor with low Aggressive and Self-Defeating humor."},
+    ],
+    "gcbs": [
+        {"name": "Non-Believer", "target": [-1.3, -1.2, -0.9, -1.2, -1.3],
+         "tagline": "Rejects conspiracy explanations across the board",
+         "description": "Low on all five conspiracist belief factors."},
+        {"name": "Grounded Skeptic", "target": [0.0, -0.2, -0.9, -0.4, -0.1],
+         "tagline": "Some institutional doubt, but rejects extraterrestrial cover-up claims",
+         "description": "Mid-range on institutional factors with low Extraterrestrial Coverup."},
+        {"name": "Cautious Doubter", "target": [-0.4, -0.4, 0.1, -0.4, -0.2],
+         "tagline": "Mostly trusting, with an open mind about the unexplained",
+         "description": "Mildly low on institutional factors with average Extraterrestrial Coverup."},
+        {"name": "Believer", "target": [0.7, 0.7, 0.7, 0.8, 0.7],
+         "tagline": "Endorses conspiracy explanations more than most",
+         "description": "Elevated on all five conspiracist belief factors."},
+        {"name": "Strong Believer", "target": [1.4, 1.6, 1.2, 1.7, 1.2],
+         "tagline": "Endorses conspiracy explanations across every theme",
+         "description": "High on all five conspiracist belief factors."},
+    ],
+    "attachment": [
+        {"name": "Secure", "target": [-0.8, -0.7, 1.1],
+         "tagline": "Comfortable with closeness and unworried about abandonment",
+         "description": "Low attachment anxiety and low attachment avoidance."},
+        {"name": "Preoccupied", "target": [0.8, -0.7, -0.1],
+         "tagline": "Seeks closeness and worries about losing it",
+         "description": "High attachment anxiety with low attachment avoidance."},
+        {"name": "Dismissing", "target": [-1.1, 1.4, -0.2],
+         "tagline": "Self-reliant and uncomfortable with dependence",
+         "description": "Low attachment anxiety with high attachment avoidance."},
+        {"name": "Fearful-Avoidant", "target": [0.5, 0.8, -1.0],
+         "tagline": "Wants closeness but keeps distance for fear of being hurt",
+         "description": "High attachment anxiety and high attachment avoidance."},
+    ],
+}
+
+CODE_TYPES: Dict[str, Dict[str, tuple]] = {
+    "riasec": {
+        "Realistic": ("Doer", "hands-on, practical work with tools and things"),
+        "Investigative": ("Thinker", "analysis, research and abstract problems"),
+        "Artistic": ("Creator", "self-expression and unstructured creative work"),
+        "Social": ("Helper", "teaching, supporting and caring for people"),
+        "Enterprising": ("Persuader", "leading, selling and taking initiative"),
+        "Conventional": ("Organizer", "order, detail and structured procedures"),
     },
     "fti": {
-        "Explorer":   ("Explorer",   "Cautious"),
-        "Builder":    ("Builder",    "Spontaneous"),
-        "Director":   ("Director",   "Receptive"),
-        "Negotiator": ("Negotiator", "Pragmatic"),
-    },
-    "npi": {
-        "Authority":        ("Authority Holder", "Quiet"),
-        "Self-Sufficiency": ("Self-Reliant",     "Interdependent"),
-        "Superiority":      ("Confident Lead",   "Humble"),
-        "Exhibitionism":    ("Spotlight Lover",  "Background"),
-        "Exploitativeness": ("Strategic",        "Trusting"),
-        "Vanity":           ("Image-Aware",      "Image-Indifferent"),
-        "Entitlement":      ("Expects-The-Best", "Receives-As-Given"),
-    },
-    "ambi": {
-        "Affect Regulation":  ("Affect-Regulated",     "Affect-Reactive"),
-        "Social Drive":       ("Socially Driven",      "Solitude-Drawn"),
-        "Conscientiousness":  ("Disciplined",          "Free-Flowing"),
-        "Openness":           ("Open Explorer",        "Conventional"),
-        "Agreeableness":      ("Warm Connector",       "Hard-Nosed"),
-        "Energy Drive":       ("High-Energy",          "Low-Key"),
-        "Identity Coherence": ("Identity-Anchored",    "Identity-Fluid"),
-    },
-    "gcbs": {
-        "Government Malfeasance":     ("Govt-Skeptic",        "Govt-Trusting"),
-        "Malevolent Global":          ("Hidden-Power Skeptic", "Status-Quo Believer"),
-        "Extraterrestrial Coverup":   ("ET-Cover-Up Believer", "ET-Skeptic"),
-        "Personal Wellbeing Threats": ("Body-Threat Wary",    "Body-Threat Calm"),
-        "Control of Information":     ("Info-Withheld",       "Info-Open"),
-    },
-    "sixteenpf": {
-        "Warmth":             ("Warm",            "Reserved"),
-        "Reasoning":          ("Sharp-Minded",    "Concrete"),
-        "Stability":          ("Steady",          "Reactive"),
-        "Dominance":          ("Assertive",       "Deferential"),
-        "Liveliness":         ("Lively",          "Serious"),
-        "Rule-Consciousness": ("Dutiful",         "Expedient"),
-        "Social-Boldness":    ("Socially Bold",   "Shy"),
-        "Sensitivity":        ("Sensitive",       "Utilitarian"),
-        "Vigilance":          ("Vigilant",        "Trusting"),
-        "Abstractedness":     ("Imaginative",     "Grounded"),
-        "Privateness":        ("Private",         "Forthright"),
-        "Apprehension":       ("Self-Doubting",   "Self-Assured"),
-        "Openness-to-Change": ("Open-to-Change",  "Traditional"),
-        "Self-Reliance":      ("Self-Reliant",    "Group-Oriented"),
-        "Perfectionism":      ("Perfectionist",   "Flexible"),
-        "Tension":            ("Driven",          "Relaxed"),
-    },
-    "riasec": {
-        "Realistic":     ("Hands-On Doer",   "Abstract"),
-        "Investigative": ("Analyst",         "Non-Analytical"),
-        "Artistic":      ("Creator",         "Conventional-Minded"),
-        "Social":        ("Helper",          "Detached"),
-        "Enterprising":  ("Leader",          "Non-Assertive"),
-        "Conventional":  ("Organizer",       "Unstructured"),
-    },
-    "aesthetic": {
-        "Intense":     ("Raw-Intensity Seeker",  "Gentle-Palette"),
-        "Mainstream":  ("Popular-Current",       "Off-The-Path"),
-        "Traditional": ("Classic Devotee",       "Modernist"),
-        "Visual":      ("Visual Sensualist",     "Idea-First"),
-    },
-    "attachment": {
-        "Anxious":  ("Closeness-Seeking",  "Worry-Free"),
-        "Avoidant": ("Independent Spirit", "Openly Close"),
-        "Secure":   ("Secure Connector",   "Guarded"),
-    },
-    "darktriad": {
-        "Machiavellianism": ("Strategist",       "Straight-Dealer"),
-        "Narcissism":       ("Self-Assured",     "Modest"),
-        "Psychopathy":      ("Cool-Detached",    "Warm-Feeling"),
-    },
-    "dass": {
-        "Depression": ("Heavy-Hearted",  "Bright-Mooded"),
-        "Anxiety":    ("Alert-Wired",    "Calm-Bodied"),
-        "Stress":     ("Pressure-Loaded","Unburdened"),
+        "Explorer": ("Explorer", "novelty, spontaneity and curiosity"),
+        "Builder": ("Builder", "caution, loyalty and respect for norms"),
+        "Director": ("Director", "analysis, directness and tough-mindedness"),
+        "Negotiator": ("Negotiator", "empathy, intuition and seeing the whole picture"),
     },
 }
 
 
-# Color palette per test, distinct hues per cluster index
-COLORS = ["#6B8CAE", "#AE6B8A", "#6BAE8A", "#AE9A6B", "#8A6BAE", "#6BAE9A",
-          "#AE8A6B", "#9A7AAE", "#7A8AAE", "#AE7A8A", "#7AAE9A", "#8AAE6B"]
-
-
-def name_one(test_id: str) -> Dict:
-    import numpy as np
-    meta_path = os.path.join(MODELS_DIR, f"{test_id}_meta.json")
-    arc_path  = os.path.join(MODELS_DIR, f"{test_id}_archetypes.json")
-    dist_path = os.path.join(MODELS_DIR, f"{test_id}_distributions.json")
-    if not all(os.path.exists(p) for p in (meta_path, arc_path, dist_path)):
-        return {"test_id": test_id, "error": "missing artifacts"}
-
-    with open(meta_path) as fh:
+def _stats(test_id: str):
+    with open(os.path.join(MODELS_DIR, f"{test_id}_meta.json"), encoding="utf-8") as fh:
         meta = json.load(fh)
-    with open(arc_path) as fh:
+    with open(os.path.join(MODELS_DIR, f"{test_id}_archetypes.json"), encoding="utf-8") as fh:
         archetypes = json.load(fh)
-    with open(dist_path) as fh:
+    with open(os.path.join(MODELS_DIR, f"{test_id}_distributions.json"), encoding="utf-8") as fh:
         dists = json.load(fh)
+    names = meta["trait_names"]
+    mu = np.array([np.mean(dists[n]) for n in names])
+    sd = np.array([np.std(dists[n]) + 1e-8 for n in names])
+    return meta, archetypes, names, mu, sd
 
-    trait_names = meta.get("trait_names") or list(dists.keys())
-    if not trait_names:
-        return {"test_id": test_id, "error": "no trait_names in meta"}
 
-    # population statistics per trait (mean + std)
-    pop_stats = {t: (float(np.mean(dists[t])), float(np.std(dists[t]) + 1e-8)) for t in trait_names}
-
-    labels = TRAIT_LABELS.get(test_id, {})
-    renamed: Dict[str, Dict] = {}
-
-    for cid, info in archetypes.items():
-        centroid = info.get("centroid") or []
-        if len(centroid) != len(trait_names):
-            renamed[cid] = info
-            continue
-
-        # z-score of each centroid against the population
-        z = {}
-        for trait, val in zip(trait_names, centroid):
-            mu, sd = pop_stats[trait]
-            z[trait] = (val - mu) / sd
-
-        # Pick distinctive features: highest +z and lowest -z. Try a strict
-        # threshold first, then relax, so near-mean clusters still get a
-        # descriptive name instead of a generic "The Balanced".
-        sorted_pos = sorted(z.items(), key=lambda kv: -kv[1])
-        sorted_neg = sorted(z.items(), key=lambda kv: kv[1])
-
-        top_high, top_low = [], []
-        for threshold in (0.5, 0.25, 0.1):
-            top_high = [t for t, v in sorted_pos if v >= threshold][:2]
-            top_low  = [t for t, v in sorted_neg if v <= -threshold][:1]
-            if top_high or top_low:
-                break
-
-        name_parts: List[str] = []
-        for t in top_high:
-            high_word = labels.get(t, (t, ""))[0]
-            if high_word:
-                name_parts.append(high_word)
-        for t in top_low:
-            low_word = labels.get(t, ("", t))[1]
-            if low_word:
-                name_parts.append(low_word)
-
-        if name_parts:
-            name = "The " + " ".join(name_parts[:2])
-        else:
-            # Truly flat profile: lean on whichever trait sits highest.
-            lean = sorted_pos[0][0]
-            name = f"The Balanced, {labels.get(lean, (lean, ''))[0]}-Leaning"
-
-        tagline_parts = []
-        for t in top_high[:2]:
-            tagline_parts.append(f"high {t.lower()} ({z[t]:+.1f}sd)")
-        for t in top_low[:1]:
-            tagline_parts.append(f"low {t.lower()} ({z[t]:+.1f}sd)")
-        if not tagline_parts:
-            tagline_parts.append("centroid near population mean across all traits")
-        tagline = ", ".join(tagline_parts)
-
-        idx = int(cid) if cid.isdigit() else len(renamed)
-        renamed[cid] = {
-            "id":          info.get("id", f"cluster_{cid}"),
-            "name":        name,
-            "tagline":     tagline,
-            "color":       COLORS[idx % len(COLORS)],
-            "description": "Centroid (z vs population): " + ", ".join(
-                f"{t} {z[t]:+.1f}sd" for t in trait_names),
-            "centroid":    info.get("centroid"),
-            "size":        info.get("size", 0),
-            "weight":      info.get("weight"),
-        }
-
-    # Uniqueness pass: no two clusters in a test may share a name. When a
-    # collision happens, append each cluster's next-most distinctive trait
-    # word so both names stay descriptive.
-    seen: Dict[str, List[str]] = {}
-    for cid, info in renamed.items():
-        seen.setdefault(info["name"], []).append(cid)
-    for name, cids in seen.items():
-        if len(cids) < 2:
-            continue
-        for cid in cids:
-            info = renamed[cid]
-            centroid = info.get("centroid") or []
-            if len(centroid) == len(trait_names):
-                zz = sorted(
-                    ((t, (v - pop_stats[t][0]) / pop_stats[t][1])
-                     for t, v in zip(trait_names, centroid)),
-                    key=lambda kv: -abs(kv[1]),
-                )
-                for t, v in zz:
-                    word = labels.get(t, (t, t))[0 if v >= 0 else 1] or t
-                    candidate = f"{info['name']} ({word}-{'Forward' if v >= 0 else 'Light'})"
-                    if candidate not in {x["name"] for x in renamed.values()}:
-                        info["name"] = candidate
-                        break
-                else:
-                    info["name"] = f"{info['name']} {cid}"
-            else:
-                info["name"] = f"{info['name']} {cid}"
-
-    with open(arc_path, "w", encoding="utf-8") as fh:
-        json.dump(renamed, fh, indent=2)
+def _entry(info: dict, idx: int, name: str, tagline: str, description: str, basis: str) -> dict:
     return {
-        "test_id":     test_id,
-        "n_clusters":  len(renamed),
-        "sample_names": [v["name"] for v in renamed.values()],
+        "id": info.get("id"),
+        "name": name,
+        "tagline": tagline,
+        "color": COLORS[idx % len(COLORS)],
+        "description": description,
+        "basis": basis,
+        "centroid": info.get("centroid"),
+        "size": info.get("size", 0),
+        "weight": info.get("weight"),
     }
 
 
+def name_by_prototype(test_id: str) -> Dict:
+    meta, archetypes, names, mu, sd = _stats(test_id)
+    protos = PROTOTYPES[test_id]
+    cids = list(archetypes.keys())
+    z = np.array([(np.array(archetypes[c]["centroid"]) - mu) / sd for c in cids])
+    targets = np.array([p["target"] for p in protos])
+    cost = np.linalg.norm(z[:, None, :] - targets[None, :, :], axis=2)
+    rows, cols = linear_sum_assignment(cost)
+    out = {}
+    for r, c in zip(rows, cols):
+        p = protos[c]
+        out[cids[r]] = _entry(archetypes[cids[r]], int(cids[r]), p["name"], p["tagline"],
+                              p["description"], meta.get("k_basis", ""))
+        out[cids[r]]["match_distance"] = round(float(cost[r, c]), 3)
+    return {c: out[c] for c in cids if c in out}
+
+
+def name_by_code(test_id: str) -> Dict:
+    meta, archetypes, names, mu, sd = _stats(test_id)
+    types = CODE_TYPES[test_id]
+    out = {}
+    for cid, info in archetypes.items():
+        primary = names[int(cid)]
+        noun, pull = types[primary]
+        name = primary if noun == primary else f"{primary} ({noun})"
+        out[cid] = _entry(info, int(cid), name, f"Drawn to {pull}",
+                          f"{primary} is the highest of this person's scores relative to the reference sample.",
+                          meta.get("k_basis", ""))
+    return out
+
+
+def name_one(test_id: str) -> Dict:
+    named = name_by_code(test_id) if test_id in CODE_TYPES else name_by_prototype(test_id)
+    with open(os.path.join(MODELS_DIR, f"{test_id}_archetypes.json"), "w", encoding="utf-8") as fh:
+        json.dump(named, fh, indent=2)
+    return named
+
+
 if __name__ == "__main__":
-    results = []
-    for tid in TESTS:
-        try:
-            r = name_one(tid)
-        except Exception as e:
-            r = {"test_id": tid, "error": str(e)}
-        results.append(r)
-        if "error" in r:
-            print(f"  {tid:<10} ERROR  {r['error']}")
-        else:
-            print(f"  {tid:<10} {r['n_clusters']:>2} clusters named   e.g. {r['sample_names']}")
-    print("\nDone.")
+    for tid in list(PROTOTYPES.keys()) + list(CODE_TYPES.keys()):
+        named = name_one(tid)
+        print(f"{tid:<11}", [(v["name"], v.get("match_distance")) for v in named.values()])

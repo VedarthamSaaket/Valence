@@ -1,45 +1,24 @@
 """
-Valence Unified Training Script
-================================
-One script. Trains percentile distributions, UMAP embeddings, and Bayesian Gaussian
-Mixture clusters for all ML-pipeline tests. No KMeans. No hand-picked k.
+Valence training script.
 
-Pipeline per test:
-  1. load dataset
-  2. clean (drop invalid rows, fill medians)
-  3. score (population-level scorer -> trait matrix, N x D, all in 0..1)
-  4. save distributions.json  (per-trait sorted arrays for percentile lookup)
-  5. UMAP -> 10D embedding (preserves manifold for clustering)
-  6. Bayesian Gaussian Mixture with Dirichlet Process prior on the 10D embedding,
-     max_components = 12, data picks the actual k via variational Bayes
-  7. UMAP -> 2D for the personality map visualization
-  8. write archetype placeholders (centroids in raw trait space, LLM refines later)
-  9. write meta.json (k, effective_k, silhouette, schema_version, timestamps)
-
-Why Bayesian GMM with DP prior:
-  - Auto-discovers k from the data (no silhouette grid-search)
-  - Soft probabilistic membership (every person is a blend, never a binary label)
-  - Predicts cluster for new respondents (.predict / .predict_proba on the model)
-  - Combined with UMAP-10D, handles non-convex personality clusters cleanly
-  - Latent Profile Analysis is the gold standard in personality psych research;
-    BGM-DP is its principled "auto k" extension.
+Per instrument: load the reference dataset, clean, score with the published keys,
+save the empirical distributions used for percentiles, fit a latent-profile model
+(Gaussian mixture on standardized trait scores) with the number of profiles fixed
+from the person-centered literature, and fit a 2D UMAP for the personality map.
 
 Usage:
-    python backend/ml/train_offline.py                  # train missing
-    FORCE_RETRAIN=1 python backend/ml/train_offline.py  # retrain everything
-    python backend/ml/train_offline.py hexaco hsq       # only the listed ones
-
-Observable progress (you can tail these without interrupting training):
-    backend/models/train_offline.log         (line-by-line log)
-    backend/models/_training_status.json     (current test, step, percent)
+    FORCE_RETRAIN=1 python backend/ml/train_offline.py
+    python backend/ml/train_offline.py hexaco hsq
 """
 
 from __future__ import annotations
 
+import io
 import json
 import logging
 import os
 import pickle
+import re
 import sys
 import time
 import traceback
@@ -48,8 +27,15 @@ from typing import Dict, List, Optional
 
 import numpy as np
 import pandas as pd
-from sklearn.mixture import BayesianGaussianMixture
+from sklearn.mixture import GaussianMixture
+from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import silhouette_score
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from scoring_keys import (
+    HEXACO_FACETS, HEXACO_REVERSED_ITEMS, HSQ_SCALES, HSQ_REVERSED,
+    ECR_AVOIDANCE, ECR_ANXIETY, ECR_REVERSED, AMBI_NEO_FACETS,
+)
 
 try:
     import umap
@@ -70,7 +56,7 @@ os.makedirs(MODELS_DIR, exist_ok=True)
 LOG_PATH    = os.path.join(MODELS_DIR, "train_offline.log")
 STATUS_PATH = os.path.join(MODELS_DIR, "_training_status.json")
 
-SCHEMA_VERSION = "v6-bgm-research-tuned"
+SCHEMA_VERSION = "v12-literature-profiles"
 
 logging.basicConfig(
     level=logging.INFO,
@@ -105,6 +91,9 @@ def stage(test_id: str, step: str, percent: int, extra: Optional[Dict] = None):
 # ---------------------------------------------------------------------------
 # Dataset loader
 # ---------------------------------------------------------------------------
+APP_ROW = re.compile(r"20\d\d-\d\d-\d\dT\d\d:\d\d:\d\d")
+
+
 def load_dataset(folder: str) -> pd.DataFrame:
     candidates = [
         os.path.join(DATASETS_DIR, folder, folder, "data.csv"),
@@ -113,9 +102,17 @@ def load_dataset(folder: str) -> pd.DataFrame:
     for path in candidates:
         if not os.path.exists(path):
             continue
+        with open(path, encoding="latin-1") as fh:
+            lines = fh.read().splitlines()
+        if APP_ROW.search(lines[0]) or lines[0].lower().startswith("timestamp"):
+            continue
+        kept = [lines[0]] + [ln for ln in lines[1:] if not APP_ROW.search(ln)]
+        if len(kept) != len(lines):
+            log.info(f"  ignored {len(lines) - len(kept)} app-appended rows in {path}")
+        text = "\n".join(kept)
         for sep in (",", "\t"):
             try:
-                df = pd.read_csv(path, sep=sep, low_memory=False)
+                df = pd.read_csv(io.StringIO(text), sep=sep, low_memory=False)
                 if df.shape[1] > 1:
                     log.info(f"  loaded {path}  sep={sep!r}  shape={df.shape}")
                     return df
@@ -128,32 +125,6 @@ def load_dataset(folder: str) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 # Population scorers (df -> DataFrame of normalized 0..1 trait scores)
 # ---------------------------------------------------------------------------
-def score_sixteenpf_df(df):
-    factor_map = {
-        "Warmth":             [f"A{i}" for i in range(1,11)],
-        "Reasoning":          [f"B{i}" for i in range(1,14)],
-        "Stability":          [f"C{i}" for i in range(1,11)],
-        "Dominance":          [f"D{i}" for i in range(1,11)],
-        "Liveliness":         [f"E{i}" for i in range(1,11)],
-        "Rule-Consciousness": [f"F{i}" for i in range(1,11)],
-        "Social-Boldness":    [f"G{i}" for i in range(1,11)],
-        "Sensitivity":        [f"H{i}" for i in range(1,11)],
-        "Vigilance":          [f"I{i}" for i in range(1,11)],
-        "Abstractedness":     [f"J{i}" for i in range(1,11)],
-        "Privateness":        [f"K{i}" for i in range(1,11)],
-        "Apprehension":       [f"L{i}" for i in range(1,11)],
-        "Openness-to-Change": [f"M{i}" for i in range(1,11)],
-        "Self-Reliance":      [f"N{i}" for i in range(1,11)],
-        "Perfectionism":      [f"O{i}" for i in range(1,11)],
-        "Tension":            [f"P{i}" for i in range(1,11)],
-    }
-    out = {}
-    for trait, cols in factor_map.items():
-        avail = [c for c in cols if c in df.columns]
-        out[trait] = ((df[avail].mean(axis=1) - 1) / 4).clip(0, 1)
-    return pd.DataFrame(out)
-
-
 def score_darktriad_df(df):
     def r(c): return 6 - df[c]
     m = df[[f"M{i}" for i in range(1,10)]].mean(axis=1)
@@ -186,18 +157,6 @@ def score_dass_df(df):
     })
 
 
-def score_aesthetic_df(df):
-    def avg(prefix, end):
-        cols = [f"{prefix}{i}A" for i in range(1, end + 1) if f"{prefix}{i}A" in df.columns]
-        return ((df[cols].mean(axis=1) - 1) / 4).clip(0, 1)
-    return pd.DataFrame({
-        "Intense":     avg("RA", 8),
-        "Mainstream":  avg("LP", 8),
-        "Traditional": avg("MF", 8),
-        "Visual":      avg("V",  6),
-    })
-
-
 def score_riasec_df(df):
     def avg(letter):
         cols = [f"{letter}{i}" for i in range(1, 9) if f"{letter}{i}" in df.columns]
@@ -213,10 +172,11 @@ def score_riasec_df(df):
 
 
 def score_attachment_df(df):
-    anx_cols = [f"Q{i}" for i in range(1, 19) if f"Q{i}" in df.columns]
-    avo_cols = [f"Q{i}" for i in range(19, 37) if f"Q{i}" in df.columns]
-    anx = (df[anx_cols].mean(axis=1) - 1) / 6
-    avo = (df[avo_cols].mean(axis=1) - 1) / 6
+    def keyed(nums):
+        cols = [(6 - df[f"Q{q}"]) if q in ECR_REVERSED else df[f"Q{q}"] for q in nums if f"Q{q}" in df.columns]
+        return (pd.concat(cols, axis=1).mean(axis=1) - 1) / 4
+    anx = keyed(ECR_ANXIETY)
+    avo = keyed(ECR_AVOIDANCE)
     return pd.DataFrame({
         "Anxious":  anx.clip(0, 1),
         "Avoidant": avo.clip(0, 1),
@@ -224,41 +184,25 @@ def score_attachment_df(df):
     })
 
 
-# --- the 7 new tests ---
-
-HEXACO_FACETS = {
-    "Honesty-Humility":  ["HSinc", "HFair", "HGree", "HMode"],
-    "Emotionality":      ["EFear", "EAnxi", "EDepe", "ESent"],
-    "Extraversion":      ["XExpr", "XSoci", "XSocB", "XLive"],
-    "Agreeableness":     ["AForg", "AGent", "AFlex", "APati"],
-    "Conscientiousness": ["COrga", "CDili", "CPerf", "CPrud"],
-    "Openness":          ["OAesA", "OInqu", "OCrea", "OUnco"],
-}
-
-
 def score_hexaco_df(df):
     out = {}
     for trait, facets in HEXACO_FACETS.items():
         cols = []
         for f in facets:
-            cols += [f"{f}{i}" for i in range(1, 11) if f"{f}{i}" in df.columns]
-        out[trait] = ((df[cols].mean(axis=1) - 1) / 6).clip(0, 1)
+            for i in range(1, 11):
+                name = f"{f}{i}"
+                if name in df.columns:
+                    cols.append((8 - df[name]) if name in HEXACO_REVERSED_ITEMS else df[name])
+        out[trait] = ((pd.concat(cols, axis=1).mean(axis=1) - 1) / 6).clip(0, 1)
     return pd.DataFrame(out)
 
 
 def score_hsq_df(df):
-    def r(c): return 6 - df[c]
-    aff = pd.concat([r("Q1"),  df["Q5"],  r("Q9"),  df["Q13"],
-                     r("Q17"), df["Q21"], r("Q25"), r("Q29")], axis=1).mean(axis=1)
-    sen = df[[f"Q{i}" for i in [2, 6, 10, 14, 18, 22, 26, 30] if f"Q{i}" in df.columns]].mean(axis=1)
-    agg = df[[f"Q{i}" for i in [3, 7, 11, 15, 19, 23, 27, 31] if f"Q{i}" in df.columns]].mean(axis=1)
-    sdf = df[[f"Q{i}" for i in [4, 8, 12, 16, 20, 24, 28, 32] if f"Q{i}" in df.columns]].mean(axis=1)
-    return pd.DataFrame({
-        "Affiliative":    ((aff - 1) / 4).clip(0, 1),
-        "Self-Enhancing": ((sen - 1) / 4).clip(0, 1),
-        "Aggressive":     ((agg - 1) / 4).clip(0, 1),
-        "Self-Defeating": ((sdf - 1) / 4).clip(0, 1),
-    })
+    out = {}
+    for scale, qs in HSQ_SCALES.items():
+        cols = [(6 - df[f"Q{q}"]) if q in HSQ_REVERSED else df[f"Q{q}"] for q in qs if f"Q{q}" in df.columns]
+        out[scale] = ((pd.concat(cols, axis=1).mean(axis=1) - 1) / 4).clip(0, 1)
+    return pd.DataFrame(out)
 
 
 def score_kims_df(df):
@@ -326,20 +270,16 @@ def score_npi_df(df):
 
 
 def score_ambi_df(df):
-    def avg(rng):
-        cols = [f"Q{i}A" for i in rng if f"Q{i}A" in df.columns]
-        if not cols:
-            cols = [f"Q{i}" for i in rng if f"Q{i}" in df.columns]
-        return ((df[cols].mean(axis=1) - 1) / 6).clip(0, 1)
-    return pd.DataFrame({
-        "Affect Regulation":  avg(range(1, 27)),
-        "Social Drive":       avg(range(27, 53)),
-        "Conscientiousness":  avg(range(53, 79)),
-        "Openness":           avg(range(79, 105)),
-        "Agreeableness":      avg(range(105, 131)),
-        "Energy Drive":       avg(range(131, 157)),
-        "Identity Coherence": avg(range(157, 182)),
-    })
+    def col(q):
+        return f"Q{q}A" if f"Q{q}A" in df.columns else f"Q{q}"
+    out = {}
+    for domain, facets in AMBI_NEO_FACETS.items():
+        facet_means = []
+        for keyed in facets.values():
+            cols = [df[col(q)] if sign > 0 else (8 - df[col(q)]) for q, sign in keyed if col(q) in df.columns]
+            facet_means.append(pd.concat(cols, axis=1).mean(axis=1))
+        out[domain] = ((pd.concat(facet_means, axis=1).mean(axis=1) - 1) / 6).clip(0, 1)
+    return pd.DataFrame(out)
 
 
 def score_gcbs_df(df):
@@ -361,52 +301,53 @@ def score_gcbs_df(df):
 # Config table
 # ---------------------------------------------------------------------------
 CONFIGS = {
-    # already-trained tests, retrained under the new BGM pipeline for consistency
-    "sixteenpf":  {"folder": "16PF",                 "scorer": score_sixteenpf_df,  "k_max": 6, "wcp": 0.01},
-    "darktriad":  {"folder": "SD3",                  "scorer": score_darktriad_df,  "k_max": 4, "wcp": 0.01},
-    "dass":       {"folder": "DASS_data_21.02.19",   "scorer": score_dass_df,       "k_max": 5, "wcp": 0.01},
-    "aesthetic":  {"folder": "APS_data",             "scorer": score_aesthetic_df,  "k_max": 5, "wcp": 0.01},
-    "riasec":     {"folder": "RIASEC_data12Dec2018", "scorer": score_riasec_df,     "k_max": 6, "wcp": 0.01},
-    "attachment": {"folder": "ECR-data-1March2018",  "scorer": score_attachment_df, "k_max": 4, "wcp": 0.01},
-    # the 7 new tests, k_max chosen per research literature, see README/docstring
-    "hexaco": {"folder": "HEXACO",            "scorer": score_hexaco_df, "k_max": 4, "wcp": 0.01},  # Gerlach 2018: 4 types
-    "hsq":    {"folder": "HSQ",               "scorer": score_hsq_df,    "k_max": 4, "wcp": 0.01},  # Galloway 2010
-    "kims":   {"folder": "KIMS",              "scorer": score_kims_df,   "k_max": 4, "wcp": 0.01},  # Pearson 2015
-    "fti":    {"folder": "FTI",               "scorer": score_fti_df,    "k_max": 4, "wcp": 0.01},  # Fisher 2013 (4 temperaments)
-    "npi":    {"folder": "NPI",               "scorer": score_npi_df,    "k_max": 4, "wcp": 0.01},  # Wallace 2002
-    "ambi":   {"folder": "AMBI_data_Nov2019", "scorer": score_ambi_df,   "k_max": 5, "wcp": 0.01},  # Big Five mapping
-    "gcbs":   {"folder": "GCBS",              "scorer": score_gcbs_df,   "k_max": 5, "wcp": 0.01},  # Brotherton 2013
+    "hexaco":     {"folder": "HEXACO",               "scorer": score_hexaco_df,     "k": 5,
+                   "basis": "Espinoza, Daljeet & Meyer (2020, Nature Human Behaviour): five replicated HEXACO-PI-R profiles in about 90,000 respondents; Daljeet et al. (2017) also found five"},
+    "ambi":       {"folder": "AMBI_data_Nov2019",    "scorer": score_ambi_df,       "k": 4,
+                   "basis": "Gerlach, Farb, Revelle & Amaral (2018, Nature Human Behaviour): four personality types (average, reserved, self-centred, role model) in Big-Five trait space across more than 1.5 million respondents"},
+    "darktriad":  {"folder": "SD3",                  "scorer": score_darktriad_df,  "k": 4,
+                   "basis": "Dark Triad latent-profile studies report four or five profiles running from low to high; four follows the four-profile solutions (e.g. the person-centered work-behaviour study, 2020)"},
+    "npi":        {"folder": "NPI",                  "scorer": score_npi_df,        "k": 4,
+                   "basis": "Wetzel, Leckelt, Gerlach & Back (2016, European Journal of Personality): four narcissism subgroups replicated in German and US samples"},
+    "dass":       {"folder": "DASS_data_21.02.19",   "scorer": score_dass_df,       "k": 4,
+                   "basis": "A latent-profile study of depression, anxiety and stress found four profiles (low, moderate, high, very high), in an adolescent sample; no adult DASS profile study was located"},
+    "kims":       {"folder": "KIMS",                 "scorer": score_kims_df,       "k": 4,
+                   "basis": "Pearson, Lawless, Brown & Bravo (2015, Personality and Individual Differences): four mindfulness subgroups (high, low, judgmentally observing, non-judgmentally aware), found with the related FFMQ"},
+    "hsq":        {"folder": "HSQ",                  "scorer": score_hsq_df,        "k": 4,
+                   "basis": "Galloway (2010, Personality and Individual Differences): four humor clusters on the HSQ (high on all, low on all, positive styles, negative styles); Leist & Mueller (2013) found three"},
+    "gcbs":       {"folder": "GCBS",                 "scorer": score_gcbs_df,       "k": 5,
+                   "basis": "Frenken & Imhoff (2021, International Review of Social Psychology): latent profiles that differ mainly in degree of belief; five graded profiles follow the comparison in the accompanying study"},
+    "riasec":     {"folder": "RIASEC_data12Dec2018", "scorer": score_riasec_df,     "k": 6, "ipsatize": True, "assignment": "dominant",
+                   "basis": "Holland (1959): six vocational personality types, each person classified by their dominant interest area; Perera & McIlveen (2018) also report six interest profiles"},
+    "attachment": {"folder": "ECR-data-1March2018",  "scorer": score_attachment_df, "k": 4,
+                   "cluster_traits": ["Anxious", "Avoidant"],
+                   "basis": "Bartholomew & Horowitz (1991): four attachment styles; Vaillancourt-Morel et al. (2022): latent profile analysis of ECR scores found the same four in a community sample"},
+    "fti":        {"folder": "FTI",                  "scorer": score_fti_df,        "k": 4, "ipsatize": True, "assignment": "dominant",
+                   "basis": "Brown, Acevedo & Fisher (2013); Fisher et al. (2015): four temperament types, each person classified by their dominant temperament scale"},
 }
 
 
 # ---------------------------------------------------------------------------
-# Clustering: Bayesian GMM with Dirichlet Process prior
+# Clustering: latent-profile model with a literature-fixed number of profiles
 # ---------------------------------------------------------------------------
-def fit_bgm(embeddings: np.ndarray, max_components: int = 12,
-            weight_concentration_prior: float = 0.01) -> BayesianGaussianMixture:
-    """
-    Variational Bayesian Gaussian Mixture with Dirichlet Process weight prior.
-    weight_concentration_prior smaller -> sparser mixture (more aggressive pruning).
-    Default 0.01 follows LPA-style sparse mixture practice in personality research.
-    """
-    bgm = BayesianGaussianMixture(
-        n_components=max_components,
-        covariance_type="full",
-        weight_concentration_prior_type="dirichlet_process",
-        weight_concentration_prior=weight_concentration_prior,
-        max_iter=300,
-        n_init=3,
+def profile_features(z: np.ndarray, ipsatize: bool) -> np.ndarray:
+    if ipsatize:
+        return z - z.mean(axis=1, keepdims=True)
+    return z
+
+
+def fit_profiles(features: np.ndarray, k: int) -> GaussianMixture:
+    model = GaussianMixture(
+        n_components=k,
+        covariance_type="diag",
+        n_init=10,
+        max_iter=500,
         init_params="kmeans",
-        reg_covar=1e-4,
+        reg_covar=1e-3,
         random_state=42,
     )
-    bgm.fit(embeddings)
-    return bgm
-
-
-def effective_k(weights: np.ndarray, threshold: float = 0.02) -> int:
-    """Components with non-trivial weight."""
-    return int(np.sum(np.array(weights) >= threshold))
+    model.fit(features)
+    return model
 
 
 # ---------------------------------------------------------------------------
@@ -437,45 +378,37 @@ def train_one(test_id: str, cfg: Dict) -> Dict:
     sample_idx = np.random.default_rng(42).choice(n, sample_size, replace=False) if n > sample_size else np.arange(n)
     sample = trait_matrix[sample_idx]
 
-    # UMAP 10D for clustering input
-    stage(test_id, "umap 10d", 38)
-    if UMAP_AVAILABLE:
-        reducer10 = umap.UMAP(n_components=10, n_neighbors=30, min_dist=0.0,
-                              random_state=42, metric="euclidean")
-        reducer10.fit(sample)
-        with open(os.path.join(MODELS_DIR, f"{test_id}_umap10d.pkl"), "wb") as fh:
-            pickle.dump(reducer10, fh)
-        emb10_full = reducer10.transform(trait_matrix).astype(np.float32)
-        np.save(os.path.join(MODELS_DIR, f"{test_id}_umap10d_matrix.npy"), emb10_full)
-        cluster_input = emb10_full[sample_idx]
-    else:
-        log.warning("  umap unavailable, clustering on raw trait space")
-        cluster_input = sample
+    stage(test_id, "latent profile fit", 50)
+    trait_names = list(trait_df.columns)
+    cluster_traits = cfg.get("cluster_traits") or trait_names
+    cluster_idx = [trait_names.index(t) for t in cluster_traits]
+    ipsatize = bool(cfg.get("ipsatize", False))
+    k = int(cfg["k"])
 
-    # Bayesian GMM with DP prior on the embedding (per-test k_max + Dirichlet prior)
-    stage(test_id, "bayesian gmm fit", 60)
-    k_max = int(cfg.get("k_max", 12))
-    wcp   = float(cfg.get("wcp", 0.01))
-    bgm   = fit_bgm(cluster_input, max_components=k_max, weight_concentration_prior=wcp)
-    weights = bgm.weights_.tolist()
-    k_eff = effective_k(weights)
-    labels = bgm.predict(cluster_input)
+    scaler = StandardScaler().fit(trait_matrix[:, cluster_idx])
+    features = profile_features(scaler.transform(trait_matrix[:, cluster_idx]), ipsatize)
+    fit_idx = np.random.default_rng(42).choice(n, min(50000, n), replace=False) if n > 50000 else np.arange(n)
+    dominant = cfg.get("assignment") == "dominant"
+    if dominant:
+        bgm = None
+        all_labels = features.argmax(axis=1)
+    else:
+        bgm = fit_profiles(features[fit_idx], k)
+        all_labels = bgm.predict(features)
+    labels = all_labels[sample_idx]
+    weights = [float(np.mean(all_labels == c)) for c in range(k)]
+    k_eff = int(len(set(all_labels.tolist())))
     try:
-        sil = float(silhouette_score(cluster_input, labels))
+        sil = float(silhouette_score(features[sample_idx], labels))
     except Exception:
         sil = 0.0
-    log.info(f"  BGM converged, effective_k={k_eff}, silhouette={sil:.4f}")
+    log.info(f"  profiles k={k}, shares={[round(w, 3) for w in weights]}, silhouette={sil:.4f}")
 
-    with open(os.path.join(MODELS_DIR, f"{test_id}_gmm.pkl"), "wb") as fh:
-        pickle.dump(bgm, fh)
-    with open(os.path.join(MODELS_DIR, f"{test_id}_gmm_weights.json"), "w", encoding="utf-8") as fh:
-        json.dump({
-            "n_components": int(bgm.n_components),
-            "effective_k":  int(k_eff),
-            "weights":      [round(float(w), 6) for w in weights],
-            "silhouette":   sil,
-            "method":       "bayesian_gmm_dirichlet_process",
-        }, fh, indent=2)
+    if bgm is not None:
+        with open(os.path.join(MODELS_DIR, f"{test_id}_gmm.pkl"), "wb") as fh:
+            pickle.dump(bgm, fh)
+    with open(os.path.join(MODELS_DIR, f"{test_id}_trait_scaler.pkl"), "wb") as fh:
+        pickle.dump(scaler, fh)
 
     # UMAP 2D for the visualization map
     stage(test_id, "umap 2d for map", 80)
@@ -492,39 +425,34 @@ def train_one(test_id: str, cfg: Dict) -> Dict:
     # Archetype centroid seeds (in raw trait space). LLM names them at inference.
     stage(test_id, "archetype seeds", 90)
     centroids = []
-    for cid in range(bgm.n_components):
-        members = sample_idx[labels == cid]
-        if len(members) > 0:
-            centroid = trait_matrix[members].mean(axis=0).tolist()
-        else:
-            centroid = [0.5] * trait_matrix.shape[1]
+    for cid in range(k):
+        members = all_labels == cid
+        centroid = trait_matrix[members].mean(axis=0).tolist() if members.any() else [0.5] * trait_matrix.shape[1]
         centroids.append({
             "cluster":  int(cid),
             "weight":   round(float(weights[cid]), 6),
-            "size":     int(len(members)),
+            "size":     int(members.sum()),
             "centroid": [round(float(v), 4) for v in centroid],
         })
 
     arc_path = os.path.join(MODELS_DIR, f"{test_id}_archetypes.json")
-    if not os.path.exists(arc_path) or os.getenv("FORCE_RETRAIN") == "1":
-        # Only emit archetypes for effective components (weight above threshold)
-        kept = [c for c in centroids if c["weight"] >= 0.02]
-        placeholder = {
-            str(i): {
-                "id":          f"cluster_{i}",
-                "name":        f"Archetype {i + 1}",
-                "tagline":     "LLM enrichment pending",
-                "color":       "#8A9AAE",
-                "description": "Seeded from BGM centroid. LLM rewrites at inference time.",
-                "centroid":    c["centroid"],
-                "size":        c["size"],
-                "weight":      c["weight"],
-            }
-            for i, c in enumerate(kept)
+    kept = [c for c in centroids if c["size"] > 0]
+    placeholder = {
+        str(c["cluster"]): {
+            "id":          f"cluster_{c['cluster']}",
+            "name":        f"Archetype {c['cluster'] + 1}",
+            "tagline":     "",
+            "color":       "#8A9AAE",
+            "description": "",
+            "centroid":    c["centroid"],
+            "size":        c["size"],
+            "weight":      c["weight"],
         }
-        with open(arc_path, "w", encoding="utf-8") as fh:
-            json.dump(placeholder, fh, indent=2)
-        log.info(f"  archetype placeholders written ({len(kept)} non-trivial clusters)")
+        for c in kept
+    }
+    with open(arc_path, "w", encoding="utf-8") as fh:
+        json.dump(placeholder, fh, indent=2)
+    log.info(f"  archetype seeds written ({len(kept)} profiles)")
 
     meta = {
         "schema_version":      SCHEMA_VERSION,
@@ -532,12 +460,15 @@ def train_one(test_id: str, cfg: Dict) -> Dict:
         "trained_at":          datetime.utcnow().isoformat(timespec="seconds") + "Z",
         "n_samples":           int(n),
         "n_traits":            int(trait_matrix.shape[1]),
-        "trait_names":         list(trait_df.columns),
-        "k":                   int(bgm.n_components),
-        "effective_k":         int(k_eff),
+        "trait_names":         trait_names,
+        "cluster_traits":      cluster_traits,
+        "ipsatize":            ipsatize,
+        "assignment":          "dominant" if dominant else "mixture",
+        "k":                   k,
+        "effective_k":         k_eff,
+        "k_basis":             cfg.get("basis"),
         "silhouette":          sil,
-        "clustering_strategy": "bayesian_gmm_dp_on_umap10d",
-        "umap_dims_cluster":   10,
+        "clustering_strategy": "dominant_type_on_standardized_traits" if dominant else "latent_profile_gmm_on_standardized_traits",
         "umap_dims_map":       2,
         "sample_size":         int(sample_size),
     }

@@ -15,7 +15,6 @@
     "@fontsource/jetbrains-mono": "^5.2.8",
     "@fontsource/libre-baskerville": "^5.2.10",
     "@fontsource/playfair-display": "^5.2.8",
-    "@fontsource/press-start-2p": "^5.2.7",
     "@react-oauth/google": "^0.12.1",
     "axios": "^1.7.2",
     "gsap": "^3.14.2",

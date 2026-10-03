@@ -9,7 +9,7 @@ const METAL = 'linear-gradient(135deg,#7a8a9a 0%,#c4d4e2 10%,#eaf4fa 22%,#ffffff
 const S = {
   fontDisplay: "'Cormorant Garamond', Georgia, serif",
   fontSC: "'Cinzel', serif",
-  fontBody: "'Playfair Display', Georgia, serif",
+  fontBody: "'Libre Baskerville', Baskerville, Georgia, serif",
   textPrim: '#F4F7FA',
   textSec: 'rgba(244,247,250,0.56)',
   textMuted: 'rgba(244,247,250,0.30)',

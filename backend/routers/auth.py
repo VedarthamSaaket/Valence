@@ -292,6 +292,31 @@ async def google_auth(body: GoogleAuthRequest):
     }
 
 
+@router.post("/local")
+def local_login(request: Request):
+    username = os.getenv("VALENCE_LOCAL_USER", "").strip().lower()
+    host     = request.client.host if request.client else ""
+    if not username or host not in ("127.0.0.1", "::1") or request.headers.get("X-Forwarded-For"):
+        raise HTTPException(status_code=404, detail="Not found")
+
+    db   = get_db()
+    user = db.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+    db.close()
+    if not user:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    token = create_session(user["id"])
+    return {
+        "token": token,
+        "user": {
+            "id": user["id"],
+            "username": user["username"],
+            "email": user["email"],
+            "avatar_color": user["avatar_color"],
+        },
+    }
+
+
 @router.post("/logout")
 def logout(request: Request):
     raw   = request.headers.get("Authorization", "")

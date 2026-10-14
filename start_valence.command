@@ -1,5 +1,6 @@
 #!/bin/zsh
 export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+export VALENCE_LOCAL_USER="${VALENCE_LOCAL_USER:-darth}"
 ROOT="${0:A:h}"
 LOGS="$ROOT/logs"
 mkdir -p "$LOGS"
@@ -29,8 +30,9 @@ cleanup() {
     pkill -f "$ROOT/frontend/node_modules/.bin/vite" 2>/dev/null
   fi
   [ -n "$BACK_PID" ] && kill $BACK_PID 2>/dev/null
+  lsof -nP -tiTCP:8000 -sTCP:LISTEN 2>/dev/null | xargs kill 2>/dev/null
   sleep 2
-  [ -n "$BACK_PID" ] && pkill -f "llama-server.*MentaLLaMA" 2>/dev/null
+  pkill -f "llama-server.*$ROOT/backend/models/llm" 2>/dev/null
   exit 0
 }
 trap cleanup INT TERM HUP
@@ -57,7 +59,7 @@ fi
 
 wait_for 8000 "Backend" || cleanup
 wait_for 5173 "Frontend" || cleanup
-wait_for 8081 "MentaLLaMA model server"
+wait_for 8081 "Language model server"
 
 [ -z "$VALENCE_NO_OPEN" ] && open "http://localhost:5173/"
 echo

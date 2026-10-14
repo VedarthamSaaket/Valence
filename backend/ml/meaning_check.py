@@ -62,3 +62,17 @@ def check(text: str, premises: List[str]) -> Optional[dict]:
         elif float(block[:, e_idx].max()) >= ENTAILMENT_THRESHOLD:
             supported += 1
     return {"sentences": len(sentences), "supported": supported, "contradicted": contradicted}
+
+
+def entailment(premises: List[str], hypotheses: List[str]) -> Optional[List[float]]:
+    if not premises or not hypotheses or not load():
+        return None
+    import torch
+    pairs = [(p, h) for h in hypotheses for p in premises]
+    with _lock:
+        encoded = _state["tokenizer"]([p for p, _ in pairs], [h for _, h in pairs],
+                                      return_tensors="pt", truncation=True, padding=True, max_length=256)
+        with torch.no_grad():
+            probs = torch.softmax(_state["model"](**encoded).logits, dim=-1)
+    e_idx, n = _state["labels"]["entailment"], len(premises)
+    return [float(probs[i * n:(i + 1) * n, e_idx].max()) for i in range(len(hypotheses))]

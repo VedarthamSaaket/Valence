@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import api from '../utils/api'
 import ParticleCanvas from '../components/ParticleCanvas'
 import bgImage from '../assets/Image60.jpeg'
+import { SCALE, SCALE_OVERRIDES } from './Questionnaire'
 
 const S = {
   fontDisplay: "'Cormorant Garamond', Georgia, serif",
@@ -592,14 +593,14 @@ function ArchetypeConstellation({ testType, userArchetype, accent, names: provid
     // a radius proportional to (100 - score). Closer star = more compatible.
     const GOLDEN = Math.PI * (3 - Math.sqrt(5))
     stars = sameTest.map((c, i) => {
-      const radius = 52 + Math.min(96, Math.max(6, (100 - c.score) * 1.15))
+      const radius = 52 + Math.min(96, Math.max(6, (100 - c.closeness) * 1.15))
       const angle = i * GOLDEN + 0.65
       return {
         name: c.name,
-        score: c.score,
+        score: c.closeness,
         x: Math.cos(angle) * radius,
         y: Math.sin(angle) * radius * 0.68,
-        size: 2.5 + (c.score / 50),
+        size: 2.5 + (c.closeness / 50),
         isUser: false,
       }
     })
@@ -882,7 +883,7 @@ function FragmentRow({ t, accent }) {
 // page, same components, same CSS, same rendering, correct aspect ratio,
 // with the action buttons stripped out. No rasterisation, no distortion.
 // Open it in any browser; print to PDF from there if a PDF is ever needed.
-async function generateHTMLReport(rootEl, meta, short, result) {
+export async function generateHTMLReport(rootEl, meta, short, result) {
   if (!rootEl) throw new Error('No element to capture')
 
   if (document.fonts && document.fonts.ready) {
@@ -1074,6 +1075,20 @@ function ResearchSection({ research, accent }) {
   )
 }
 
+const whyBox = (accent, lead) => ({ padding: '16px 20px', background: lead ? 'rgba(215,228,242,0.05)' : 'rgba(215,228,242,0.02)', border: '1px solid rgba(215,228,242,0.07)', borderLeft: `2px solid ${accent}${lead ? '77' : '33'}` })
+const whyLabel = { fontFamily: "'Cinzel', serif", fontSize: 8, letterSpacing: '0.18em', color: '#8A9EAE', textTransform: 'uppercase', marginBottom: 8 }
+const whyText = { fontFamily: "'Libre Baskerville', Baskerville, Georgia, serif", fontStyle: 'italic', fontSize: 15, color: 'rgba(244,247,250,0.66)', lineHeight: 1.8 }
+const lowerFirst = text => text.charAt(0).toLowerCase() + text.slice(1)
+const ordinal = n => {
+  const v = Math.round(n)
+  const suffix = v % 100 >= 10 && v % 100 <= 20 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[v % 10] || 'th')
+  return `${v}${suffix}`
+}
+const answerLabel = (testType, value) => {
+  const option = (SCALE_OVERRIDES[testType] || SCALE).find(o => o.value === value)
+  return option ? option.label : `${value}`
+}
+
 export default function Results() {
   const { resultId } = useParams()
   const navigate = useNavigate()
@@ -1160,6 +1175,8 @@ export default function Results() {
   const deepDiveReady = deepDiveData?.status === 'ok' && (deepDiveData?.bullets?.length > 0)
 
   const stats = computeStats(traitScores, percentiles)
+  const explain = result.explain
+  const looseFit = explain?.type?.fit === 'loose'
   const plainLines = generatePlainEnglishSummary(testType, traitScores, percentiles, result.archetype_name, result.archetype_description, insights)
   const traitCount = Object.keys(traitScores).length
 
@@ -1214,10 +1231,10 @@ export default function Results() {
                 <span style={{ fontFamily: S.fontDisplay, fontSize: 15, fontWeight: 300, color: 'rgba(215,228,242,0.20)', letterSpacing: '0.06em' }}>{roman}</span>
               </div>
               <h1 style={{ fontFamily: S.fontDisplay, fontSize: 'clamp(40px,6vw,68px)', fontWeight: 300, letterSpacing: '-0.02em', lineHeight: 1.0, background: metal, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', backgroundSize: '200% 200%', animation: 'metal-sweep 9s ease-in-out infinite', marginBottom: 16 }}>
-                {result.archetype_name || name}
+                {looseFit ? 'Between Types' : (result.archetype_name || name)}
               </h1>
               <p style={{ fontFamily: S.fontBody, fontStyle: 'italic', fontSize: 18, color: S.textSec, marginBottom: 44, lineHeight: 1.75, maxWidth: 480, margin: '0 auto 44px' }}>
-                {result.archetype_description || insights.summary || ''}
+                {looseFit ? `Nearest type: ${result.archetype_name}, a loose fit. Your scores differ from its typical member on the traits that define it.` : (result.archetype_description || insights.summary || '')}
               </p>
               <div style={{ display: 'flex', justifyContent: 'center', gap: 0, flexWrap: 'wrap' }}>
                 <StatPill value={result.type_share_pct != null ? `${Math.round(result.type_share_pct)}%` : '?'} label={'of the reference sample\nshares this profile type'} metal={metal} />
@@ -1229,13 +1246,65 @@ export default function Results() {
             </div>
           </div>
 
-          {/* In Plain Terms */}
-          <Section label="In Plain Terms" roman="i" accent={accent}>
+          {explain?.scale_invalid && (
+            <div role="alert" style={{ marginTop: 3, padding: '18px 24px', background: 'rgba(200,170,140,0.07)', border: '1px solid rgba(210,180,150,0.22)', borderLeft: '3px solid rgba(220,190,160,0.6)' }}>
+              <div style={{ fontFamily: S.fontSC, fontSize: 10, letterSpacing: '0.18em', color: 'rgba(240,220,200,0.95)', textTransform: 'uppercase', marginBottom: 6 }}>These scores are not reliable</div>
+              <p style={{ fontFamily: S.fontBody, fontStyle: 'italic', fontSize: 14, color: 'rgba(230,205,180,0.85)', lineHeight: 1.8 }}>
+                This result was recorded on an answer scale that did not fit the test, so its scores and percentiles are distorted. The scale has been corrected. Please retake the assessment for an accurate result.
+              </p>
+            </div>
+          )}
+
+          <Section label="Why You Got This Result" roman="i" accent={accent}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {plainLines.map((line, i) => (
-                <div key={i} style={{ display: 'flex', gap: 18, alignItems: 'flex-start', padding: '14px 18px', background: i === 0 ? 'rgba(215,228,242,0.05)' : 'rgba(215,228,242,0.02)', border: `1px solid rgba(215,228,242,0.07)`, borderLeft: i === 0 ? `2px solid ${accent}77` : `2px solid ${accent}33` }}>
-                  <span style={{ fontFamily: S.fontDisplay, fontSize: 16, fontWeight: 300, color: accent, opacity: i === 0 ? 0.8 : 0.45, flexShrink: 0, marginTop: 1 }}>{String(i + 1).padStart(2, '0')}</span>
-                  <p style={{ fontFamily: S.fontBody, fontStyle: 'italic', fontSize: 15, color: i === 0 ? S.textSec : 'rgba(244,247,250,0.48)', lineHeight: 1.80 }}>{line}</p>
+              {explain?.type && (
+                <div style={whyBox(accent, true)}>
+                  <div style={whyLabel}>{explain.type.fit === 'loose' ? 'Your nearest type, and how well it fits' : 'What your type means'}</div>
+                  <p style={whyText}>
+                    {explain.type.fit === 'loose' && `Your scores do not sit close to any one type. The nearest is ${explain.type.name}, but you differ from its typical member on the traits that define it, so read its description as a loose fit and not as a description of you. `}
+                    <span style={{ color: accent }}>{explain.type.name}</span>: {explain.type.meaning ? `${lowerFirst(explain.type.meaning)}. ` : ''}{explain.type.definition}
+                    {explain.type.share_pct != null && ` It is one of ${explain.type.types} types found for this test, and about ${explain.type.share_pct}% of the reference sample falls into it.`}
+                  </p>
+                </div>
+              )}
+              {explain?.type?.traits?.length > 0 && (
+                <div style={whyBox(accent, false)}>
+                  <div style={whyLabel}>Why you were placed in this type</div>
+                  <p style={whyText}>{explain.type.fit === 'loose' ? 'Every result is given the type whose typical scores sit closest, even when none is close. Here is how far the typical member is from you:' : 'Your type is the one whose typical scores sit closest to yours. Here is the typical member next to you:'}</p>
+                  <ul style={{ listStyle: 'none', margin: '10px 0 0', padding: 0 }}>
+                    {explain.type.traits.map(t => (
+                      <li key={t.trait} style={{ fontFamily: S.fontMono, fontSize: 12, color: S.textSec, lineHeight: 1.9 }}>
+                        {t.trait}: typical member at the {ordinal(t.typical)} percentile, you at the {ordinal(t.yours)}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {(explain?.drivers || []).map(d => (
+                <div key={d.trait} style={whyBox(accent, false)}>
+                  <div style={whyLabel}>What {d.direction} your {d.trait} score · {ordinal(d.percentile)} percentile</div>
+                  <p style={whyText}>
+                    {d.answers_in_direction} of the {d.answers_counted} answers that count toward {d.trait} pushed it {d.direction === 'raised' ? 'up' : 'down'}. These moved it the most:
+                  </p>
+                  <ul style={{ listStyle: 'none', margin: '10px 0 0', padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {d.items.map((item, i) => (
+                      <li key={i} style={{ paddingLeft: 14, borderLeft: `1px solid ${accent}44` }}>
+                        <div style={{ fontFamily: S.fontBody, fontStyle: 'italic', fontSize: 14, color: 'rgba(244,247,250,0.78)', lineHeight: 1.7 }}>
+                          {item.choice ? `You chose: "${item.choice}"` : `"${item.text}"`}
+                        </div>
+                        {!item.choice && (
+                          <div style={{ fontFamily: S.fontMono, fontSize: 11, color: S.textMuted, lineHeight: 1.7 }}>
+                            You answered {answerLabel(testType, item.answer)} ({item.answer} of {d.scale[1]})
+                          </div>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+              {!explain && plainLines.map((line, i) => (
+                <div key={i} style={whyBox(accent, i === 0)}>
+                  <p style={whyText}>{line}</p>
                 </div>
               ))}
             </div>
@@ -1328,7 +1397,7 @@ export default function Results() {
             </Section>
           )}
 
-          {/* Archetype Constellation + Compatibility */}
+          {/* Archetype Constellation */}
           {testType !== 'dass' && <Section label="Archetype Constellation" roman="vii" accent={accent}>
             <ArchetypeConstellation
               testType={testType}
@@ -1339,14 +1408,14 @@ export default function Results() {
             />
             <p style={{ fontFamily: S.fontSC, fontSize: 12, letterSpacing: '0.06em', color: S.textSec, lineHeight: 1.75, marginTop: 20, textAlign: 'center' }}>
               {compat?.available
-                ? 'Distance encodes compatibility: the closer a star sits to yours, the higher your compatibility score with that archetype.'
+                ? 'The closer a star sits to yours, the more the average profile of that type resembles the average profile of your type.'
                 : 'Your archetype lit up within the full map of personality types for this assessment.'}
             </p>
 
             {compat === null && (
               <div style={{ marginTop: 16, padding: '14px 18px', background: 'rgba(200,170,140,0.06)', border: '1px solid rgba(210,180,150,0.18)', borderLeft: '2px solid rgba(220,190,160,0.45)' }}>
                 <p style={{ fontFamily: S.fontSC, fontSize: 11, letterSpacing: '0.04em', color: 'rgba(230,205,180,0.85)', lineHeight: 1.75 }}>
-                  Compatibility scores could not be loaded. The backend needs a restart to serve the compatibility endpoint. Once it is running, this section shows your top 5 most compatible and bottom 5 least compatible clusters, each scored out of 100.
+                  The comparison with the other types of this assessment could not be loaded. Please try again in a moment.
                 </p>
               </div>
             )}
@@ -1364,115 +1433,23 @@ export default function Results() {
 
             {compat?.available && (
               <div style={{ marginTop: 28 }}>
-                {/* Top 5 compatibilities overall */}
-                <div style={{ fontFamily: S.fontSC, fontSize: 8, letterSpacing: '0.20em', color: S.irisDim, textTransform: 'uppercase', marginBottom: 12 }}>
-                  Top 5 Compatibilities
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {(compat.top5 || []).map((c, i) => (
-                    <div key={`top-${c.test_id}-${c.name}`} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 18px', background: i === 0 ? 'rgba(215,228,242,0.06)' : 'rgba(215,228,242,0.03)', border: `1px solid rgba(215,228,242,0.08)`, borderLeft: `2px solid ${accent}${i === 0 ? '88' : '44'}` }}>
-                      <span style={{ fontFamily: S.fontDisplay, fontSize: 20, fontWeight: 300, color: accent, opacity: i === 0 ? 0.9 : 0.5, minWidth: 24, lineHeight: 1 }}>{i + 1}</span>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontFamily: S.fontDisplay, fontStyle: 'italic', fontSize: 16, fontWeight: 300, color: S.textPrim, lineHeight: 1.3 }}>{c.name}</div>
-                        <div style={{ fontFamily: S.fontSC, fontSize: 7, letterSpacing: '0.16em', color: S.textMuted, textTransform: 'uppercase', marginTop: 3 }}>
-                          {c.kind === 'within' ? 'This test' : c.test_name}
-                        </div>
-                      </div>
-                      <div style={{ width: 90, flexShrink: 0 }}>
-                        <div style={{ height: 3, background: 'rgba(215,228,242,0.08)' }}>
-                          <div style={{ height: '100%', width: `${c.score}%`, background: metal, backgroundSize: '200% 100%', animation: 'metal-sweep 5s ease-in-out infinite' }} />
-                        </div>
-                      </div>
-                      <span style={{ fontFamily: S.fontMono, fontSize: 12, color: S.textSec, minWidth: 58, textAlign: 'right', flexShrink: 0 }}>
-                        {c.score} <span style={{ fontSize: 9, color: S.textMuted }}>/ 100</span>
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Bottom 5 compatibilities overall , least compatible clusters */}
-                {(compat.bottom5 || []).length > 0 && (
-                  <div style={{ marginTop: 24 }}>
-                    <div style={{ fontFamily: S.fontSC, fontSize: 8, letterSpacing: '0.20em', color: S.irisDim, textTransform: 'uppercase', marginBottom: 12 }}>
-                      Bottom 5 · Least Compatible
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {(compat.bottom5 || []).map((c, i) => (
-                        <div key={`bot-${c.test_id}-${c.name}`} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 18px', background: 'rgba(200,170,150,0.03)', border: `1px solid rgba(215,228,242,0.06)`, borderLeft: `2px solid rgba(214,150,150,${i === 0 ? '0.55' : '0.28'})` }}>
-                          <span style={{ fontFamily: S.fontDisplay, fontSize: 20, fontWeight: 300, color: 'rgba(214,160,150,0.85)', opacity: i === 0 ? 0.9 : 0.5, minWidth: 24, lineHeight: 1 }}>{i + 1}</span>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontFamily: S.fontDisplay, fontStyle: 'italic', fontSize: 16, fontWeight: 300, color: S.textSec, lineHeight: 1.3 }}>{c.name}</div>
-                            <div style={{ fontFamily: S.fontSC, fontSize: 7, letterSpacing: '0.16em', color: S.textMuted, textTransform: 'uppercase', marginTop: 3 }}>
-                              {c.kind === 'within' ? 'This test' : c.test_name}
-                            </div>
-                          </div>
-                          <div style={{ width: 90, flexShrink: 0 }}>
-                            <div style={{ height: 3, background: 'rgba(215,228,242,0.08)' }}>
-                              <div style={{ height: '100%', width: `${c.score}%`, background: 'rgba(214,150,150,0.55)' }} />
-                            </div>
-                          </div>
-                          <span style={{ fontFamily: S.fontMono, fontSize: 12, color: S.textSec, minWidth: 58, textAlign: 'right', flexShrink: 0 }}>
-                            {c.score} <span style={{ fontSize: 9, color: S.textMuted }}>/ 100</span>
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                    <p style={{ fontFamily: S.fontSC, fontSize: 11, letterSpacing: '0.04em', color: S.textMuted, lineHeight: 1.7, marginTop: 10 }}>
-                      Low scores mark opposing profile shapes. These pairings are complementary rather than "bad" , in research they create the strongest growth dynamics by challenging each other's blind spots.
-                    </p>
-                  </div>
-                )}
-
                 {/* Within this test */}
                 {compat.same_test.length > 0 && (
                   <div style={{ marginTop: 24 }}>
                     <div style={{ fontFamily: S.fontSC, fontSize: 8, letterSpacing: '0.20em', color: S.irisDim, textTransform: 'uppercase', marginBottom: 12 }}>
-                      Within This Test
+                      Other Types In This Test · Closest To Your Profile First
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 8 }}>
                       {compat.same_test.map(c => {
                         const behavior = behaviorSummary(c.avg_profile)
                         return (
                         <div key={c.name} style={{ padding: '12px 16px', background: 'rgba(215,228,242,0.03)', border: '1px solid rgba(215,228,242,0.08)' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
-                            <span style={{ fontFamily: S.fontDisplay, fontStyle: 'italic', fontSize: 14, fontWeight: 300, color: S.textSec, lineHeight: 1.35 }}>{c.name}</span>
-                            <span style={{ fontFamily: S.fontMono, fontSize: 12, color: accent, flexShrink: 0 }}>{c.score}<span style={{ fontSize: 8, color: S.textMuted }}>/100</span></span>
-                          </div>
-                          <div style={{ height: 2, background: 'rgba(215,228,242,0.07)', marginTop: 8 }}>
-                            <div style={{ height: '100%', width: `${c.score}%`, background: accent, opacity: 0.55 }} />
-                          </div>
-                          {behavior && (
-                            <p style={{ fontFamily: S.fontBody, fontStyle: 'italic', fontSize: 12, color: 'rgba(244,247,250,0.55)', lineHeight: 1.65, marginTop: 10 }}>
-                              {behavior}
+                          <div style={{ fontFamily: S.fontDisplay, fontStyle: 'italic', fontSize: 14, fontWeight: 300, color: S.textSec, lineHeight: 1.35 }}>{c.name}</div>
+                          {c.differences?.length > 0 && (
+                            <p style={{ fontFamily: S.fontSC, fontSize: 10.5, letterSpacing: '0.03em', color: accent, opacity: 0.8, lineHeight: 1.7, marginTop: 8 }}>
+                              Compared with your type: {c.differences.map(d => `${d.direction} ${d.trait}`).join(', ')}
                             </p>
                           )}
-                          <ClusterProfileTable profile={c.avg_profile} accent={accent} />
-                        </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Across other tests */}
-                {compat.cross_test.length > 0 && (
-                  <div style={{ marginTop: 24 }}>
-                    <div style={{ fontFamily: S.fontSC, fontSize: 8, letterSpacing: '0.20em', color: S.irisDim, textTransform: 'uppercase', marginBottom: 12 }}>
-                      Across Other Tests
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 8 }}>
-                      {compat.cross_test.map(c => {
-                        const behavior = behaviorSummary(c.avg_profile)
-                        return (
-                        <div key={`${c.test_id}-${c.name}`} style={{ padding: '12px 16px', background: 'rgba(215,228,242,0.03)', border: '1px solid rgba(215,228,242,0.08)' }}>
-                          <div style={{ fontFamily: S.fontSC, fontSize: 7, letterSpacing: '0.16em', color: S.textMuted, textTransform: 'uppercase', marginBottom: 5 }}>{c.test_name}</div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
-                            <span style={{ fontFamily: S.fontDisplay, fontStyle: 'italic', fontSize: 14, fontWeight: 300, color: S.textSec, lineHeight: 1.35 }}>{c.name}</span>
-                            <span style={{ fontFamily: S.fontMono, fontSize: 12, color: accent, flexShrink: 0 }}>{c.score}<span style={{ fontSize: 8, color: S.textMuted }}>/100</span></span>
-                          </div>
-                          <div style={{ height: 2, background: 'rgba(215,228,242,0.07)', marginTop: 8 }}>
-                            <div style={{ height: '100%', width: `${c.score}%`, background: accent, opacity: 0.55 }} />
-                          </div>
                           {behavior && (
                             <p style={{ fontFamily: S.fontBody, fontStyle: 'italic', fontSize: 12, color: 'rgba(244,247,250,0.55)', lineHeight: 1.65, marginTop: 10 }}>
                               {behavior}
@@ -1489,24 +1466,13 @@ export default function Results() {
             )}
 
             <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ fontFamily: S.fontSC, fontSize: 8, letterSpacing: '0.20em', color: S.irisDim, textTransform: 'uppercase', marginBottom: 4 }}>How To Read This</div>
-              <div style={{ padding: '14px 18px', background: 'rgba(215,228,242,0.03)', border: `1px solid rgba(215,228,242,0.07)`, borderLeft: `2px solid ${accent}55` }}>
-                <p style={{ fontFamily: S.fontSC, fontSize: 12, letterSpacing: '0.04em', color: 'rgba(244,247,250,0.50)', lineHeight: 1.80 }}>
-                  Scores compare the shape of trait profiles. 100 means an almost identical profile shape, 50 means unrelated, and lower scores mean opposing profiles. High scorers within this test are the people who "just get you" without explanation.
-                </p>
-              </div>
-              <div style={{ padding: '14px 18px', background: 'rgba(215,228,242,0.03)', border: `1px solid rgba(215,228,242,0.07)`, borderLeft: `2px solid ${accent}33` }}>
-                <p style={{ fontFamily: S.fontSC, fontSize: 12, letterSpacing: '0.04em', color: 'rgba(244,247,250,0.45)', lineHeight: 1.80 }}>
-                  Cross-test rows show, for each other assessment, the archetype whose profile shape sits closest to yours. Lower-scoring archetypes are complementary rather than incompatible; in research those pairings create the strongest growth dynamics, since they challenge your blind spots while you challenge theirs.
-                </p>
-              </div>
-              {compat?.method?.summary && (
-                <div style={{ padding: '14px 18px', background: 'rgba(215,228,242,0.03)', border: `1px solid rgba(215,228,242,0.07)`, borderLeft: `2px solid ${accent}22` }}>
-                  <div style={{ fontFamily: S.fontSC, fontSize: 7, letterSpacing: '0.18em', color: S.textMuted, textTransform: 'uppercase', marginBottom: 6 }}>Scoring Model</div>
-                  <p style={{ fontFamily: S.fontSC, fontSize: 11, letterSpacing: '0.03em', color: 'rgba(244,247,250,0.42)', lineHeight: 1.80 }}>
-                    {compat.method.summary}
-                  </p>
-                </div>
+              {compat?.basis && (
+                <>
+                  <div style={{ fontFamily: S.fontSC, fontSize: 8, letterSpacing: '0.20em', color: S.irisDim, textTransform: 'uppercase', marginBottom: 4 }}>How To Read This</div>
+                  <div style={{ padding: '14px 18px', background: 'rgba(215,228,242,0.03)', border: `1px solid rgba(215,228,242,0.07)`, borderLeft: `2px solid ${accent}55` }}>
+                    <p style={{ fontFamily: S.fontSC, fontSize: 12, letterSpacing: '0.04em', color: 'rgba(244,247,250,0.50)', lineHeight: 1.80 }}>{compat.basis}</p>
+                  </div>
+                </>
               )}
             </div>
           </Section>}

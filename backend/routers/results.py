@@ -69,8 +69,15 @@ def submit_test(body: SubmitTestRequest, current_user=Depends(get_current_user))
             raise HTTPException(status_code=400, detail="No responses provided")
 
         print("[DEBUG] Step 1: Running inference")
+        from ml.inference import ANSWER_RANGE, answers_in_range
+        if not answers_in_range(body.test_type, body.responses):
+            lo, hi = ANSWER_RANGE[body.test_type]
+            raise HTTPException(status_code=400, detail=f"Answers for this test must be between {lo} and {hi}")
+
         context_notes = _build_context_notes(body.test_type, body.question_contexts)
         result = run_inference(body.test_type, body.responses)
+        if context_notes:
+            result["insights"]["context_notes"] = context_notes
 
         print("[DEBUG] Step 2: Preparing archetype")
         archetype = result.get("archetype") or {}
@@ -188,7 +195,7 @@ def request_deep_dive(result_id: str, body: Optional[DeepDiveRequest] = None,
     insights = json.loads(r["insights"]) if r.get("insights") else {}
     existing = insights.get("deep_dive") or {}
     force = bool(body and body.force)
-    if r.get("enrichment_status") == "pending":
+    if r.get("enrichment_status") == "pending" and not force:
         db.close()
         return {"status": "pending"}
     if existing.get("status") == "ok" and existing.get("bullets") and not force:
@@ -202,7 +209,7 @@ def request_deep_dive(result_id: str, body: Optional[DeepDiveRequest] = None,
     threading.Thread(
         target=_enrich_result_async,
         args=(result_id, r["test_type"], json.loads(r["trait_scores"]),
-              json.loads(r["percentiles"]), archetype, insights, None),
+              json.loads(r["percentiles"]), archetype, insights, insights.get("context_notes")),
         daemon=True,
     ).start()
     return {"status": "pending"}
@@ -306,6 +313,21 @@ def get_result(result_id: str, current_user=Depends(get_current_user)):
             r["type_share_pct"] = round(float(info["weight"]) * 100, 1)
             break
 
+    try:
+        from ml.psych_facts import research_notes
+        r["research_notes"] = research_notes(r["test_type"], r["percentiles"])
+    except Exception as e:
+        print(f"[facts] {r['test_type']}: {e}")
+        r["research_notes"] = None
+
+    try:
+        from ml.score_drivers import explain
+        r["explain"] = explain(r["test_type"], json.loads(r["raw_responses"] or "{}"), r["percentiles"],
+                               r.get("archetype_id"))
+    except Exception as e:
+        print(f"[explain] {r['test_type']}: {e}")
+        r["explain"] = None
+
     # Older rows may carry placeholder names from before the archetype
     # models were named ("Archetype 2" / "LLM enrichment pending").
     # Refresh them from the current archetype catalogue by cluster id.
@@ -398,32 +420,6 @@ def _load_archetypes(test_id: str) -> Optional[dict]:
     _arch_cache[test_id] = data
     return data
 
-
-# Scoring model grounded in peer-reviewed findings:
-#   1. Profile similarity as the base signal: actual similarity predicts
-#      attraction (Byrne, 1971, "The Attraction Paradigm"; Montoya, Horton &
-#      Kirchner, 2008, meta-analysis, J. of Social and Personal Relationships).
-#      Profiles are compared as population z-score vectors per Furr (2008,
-#      J. of Personality) so normativeness does not inflate similarity.
-#   2. Interpersonal circumplex: SIMILARITY on warmth/communion but
-#      COMPLEMENTARITY on dominance/agency predicts smoother interactions
-#      (Sadler & Woody, 2003, JPSP; Markey & Markey, 2007).
-#   3. Partner effects: a partner's low negative-affect and high
-#      steadiness/conscientiousness predict relationship satisfaction
-#      regardless of similarity (Malouff et al., 2010, J. of Research in
-#      Personality; Dyrenforth et al., 2010, JPSP).
-
-WARMTH_KEYS = ("agreeable", "warmth", "affiliat", "social", "relatedness",
-               "benevolence", "secure", "empath", "warm", "helper")
-AGENCY_KEYS = ("dominance", "assertive", "authority", "enterprising",
-               "director", "power", "exhibition", "superiority", "energy",
-               "liveliness", "boldness")
-NEGAFF_KEYS = ("neurotic", "emotionality", "anxiety", "anxious", "depress",
-               "stress", "tension", "apprehension", "negative",
-               "self-defeating", "vigilance", "avoidant")
-STEADY_KEYS = ("conscientious", "stability", "wellbeing", "accepting",
-               "affect regulation", "mindful", "observ", "awareness",
-               "self-enhancing")
 
 _popstats_cache: Dict[str, Optional[dict]] = {}
 _traitnames_cache: Dict[str, Optional[list]] = {}
@@ -518,72 +514,23 @@ def _z_profile(test_id: str, centroid):
     return [f"t{i}" for i in range(len(v))], z
 
 
-def _class_means(traits, z) -> dict:
-    import numpy as np
-    out = {}
-    for name, keys in (("warmth", WARMTH_KEYS), ("agency", AGENCY_KEYS),
-                       ("negaff", NEGAFF_KEYS), ("steady", STEADY_KEYS)):
-        vals = [zz for tr, zz in zip(traits, z)
-                if any(k in tr.lower() for k in keys)]
-        out[name] = float(np.mean(vals)) if vals else 0.0
-    return out
+COMPARISON_BASIS = (
+    "Types are ordered by how close their average trait profile sits to the average profile of your type, using the "
+    "distance between profiles (Cronbach & Gleser, 1953). A type listed first shares more of your pattern across the "
+    "traits, and a type listed last differs from it the most. Each card names the traits on which that type tends to "
+    "score higher or lower than yours."
+)
 
 
-def _pearson(a, b) -> float:
-    import numpy as np
-    if len(a) < 2 or len(b) < 2 or np.std(a) < 1e-9 or np.std(b) < 1e-9:
-        return 0.0
-    return float(np.corrcoef(a, b)[0, 1])
-
-
-def _signature(z, points: int = 8):
-    """Sorted z-profile resampled to a fixed length so clusters from tests
-    with different trait counts become comparable (profile elevation and
-    scatter, after Furr, 2008)."""
-    import numpy as np
-    s = np.sort(z)[::-1]
-    if s.size == 1:
-        return np.full(points, float(s[0]))
-    xs = np.linspace(0, s.size - 1, points)
-    return np.interp(xs, np.arange(s.size), s)
-
-
-def _compat_score(user_traits, user_z, other_traits, other_z, same_space: bool) -> int:
-    """Composite compatibility score out of 100."""
-    base = (_pearson(user_z, other_z) if same_space
-            else _pearson(_signature(user_z), _signature(other_z)))
-    u = _class_means(user_traits, user_z)
-    o = _class_means(other_traits, other_z)
-    # Similarity on warmth/communion (Sadler & Woody, 2003)
-    warmth_sim = 1.0 - min(abs(u["warmth"] - o["warmth"]) / 2.0, 1.0)
-    # Complementarity on dominance/agency (Sadler & Woody, 2003; Markey 2007)
-    agency_comp = max(-1.0, min(1.0, -u["agency"] * o["agency"]))
-    # Partner effects (Malouff et al., 2010; Dyrenforth et al., 2010)
-    partner = max(-1.0, min(1.0, 0.5 * o["steady"] - 0.8 * o["negaff"]))
-    raw = (0.50 * base
-           + 0.18 * (2.0 * warmth_sim - 1.0)
-           + 0.12 * agency_comp
-           + 0.20 * partner)
-    return int(round(max(5.0, min(98.0, 50.0 + 50.0 * raw))))
-
-
-COMPAT_METHOD = {
-    "summary": ("Scores blend profile similarity (Byrne, 1971; Montoya, "
-                "Horton & Kirchner, 2008; profile metrics after Furr, 2008), "
-                "warmth similarity with dominance complementarity (Sadler & "
-                "Woody, 2003; Markey & Markey, 2007), and partner effects of "
-                "low negative affect and high steadiness (Malouff et al., "
-                "2010; Dyrenforth et al., 2010)."),
-    "weights": {"profile_similarity": 0.50, "warmth_similarity": 0.18,
-                "dominance_complementarity": 0.12, "partner_effects": 0.20},
-}
+def _differences(traits, user_z, other_z) -> list:
+    gaps = sorted(zip(traits, other_z - user_z), key=lambda g: -abs(g[1]))
+    return [{"trait": t, "direction": "higher" if d > 0 else "lower"} for t, d in gaps[:3] if abs(d) >= 0.3]
 
 
 @router.get("/compatibility/{result_id}")
 def get_compatibility(result_id: str, current_user=Depends(get_current_user)):
-    """Compatibility of the user's archetype with every other archetype of
-    the same test (within-test) and with the archetypes of all other tests
-    (cross-test), scored out of 100."""
+    """How close each other archetype of the same test sits to the user's
+    archetype, by distance between average trait profiles."""
     db  = get_db()
     row = db.execute(
         "SELECT * FROM test_results WHERE id = ? AND user_id = ?",
@@ -598,7 +545,7 @@ def get_compatibility(result_id: str, current_user=Depends(get_current_user)):
     arch_name = r["archetype_name"] or ""
 
     if test_type in STATE_MEASURES:
-        return {"available": False, "reason": "Compatibility does not apply to a current-state measure."}
+        return {"available": False, "reason": "Type comparison does not apply to a current-state measure."}
 
     archetypes = _load_archetypes(test_type)
     if not archetypes:
@@ -623,65 +570,27 @@ def get_compatibility(result_id: str, current_user=Depends(get_current_user)):
         return {"available": False, "reason": "User cluster has no centroid."}
     user_traits, user_z = _z_profile(test_type, user_info["centroid"])
 
-    # Within-test: same trait space, direct z-profile comparison.
+    import numpy as np
+
     same_test = []
     for cid, info in archetypes.items():
         if cid == user_key or not info.get("centroid"):
             continue
         o_traits, o_z = _z_profile(test_type, info["centroid"])
-        same_space = len(o_z) == len(user_z)
-        score = _compat_score(user_traits, user_z, o_traits, o_z, same_space)
+        if len(o_z) != len(user_z):
+            continue
+        distance = float(np.sqrt(np.mean((o_z - user_z) ** 2)))
         same_test.append({
             "test_id":     test_type,
-            "test_name":   TEST_DISPLAY_NAMES.get(test_type, test_type),
             "name":        info.get("name"),
             "tagline":     info.get("tagline"),
             "definition":  _cluster_definition(info),
             "avg_profile": _cluster_avg_profile(test_type, info),
             "color":       info.get("color"),
-            "score":       score,
-            "kind":        "within",
+            "closeness":   int(round(100.0 / (1.0 + distance))),
+            "differences": _differences(user_traits, user_z, o_z),
         })
-    same_test.sort(key=lambda x: -x["score"])
-
-    # Cross-test: fixed-length z-profile signatures + partner effects.
-    cross_test = []
-    for other_id, display in TEST_DISPLAY_NAMES.items():
-        if other_id == test_type or other_id in STATE_MEASURES:
-            continue
-        other = _load_archetypes(other_id)
-        if not other:
-            continue
-        best = None
-        for cid, info in other.items():
-            if not info.get("centroid"):
-                continue
-            o_traits, o_z = _z_profile(other_id, info["centroid"])
-            score = _compat_score(user_traits, user_z, o_traits, o_z, False)
-            entry = {
-                "test_id":     other_id,
-                "test_name":   display,
-                "name":        info.get("name"),
-                "tagline":     info.get("tagline"),
-                "definition":  _cluster_definition(info),
-                "avg_profile": _cluster_avg_profile(other_id, info),
-                "color":       info.get("color"),
-                "score":       score,
-                "kind":        "cross",
-            }
-            if best is None or score > best["score"]:
-                best = entry
-        if best:
-            cross_test.append(best)
-    cross_test.sort(key=lambda x: -x["score"])
-
-    combined = sorted(same_test + cross_test, key=lambda x: -x["score"])
-
-    # Bottom 5 = the LEAST compatible clusters, presented worst-first. combined
-    # is sorted best-first, so the tail holds the lowest scorers; reverse it so
-    # index 0 is the single least-compatible archetype.
-    bottom5 = list(reversed(combined[-5:])) if len(combined) >= 5 else \
-        list(reversed(combined))
+    same_test.sort(key=lambda x: -x["closeness"])
 
     return {
         "available":  True,
@@ -694,11 +603,8 @@ def get_compatibility(result_id: str, current_user=Depends(get_current_user)):
             "avg_profile": _cluster_avg_profile(test_type, user_info),
         },
         "same_test":  same_test,
-        "cross_test": cross_test[:8],
-        "top5":       combined[:5],
-        "bottom5":    bottom5,
         "all_names":  [v.get("name") for v in archetypes.values()],
-        "method":     COMPAT_METHOD,
+        "basis":      COMPARISON_BASIS,
     }
 
 

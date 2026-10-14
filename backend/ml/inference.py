@@ -195,6 +195,19 @@ def score_attachment(responses: Dict[str, int]) -> Dict[str, float]:
     }
 
 
+ANSWER_RANGE = {
+    "hexaco": (1, 7), "ambi": (1, 7), "darktriad": (1, 5), "npi": (1, 2), "dass": (1, 4), "kims": (1, 5),
+    "hsq": (1, 5), "gcbs": (1, 5), "riasec": (1, 5), "attachment": (1, 5), "fti": (1, 4),
+}
+
+
+def answers_in_range(test_id: str, responses: Dict[str, int]) -> bool:
+    lo, hi = ANSWER_RANGE.get(test_id, (None, None))
+    if lo is None:
+        return True
+    return all(isinstance(v, (int, float)) and lo <= v <= hi for v in (responses or {}).values())
+
+
 SCORERS = {
     "hexaco":     score_hexaco,
     "ambi":       score_ambi,
@@ -433,7 +446,11 @@ def run_inference(test_id: str, raw_responses: Dict[str, int],
     if not scorer:
         raise ValueError(f"No scorer for test_id: {test_id}")
 
-    trait_scores    = scorer(raw_responses)
+    if not answers_in_range(test_id, raw_responses):
+        lo, hi = ANSWER_RANGE[test_id]
+        raise ValueError(f"Answers for {test_id} must be between {lo} and {hi}")
+
+    trait_scores    = {t: min(1.0, max(0.0, v)) for t, v in scorer(raw_responses).items()}
     trait_names     = list(trait_scores.keys())
     trait_vector    = list(trait_scores.values())
 

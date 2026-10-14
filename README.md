@@ -1,10 +1,10 @@
 # Valence
 
-A psychometric assessment platform: eleven peer-reviewed self-report instruments, an unsupervised clustering layer trained on open reference data, and a locally hosted MentaLLaMA model that writes a construct-level deep dive for each result.
+A psychometric assessment platform: eleven peer-reviewed self-report instruments, an unsupervised clustering layer trained on open reference data, and a locally hosted Gemma 2 9B model that writes a construct-level deep dive for each result.
 
 ## Start
 
-Double-click `Valence` on the Desktop (or run `./start_valence.command`). It starts the API, the MentaLLaMA model server and the web app, then opens `http://localhost:5173`. Close the window or press Ctrl+C to stop everything. Logs are written to `logs/`.
+Double-click `Valence` on the Desktop (or run `./start_valence.command`). It starts the API, the language model server and the web app, then opens `http://localhost:5173`. Close the window or press Ctrl+C to stop everything. Logs are written to `logs/`.
 
 Manual start, if needed:
 
@@ -24,7 +24,7 @@ backend/
   ml/inference.py        scoring, percentiles, cluster assignment
   ml/scoring_keys.py     published item keys shared by training and inference
   ml/train_offline.py    training pipeline
-  ml/psych_layer.py      MentaLLaMA deep-dive layer
+  ml/psych_layer.py      Gemma deep-dive layer
   ml/psych_lexicon.py    constructs and frameworks per instrument
   research/              results from the accompanying study
   models/                trained artifacts, models/llm holds the GGUF
@@ -49,13 +49,13 @@ Per instrument: clean, score with the published keys, normalise to 0-1, standard
 
 ## Deep dive
 
-`MentaLLaMA-chat-7B` (Q4_K_M GGUF) runs through `llama-server` on the local GPU. For each result the layer selects the constructs that characterise the profile, asks the model for one paragraph per construct grounded in the scores, and adds an integrative formulation. Nothing leaves the machine.
+`gemma-2-9b-it` (Q4_K_M GGUF) runs through `llama-server` on the local GPU. For each result the layer selects the constructs that characterise the profile, asks the model for one paragraph per construct grounded in the scores, and adds an integrative formulation. Nothing leaves the machine.
 
 Setup on a new machine:
 
 ```bash
 brew install llama.cpp
-backend/.venv/bin/hf download QuantFactory/MentaLLaMA-chat-7B-GGUF MentaLLaMA-chat-7B.Q4_K_M.gguf --local-dir backend/models/llm
+backend/.venv/bin/hf download bartowski/gemma-2-9b-it-GGUF gemma-2-9b-it-Q4_K_M.gguf --local-dir backend/models/llm
 ```
 
 ## Notes

@@ -296,19 +296,19 @@ TRAITS: Dict[str, Dict[str, Dict[str, str]]] = {
             "framework": "Attachment anxiety dimension; internal working model of self",
             "high": "Elevated attachment anxiety: hyperactivation of the attachment system and fear of abandonment",
             "low": "Low attachment anxiety: positive working model of self and low rejection sensitivity",
-            "mid": "Moderate attachment anxiety: situational proximity seeking",
+            "mid": "Mid-range attachment anxiety: an ordinary level of concern about closeness",
         },
         "Avoidant": {
             "framework": "Attachment avoidance dimension; internal working model of others",
             "high": "Elevated attachment avoidance: deactivating strategies and compulsive self-reliance",
             "low": "Low attachment avoidance: comfort with intimacy and interdependence",
-            "mid": "Moderate attachment avoidance: selective emotional distancing",
+            "mid": "Mid-range attachment avoidance: an ordinary balance of closeness and independence",
         },
         "Secure": {
             "framework": "Attachment security; secure-base script (Mikulincer & Shaver, 2016)",
             "high": "High attachment security: secure-base script and effective co-regulation",
             "low": "Low attachment security: insecure working models and limited co-regulation",
-            "mid": "Moderate attachment security: partially consolidated secure-base script",
+            "mid": "Mid-range attachment security: typical comfort with closeness and reliance on others",
         },
     },
     "fti": {

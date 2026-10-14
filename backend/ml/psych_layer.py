@@ -9,7 +9,7 @@ import subprocess
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import httpx
 
@@ -17,23 +17,23 @@ from ml import meaning_check
 from ml.psych_bibliography import applicable_points, general_points, references
 from ml.psych_lexicon import INSTRUMENTS, LITERATURE, PATTERNS, SUPPORT_NOTE, TRAITS
 
-MODEL_KEY = "mentallama"
-MODEL_LABEL = "MentaLLaMA-chat-7B, interpretable mental-health analysis model (hosted locally)"
+MODEL_KEY = "gemma-2-9b"
+MODEL_LABEL = "Gemma 2 9B instruction model (hosted locally)"
 
 ENABLE_DEEP_DIVE = os.getenv("ENABLE_DEEP_DIVE", "true").lower() in ("1", "true", "yes")
-MENTALLAMA_URL = os.getenv("MENTALLAMA_URL", "http://127.0.0.1:8081").rstrip("/")
-MENTALLAMA_MODEL_PATH = os.getenv(
-    "MENTALLAMA_MODEL_PATH",
-    os.path.join(os.path.dirname(__file__), "..", "models", "llm", "MentaLLaMA-chat-7B.Q4_K_M.gguf"),
+LLM_URL = os.getenv("VALENCE_LLM_URL", "http://127.0.0.1:8081").rstrip("/")
+LLM_MODEL_PATH = os.getenv(
+    "VALENCE_LLM_MODEL_PATH",
+    os.path.join(os.path.dirname(__file__), "..", "models", "llm", "gemma-2-9b-it-Q4_K_M.gguf"),
 )
-MENTALLAMA_AUTOSTART = os.getenv("MENTALLAMA_AUTOSTART", "true").lower() in ("1", "true", "yes")
-INFER_TIMEOUT = float(os.getenv("MENTALLAMA_TIMEOUT", "120"))
-MAX_BULLETS = 5
-PARALLEL_SLOTS = int(os.getenv("MENTALLAMA_SLOTS", "4"))
+LLM_AUTOSTART = os.getenv("VALENCE_LLM_AUTOSTART", "true").lower() in ("1", "true", "yes")
+INFER_TIMEOUT = float(os.getenv("VALENCE_LLM_TIMEOUT", "120"))
+MAX_BULLETS = 7
+PARALLEL_SLOTS = int(os.getenv("VALENCE_LLM_SLOTS", "4"))
 LOG_DIR = os.path.join(os.path.dirname(__file__), "finetune_data")
 
 SYSTEM_PROMPT = (
-    "You are MentaLLaMA, a mental-health and personality analysis model. You write precise, "
+    "You are a personality and mental-health analysis assistant. You write precise, "
     "non-diagnostic psychological interpretations of self-report questionnaire profiles using "
     "correct psychological terminology. You never state or imply a clinical diagnosis."
 )
@@ -48,7 +48,7 @@ def enabled() -> bool:
 
 def health_ok(timeout: float = 2.0) -> bool:
     try:
-        r = httpx.get(f"{MENTALLAMA_URL}/health", timeout=timeout)
+        r = httpx.get(f"{LLM_URL}/health", timeout=timeout)
         return r.status_code == 200
     except Exception:
         return False
@@ -80,29 +80,29 @@ def ensure_server(wait: float = 90.0) -> bool:
         return False
     if health_ok():
         return True
-    if not MENTALLAMA_AUTOSTART:
+    if not LLM_AUTOSTART:
         return False
     with _server_lock:
         if health_ok():
             return True
         if _server_proc is None or _server_proc.poll() is not None:
             binary = _find_server_binary()
-            model = os.path.abspath(MENTALLAMA_MODEL_PATH)
+            model = os.path.abspath(LLM_MODEL_PATH)
             if not binary or not os.path.exists(model):
-                print(f"[psych] cannot start MentaLLaMA (binary={binary}, model exists={os.path.exists(model)})")
+                print(f"[psych] cannot start the language model (binary={binary}, model exists={os.path.exists(model)})")
                 return False
-            port = MENTALLAMA_URL.rsplit(":", 1)[-1]
+            port = LLM_URL.rsplit(":", 1)[-1]
             _server_proc = subprocess.Popen(
                 [binary, "-m", model, "--host", "127.0.0.1", "--port", port, "-ngl", "99",
-                 "-c", str(2048 * PARALLEL_SLOTS), "-np", str(PARALLEL_SLOTS)],
+                 "-c", str(3072 * PARALLEL_SLOTS), "-np", str(PARALLEL_SLOTS)],
                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
             )
             atexit.register(_stop_server)
-            print(f"[psych] starting MentaLLaMA server on port {port}")
+            print(f"[psych] starting language model server on port {port}")
         deadline = time.time() + wait
         while time.time() < deadline:
             if health_ok():
-                print("[psych] MentaLLaMA ready")
+                print("[psych] language model ready")
                 return True
             if _server_proc.poll() is not None:
                 return False
@@ -115,25 +115,27 @@ def status() -> dict:
 
 
 def _complete(user_prompt: str, max_tokens: int = 220, temperature: float = 0.45) -> Optional[str]:
-    prompt = f"[INST] <<SYS>>\n{SYSTEM_PROMPT}\n<</SYS>>\n\n{user_prompt} [/INST] "
     try:
         r = httpx.post(
-            f"{MENTALLAMA_URL}/completion",
-            json={"prompt": prompt, "n_predict": max_tokens, "temperature": temperature,
-                  "top_p": 0.9, "repeat_penalty": 1.12, "stop": ["[INST]", "\n\n"]},
+            f"{LLM_URL}/v1/chat/completions",
+            json={"messages": [{"role": "user", "content": f"{SYSTEM_PROMPT}\n\n{user_prompt}"}],
+                  "max_tokens": max_tokens, "temperature": temperature, "top_p": 0.9, "repeat_penalty": 1.12},
             timeout=INFER_TIMEOUT,
         )
         r.raise_for_status()
-        return (r.json().get("content") or "").strip()
+        content = (r.json()["choices"][0]["message"].get("content") or "").strip()
+        return content.split("\n\n", 1)[0].strip()
     except Exception as e:
-        print(f"[psych] MentaLLaMA call failed: {type(e).__name__}: {e}")
+        print(f"[psych] model call failed: {type(e).__name__}: {e}")
         return None
 
 
 DIRECTION = {
     "high": "Score direction: HIGH on {trait}. The person shows a lot of {trait}.",
     "low": "Score direction: LOW on {trait}. The person shows little {trait}; do not describe them as having it.",
-    "mid": "Score direction: MID-RANGE on {trait}. Neither clearly high nor clearly low; describe it as moderate.",
+    "mid": ("Score direction: MID-RANGE on {trait}. Neither clearly high nor clearly low. Describe an ordinary, "
+            "typical level of {trait}, as most people have. A mid-range score shows no fear, defence, difficulty or "
+            "vulnerability, so do not suggest any."),
 }
 
 
@@ -234,6 +236,41 @@ def _citations_ok(text: str, test_id: str, item: dict) -> bool:
 
 def _cited_points(text: str, points: List[dict]) -> List[str]:
     return sorted({p["label"] for p in points if any(name in text for name in p["names"])})
+
+
+_RESEARCH_CLAIM = re.compile(
+    r"\b(research|stud(y|ies)|found|findings?|evidence|meta-analys\w*|showed|shows that|experiments?|researchers)\b"
+    r"|\b(19|20)\d{2}\b",
+    re.IGNORECASE,
+)
+_ATTRIBUTION = re.compile(
+    r"^.*?\b(found|find|showed|shows|demonstrated|demonstrate|suggests?|suggested|reports?|reported|revealed|"
+    r"indicates?|indicated|links?|linked|observed|notes?|noted)( that)?\s+",
+    re.IGNORECASE,
+)
+GROUNDING_THRESHOLD = 0.5
+
+
+def _claim(sentence: str) -> str:
+    core = _ATTRIBUTION.sub("", re.sub(r"\([^)]*\d{4}[^)]*\)", "", sentence)).strip()
+    return core[:1].upper() + core[1:] if core else sentence
+
+
+def _ground(text: str, sources: List[str]) -> Tuple[str, int]:
+    sentences = meaning_check.split_sentences(text)
+    research = [i for i, s in enumerate(sentences) if _RESEARCH_CLAIM.search(s)]
+    if not research:
+        return text, 0
+    scores = meaning_check.entailment(sources, [_claim(sentences[i]) for i in research])
+    if scores is None:
+        return text, 0
+    dropped = {i for i, score in zip(research, scores) if score < GROUNDING_THRESHOLD}
+    if not dropped:
+        return text, 0
+    kept = [s for i, s in enumerate(sentences) if i not in dropped]
+    if len(kept) < 2:
+        return "", len(dropped)
+    return " ".join(kept), len(dropped)
 
 
 def _plain(construct: str) -> str:
@@ -350,16 +387,27 @@ def _notes_block(context_notes: Optional[List[Dict]]) -> str:
             lines.append(f'  On "{q}": {note[:240]}' if q else f"  {note[:240]}")
     if not lines:
         return ""
-    return "Context the person volunteered:\n" + "\n".join(lines) + "\n\n"
+    return ("Context the person volunteered about single questions. Mention a note only where it bears directly "
+            "on the construct being written about, and never treat it as evidence for a score:\n"
+            + "\n".join(lines) + "\n\n")
 
 
 def _header(test_id: str, scores: Dict[str, float], pcts: Dict[str, int], archetype: dict,
             context_notes: Optional[List[Dict]]) -> str:
     inst = INSTRUMENTS.get(test_id, {"label": test_id, "citation": ""})
     arch = (archetype or {}).get("name") or "unlabelled"
+    type_line = f"Their profile type is '{arch}'."
+    try:
+        from ml.score_drivers import type_basis
+        basis = type_basis(test_id, (archetype or {}).get("id"), pcts)
+        if basis and basis["fit"] == "loose":
+            type_line = (f"Their scores sit between profile types. The nearest type is '{arch}', but they differ from "
+                         "its typical member on the traits that define it, so do not describe them as that type.")
+    except Exception as e:
+        print(f"[psych] type fit unavailable: {e}")
     return (
         f"A person completed the {inst['label']} ({inst['citation']}). "
-        f"Their profile type is '{arch}'.\n\n"
+        f"{type_line}\n\n"
         "Scored profile (0-1 scale, percentile within the self-selected reference sample):\n"
         f"{_profile_block(scores, pcts)}\n\n{_notes_block(context_notes)}"
     )
@@ -370,7 +418,8 @@ def _bullet_prompt(header: str, item: dict, scores: Dict[str, float], pcts: Dict
         header
         + "Write one analytic paragraph about the construct below. Requirements: 3 to 4 sentences; "
           "cite the score or percentile as evidence; explain the underlying psychological mechanism "
-          "with precise terminology; finish with one concrete, observable day-to-day manifestation. "
+          "with precise terminology, drawing only on the construct line and the published findings below "
+          "(add no other studies, theories or statistics); finish with one concrete, observable day-to-day manifestation. "
           "The construct line states the finding: explain it, never contradict it, and do not "
           "attribute difficulties that the scores do not show. Do not diagnose. Do not use headings "
           "or lists.\n\n"
@@ -401,7 +450,7 @@ def _integration_prompt(header: str, items: List[dict], points: Optional[List[di
         "Write one integrative paragraph of 3 to 4 sentences: explain how these constructs interact "
         "as a single functional pattern, name one adaptive strength, and name one self-regulation or "
         "interpersonal area where the pattern could create friction. Use precise psychological "
-        "terminology. Do not diagnose. Do not use headings or lists."
+        "terminology, and make no research claims beyond the constructs and findings listed. Do not diagnose. Do not use headings or lists."
         + _findings_block(points or [])
     )
 
@@ -444,6 +493,7 @@ def enrich_result(test_id: str, trait_scores: Dict[str, float], percentiles: Dic
     t0 = time.time()
     bullets: List[dict] = []
     withheld = 0
+    withheld_points: List[dict] = []
     if ensure_server():
         header = _header(test_id, trait_scores, percentiles, archetype or {}, context_notes)
         items = select_constructs(test_id, trait_scores, percentiles)
@@ -462,21 +512,33 @@ def enrich_result(test_id: str, trait_scores: Dict[str, float], percentiles: Dic
             else:
                 prompt, budget = _bullet_prompt(header, item, trait_scores, percentiles), 220
             premises = _premises(item, items, percentiles)
+            reason = "The model did not produce a usable paragraph."
             for temperature in (0.45, 0.3):
                 text = _clean(_complete(prompt, max_tokens=budget, temperature=temperature))
                 if not text:
                     continue
                 if not _citations_ok(text, test_id, item):
+                    reason = "The paragraph cited a source outside the bibliography."
                     continue
                 verification = _verify(text, item["traits"], trait_scores, percentiles)
                 rejected = ("failed", "unverified") if item["kind"] == "trait" else ("failed",)
                 if verification["status"] in rejected:
+                    reason = ("The paragraph quoted a figure that is not in your results."
+                              if not verification["figures_match"]
+                              else "The paragraph described your score differently from what you scored.")
                     continue
                 meaning = meaning_check.check(text, premises)
                 if meaning and meaning["contradicted"]:
+                    reason = "The paragraph contained a statement that contradicts the research findings."
                     continue
+                grounded, _ = _ground(text, premises)
+                if not grounded:
+                    reason = "The paragraph's research claims could not be matched to the published findings."
+                    continue
+                if grounded != text:
+                    text, meaning = grounded, meaning_check.check(grounded, premises)
                 return text, verification, meaning
-            return "", None, None
+            return "", reason, None
 
         jobs = items + ([integration_item] if len(items) >= 2 else [])
         with ThreadPoolExecutor(max_workers=PARALLEL_SLOTS) as pool:
@@ -485,6 +547,12 @@ def enrich_result(test_id: str, trait_scores: Dict[str, float], percentiles: Dic
         for item, (text, verification, meaning) in zip(jobs, written):
             if not text:
                 withheld += 1
+                withheld_points.append({
+                    "construct": item["construct"],
+                    "framework": item["framework"],
+                    "evidence": _evidence(item["traits"], trait_scores, percentiles),
+                    "reason": verification,
+                })
                 continue
             bullets.append({
                 "construct": item["construct"],
@@ -503,6 +571,7 @@ def enrich_result(test_id: str, trait_scores: Dict[str, float], percentiles: Dic
         "instrument": inst.get("label"),
         "citation": inst.get("citation"),
         "bullets": bullets,
+        "withheld_points": withheld_points if bullets else [],
         "insights": [f"{b['construct']}. {b['text']}" for b in bullets],
         "support_note": SUPPORT_NOTE.get(test_id),
         "profile_fit": (archetype or {}).get("membership_probability"),
@@ -530,5 +599,5 @@ def enrich_result(test_id: str, trait_scores: Dict[str, float], percentiles: Dic
         "status": "ok" if bullets else "unavailable",
     })
     if bullets:
-        print(f"[psych] MentaLLaMA deep dive for {test_id}: {len(bullets)} bullets in {latency}s")
+        print(f"[psych] deep dive for {test_id}: {len(bullets)} bullets in {latency}s")
     return insights

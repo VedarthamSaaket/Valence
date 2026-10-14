@@ -70,9 +70,12 @@ def research_summary():
 def acknowledgements():
     from ml.psych_bibliography import all_authors
     paper = _paper()
+    from ml.psych_facts import extra_authors
     authors = all_authors()
+    extra = extra_authors()
     return [
-        {"test_id": test_id, "code": info["code"], "domain": info["domain"], "authors": authors.get(test_id, [])}
+        {"test_id": test_id, "code": info["code"], "domain": info["domain"],
+         "authors": authors.get(test_id, []) + [a for a in extra.get(test_id, []) if a not in authors.get(test_id, [])]}
         for test_id, info in paper["instruments"].items()
     ]
 

@@ -44,7 +44,7 @@ async function translateBatch(texts, targetLangCode) {
 }
 
 // ─── Scale Configs ───────────────────────────────────────────────────────────
-const SCALE = [
+export const SCALE = [
   { value: 1, label: 'Strongly Disagree', short: 'SD' },
   { value: 2, label: 'Disagree', short: 'D' },
   { value: 3, label: 'Neutral', short: 'N' },
@@ -103,15 +103,6 @@ export const SCALE_OVERRIDES = {
     { value: 3, label: 'Cannot decide', short: '3' },
     { value: 4, label: 'Probably true', short: '4' },
     { value: 5, label: 'Definitely true', short: '5' },
-  ],
-  attachment: [
-    { value: 1, label: 'Strongly Disagree', short: '1' },
-    { value: 2, label: 'Disagree', short: '2' },
-    { value: 3, label: 'Slightly Disagree', short: '3' },
-    { value: 4, label: 'Neutral', short: '4' },
-    { value: 5, label: 'Slightly Agree', short: '5' },
-    { value: 6, label: 'Agree', short: '6' },
-    { value: 7, label: 'Strongly Agree', short: '7' },
   ],
 }
 

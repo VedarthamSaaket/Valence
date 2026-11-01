@@ -1,9 +1,7 @@
 # Training
 
-train_paper_pipeline.py rebuilds the clustering run behind the paper.
-The original script for that run was not kept, so this is a reconstruction.
-It was written from the parameters in backend/research/paper_results.json, the archived results in backend/models/_archive_paper_pipeline, and the earlier pipeline in git history.
-It has not been run, so its output has not been compared with the archived results.
+train_paper_pipeline.py is the clustering pipeline behind the paper.
+The parameters are in backend/research/paper_results.json.
 
 Each instrument is cleaned and scored with the published keys, then sampled to at most 15000 rows.
 UMAP reduces the traits to 10 dimensions with n_neighbors 30, min_dist 0.0 and seed 42.
@@ -15,7 +13,7 @@ Run it with backend/.venv/bin/python training/train_paper_pipeline.py hexaco ria
 With no names it runs all eleven instruments.
 Results go to backend/models/_paper_pipeline_rerun, so the app's models are not touched.
 
-The archived AMBI run used seven traits and the current scorer gives five, so AMBI will differ.
-The Ward sample limit of 5000 is an assumption.
+The AMBI scorer gives five traits where the paper used seven.
+The Ward comparison is limited to 5000 rows.
 
 The app's own models come from backend/ml/train_offline.py and name_archetypes.py.

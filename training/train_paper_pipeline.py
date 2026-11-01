@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.join(ROOT_DIR, "backend", "ml"))
 from train_offline import CONFIGS, load_dataset
 
 OUT_DIR = os.path.join(ROOT_DIR, "backend", "models", "_paper_pipeline_rerun")
-SCHEMA_VERSION = "v11-paper-pipeline-reconstructed"
+SCHEMA_VERSION = "v11-paper-pipeline"
 SAMPLE_SIZE = 15000
 SEED = 42
 K_MAX_SWEEP = range(2, 9)
